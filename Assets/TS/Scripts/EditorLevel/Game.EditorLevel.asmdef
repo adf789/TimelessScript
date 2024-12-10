@@ -1,0 +1,19 @@
+{
+    "name": "Game.EditorLevel",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f757b5b81e405704ea870f4279b0680c",
+        "GUID:c203a2ecf1d2b3745a56217c603a5591",
+        "GUID:dc3aa7ebd12043d4192f54e694865854",
+        "GUID:42d23782591be1e42b8206c96a11e103"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

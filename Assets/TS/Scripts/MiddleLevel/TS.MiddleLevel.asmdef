@@ -1,0 +1,16 @@
+{
+    "name": "Game.MiddleLevel",
+    "rootNamespace": "",
+    "references": [
+        "GUID:42d23782591be1e42b8206c96a11e103"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
