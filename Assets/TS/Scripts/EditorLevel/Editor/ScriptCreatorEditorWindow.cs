@@ -1,7 +1,12 @@
-using UnityEditor;
+ï»¿using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
+using System;
+using UnityEditor.Compilation;
+using System.Linq;
+using System.Collections;
+using Cysharp.Threading.Tasks;
 
 public class ScriptCreatorEditorWindow : EditorWindow
 {
@@ -9,8 +14,9 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private string basePrefabPath = "Assets/TS/ResourcesAddressable/Prefabs/";
     private string objectName = "";
     private List<string> objectAddPaths = null;
+    private Action onEventAddPrefab = null;
 
-    [MenuItem("Tools/Create Script %e")] // Ctrl + E ´ÜÃàÅ° ¼³Á¤
+    [MenuItem("Tools/Create Script %e")] // Ctrl + E ë‹¨ì¶•í‚¤ ì„¤ì •
     public static void ShowWindow()
     {
         GetWindow<ScriptCreatorEditorWindow>("Script Creator");
@@ -40,9 +46,9 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
             foreach (string path in objectAddPaths)
             {
-                // ¹öÆ° ¹®ÀÚ¿­ ±æÀÌ¿¡ ¸Â´Â Æø °è»ê
+                // ë²„íŠ¼ ë¬¸ìì—´ ê¸¸ì´ì— ë§ëŠ” í­ ê³„ì‚°
                 Vector2 size = GUI.skin.label.CalcSize(new GUIContent(path));
-                float buttonWidth = size.x + 10; // ¿©À¯ °ø°£ Ãß°¡
+                float buttonWidth = size.x + 10; // ì—¬ìœ  ê³µê°„ ì¶”ê°€
 
                 if (GUILayout.Button(path, GUILayout.Width(buttonWidth)))
                 {
@@ -86,10 +92,10 @@ public class ScriptCreatorEditorWindow : EditorWindow
         foreach (string path in paths)
         {
             Vector2 buttonSize = GUI.skin.label.CalcSize(new GUIContent(path));
-            totalWidth += buttonSize.x + 10; // ¹öÆ° ³Êºñ °è»ê
+            totalWidth += buttonSize.x + 10; // ë²„íŠ¼ ë„ˆë¹„ ê³„ì‚°
 
-            // ½½·¡½ÃÀÇ Æø Ãß°¡
-            if (path != paths[^1]) // ¸¶Áö¸· ¾ÆÀÌÅÛÀÌ ¾Æ´Ï¸é ½½·¡½Ã Ãß°¡
+            // ìŠ¬ë˜ì‹œì˜ í­ ì¶”ê°€
+            if (path != paths[^1]) // ë§ˆì§€ë§‰ ì•„ì´í…œì´ ì•„ë‹ˆë©´ ìŠ¬ë˜ì‹œ ì¶”ê°€
             {
                 Vector2 slashSize = GUI.skin.label.CalcSize(new GUIContent(slash));
                 totalWidth += slashSize.x;
@@ -99,7 +105,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         return totalWidth;
     }
 
-    // ¹®ÀÚ¿­ Áß °æ·Î°¡ µÉ ¼ö ÀÖ´Â ºÎºĞÀÌ ÀÖÀ¸¸é ºĞ¸®.
+    // ë¬¸ìì—´ ì¤‘ ê²½ë¡œê°€ ë  ìˆ˜ ìˆëŠ” ë¶€ë¶„ì´ ìˆìœ¼ë©´ ë¶„ë¦¬.
     private bool TryGetSeperatePath(ref string name, out string extractedPath)
     {
         extractedPath = null;
@@ -140,11 +146,13 @@ public class ScriptCreatorEditorWindow : EditorWindow
             return;
         }
 
-        // °æ·Î¿¡¼­ `/`¸¦ ±âÁØÀ¸·Î Æú´õ ±¸Á¶ »ı¼º
+        // ê²½ë¡œì—ì„œ `/`ë¥¼ ê¸°ì¤€ìœ¼ë¡œ í´ë” êµ¬ì¡° ìƒì„±
         string modelPath = string.Format(basePath, "LowLevel");
         string viewPath = string.Format(basePath, "MiddleLevel");
         string controllerPath = string.Format(basePath, "HighLevel");
-        string prefabPath = basePrefabPath;
+        string createPrefabPath = basePrefabPath;
+        string createScriptName = $"{objectName}View";
+        string createPrefabName = $"{objectName}Prefab";
 
         if (objectAddPaths.Count > 0)
         {
@@ -153,27 +161,30 @@ public class ScriptCreatorEditorWindow : EditorWindow
             modelPath = Path.Combine(modelPath, addPath);
             viewPath = Path.Combine(viewPath, addPath);
             controllerPath = Path.Combine(controllerPath, addPath);
-            prefabPath = Path.Combine(prefabPath, addPath);
+            createPrefabPath = Path.Combine(createPrefabPath, addPath);
         }
 
         CreateDirectoryIfNotExist(modelPath);
         CreateDirectoryIfNotExist(viewPath);
         CreateDirectoryIfNotExist(controllerPath);
-        CreateDirectoryIfNotExist(prefabPath);
+        CreateDirectoryIfNotExist(createPrefabPath);
+
+        createPrefabPath = $"{Path.Combine(createPrefabPath, createPrefabName).Replace("\\", "/")}.prefab";
 
         CreateScript(modelPath, $"{objectName}Model", GenerateModelCode(objectName));
-        CreateScript(viewPath, $"{objectName}View", GenerateViewCode(objectName));
+        CreateScript(viewPath, createScriptName, GenerateViewCode(objectName));
         CreateScript(controllerPath, $"{objectName}Controller", GenerateControllerCode(objectName));
+        CreatePrefab(createPrefabPath, createPrefabName);
 
-        CreatePrefab(prefabPath, $"{objectName}Prefab");
+        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH", createPrefabPath);
+        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME", createScriptName);
 
         AssetDatabase.Refresh();
-        Debug.Log("MVC structure created successfully!");
     }
 
     private void CreateDirectoryIfNotExist(string path)
     {
-        // ¸ğµç ÇÏÀ§ µğ·ºÅä¸® Æ÷ÇÔÇÏ¿© »ı¼º
+        // ëª¨ë“  í•˜ìœ„ ë””ë ‰í† ë¦¬ í¬í•¨í•˜ì—¬ ìƒì„±
         string normalizedPath = path.Replace("\\", "/");
         if (!Directory.Exists(normalizedPath))
         {
@@ -187,6 +198,19 @@ public class ScriptCreatorEditorWindow : EditorWindow
         if (!File.Exists(filePath))
         {
             File.WriteAllText(filePath, content);
+        }
+    }
+
+    private void CreatePrefab(string prefabPath, string name)
+    {
+        if (!File.Exists(prefabPath))
+        {
+            GameObject obj = new GameObject(name);
+            obj.AddComponent<RectTransform>();
+            PrefabUtility.SaveAsPrefabAsset(obj, prefabPath);
+            DestroyImmediate(obj);
+
+            AssetDatabase.Refresh();
         }
     }
 
@@ -222,15 +246,100 @@ public class {name}Controller
 }}";
     }
 
-    private void CreatePrefab(string path, string prefabName)
+    [UnityEditor.Callbacks.DidReloadScripts]
+    private static void AttachScriptToPrefab()
     {
-        string prefabFilePath = Path.Combine(path, $"{prefabName}.prefab").Replace("\\", "/");
-        if (!File.Exists(prefabFilePath))
+        string path = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
+        string name = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME");
+
+        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(name))
+            return;
+
+        Debug.Log($"AttachScriptToPrefab Start, path: {path}");
+
+        AddScriptToPrefab(path, name);
+
+        EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
+        EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME");
+    }
+
+    private static void AddScriptToPrefab(string prefabPath, string scriptName)
+    {
+        // í”„ë¦¬íŒ¹ ë¡œë“œ
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null)
         {
-            GameObject obj = new GameObject(prefabName);
-            obj.AddComponent<Transform>();
-            PrefabUtility.SaveAsPrefabAsset(obj, prefabFilePath);
-            DestroyImmediate(obj);
+            Debug.LogError($"í”„ë¦¬íŒ¹ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {prefabPath}");
+            return;
+        }
+
+        // ì»´í¬ë„ŒíŠ¸ íƒ€ì… ì°¾ê¸°
+        Type scriptType = GetTypeFromUnityAssembly(scriptName);
+        if (scriptType == null)
+        {
+            Debug.LogError($"ìŠ¤í¬ë¦½íŠ¸ '{scriptName}'ì„(ë¥¼) ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+            return;
+        }
+
+        // í”„ë¦¬íŒ¹ì— ìŠ¤í¬ë¦½íŠ¸ ì¶”ê°€ (ì´ë¯¸ ì¶”ê°€ë˜ì–´ ìˆìœ¼ë©´ ë¬´ì‹œ)
+        if (prefab.GetComponent(scriptType) == null)
+        {
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            instance.AddComponent(scriptType);
+
+            // í”„ë¦¬íŒ¹ ì ìš© í›„ ì‚­ì œ
+            PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
+            GameObject.DestroyImmediate(instance);
+
+            Debug.Log($"'{scriptName}' ìŠ¤í¬ë¦½íŠ¸ë¥¼ í”„ë¦¬íŒ¹ '{prefab.name}'ì— ì¶”ê°€í–ˆìŠµë‹ˆë‹¤.");
+        }
+        else
+        {
+            Debug.Log($"í”„ë¦¬íŒ¹ '{prefab.name}'ì—ëŠ” ì´ë¯¸ '{scriptName}' ìŠ¤í¬ë¦½íŠ¸ê°€ ì¶”ê°€ë˜ì–´ ìˆìŠµë‹ˆë‹¤.");
+        }
+    }
+
+    private static Type GetTypeFromUnityAssembly(string typeName)
+    {
+        var unityAssembly = typeof(BaseView).Assembly; // UnityEngine ì–´ì…ˆë¸”ë¦¬ë§Œ ê²€ìƒ‰
+        var types = unityAssembly.GetTypes();
+
+        return types.FirstOrDefault(t => t.Name == typeName);
+    }
+
+    private void ForceCompile(Action onEventCompleteCompile)
+    {
+        CompilationPipeline.RequestScriptCompilation();
+        AssetDatabase.Refresh();
+
+        onEventAddPrefab = onEventCompleteCompile;
+
+        CompilationPipeline.compilationFinished += OnCompilationFinished;
+        //CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
+    }
+
+    private void OnCompilationFinished(object context)
+    {
+        Debug.Log("âœ… ì»´íŒŒì¼ ì™„ë£Œ!");
+
+        onEventAddPrefab?.Invoke();
+        onEventAddPrefab = null;
+
+        CompilationPipeline.compilationFinished -= OnCompilationFinished;
+    }
+
+    private void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
+    {
+        Debug.Log($"âœ… Assembly ì»´íŒŒì¼ ì™„ë£Œ: {assemblyPath}");
+
+        // íŠ¹ì • Assemblyì—ì„œ ìƒˆë¡œ ì¶”ê°€ëœ íƒ€ì…ì„ í™•ì¸ ê°€ëŠ¥
+        var newTypes = System.AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(asm => asm.GetTypes())
+            .Where(t => !string.IsNullOrEmpty(t.Namespace) && t.Namespace.Contains("MiddleLevel")); // ì›í•˜ëŠ” ë„¤ì„ìŠ¤í˜ì´ìŠ¤ë§Œ í•„í„°ë§
+
+        foreach (var type in newTypes)
+        {
+            Debug.Log($"ğŸ”¹ Assemblyì—ì„œ ê²€ìƒ‰ ê°€ëŠ¥í•´ì§„ íƒ€ì…: {type.FullName}");
         }
     }
 }
