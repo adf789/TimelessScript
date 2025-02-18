@@ -10,13 +10,13 @@ public class ScriptDeletionHandler : AssetModificationProcessor
         if (assetPath.EndsWith(".cs"))
         {
             string scriptName = Path.GetFileNameWithoutExtension(assetPath);
-            RemoveScriptFromPrefabs(scriptName);
+            RemoveScriptFromPrefabs(assetPath, scriptName);
         }
 
         return AssetDeleteResult.DidNotDelete;
     }
 
-    private static void RemoveScriptFromPrefabs(string scriptName)
+    private static void RemoveScriptFromPrefabs(string assetPath, string scriptName)
     {
         // 모든 프리팹 찾기
         string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab");
@@ -32,25 +32,22 @@ public class ScriptDeletionHandler : AssetModificationProcessor
 
             foreach (var component in components)
             {
-                if (!component && component.GetType().Name == scriptName)
+                if (!component)
+                    continue;
+
+                if(component.GetType().Name == scriptName)
                 {
+                    MonoScript monoScript = MonoScript.FromMonoBehaviour((MonoBehaviour)component);
+                    string attachedScriptPath = AssetDatabase.GetAssetPath(monoScript);
+
+                    if (attachedScriptPath != assetPath)
+                        continue;
+
                     Debug.Log($"[ScriptDeletionHandler] '{prefab.name}' 프리팹에서 삭제된 스크립트 발견, 제거 중...");
-                    GameObject target = component.gameObject;
-                    var serializedObject = new SerializedObject(target);
-                    var property = serializedObject.FindProperty("m_Component");
 
-                    for (int i = property.arraySize - 1; i >= 0; i--)
-                    {
-                        var element = property.GetArrayElementAtIndex(i);
-                        var objRef = element.objectReferenceValue;
-                        if (objRef == null)
-                        {
-                            property.DeleteArrayElementAtIndex(i);
-                            modified = true;
-                        }
-                    }
+                    Object.DestroyImmediate(component, true);
 
-                    serializedObject.ApplyModifiedProperties();
+                    modified = true;
                 }
             }
 
