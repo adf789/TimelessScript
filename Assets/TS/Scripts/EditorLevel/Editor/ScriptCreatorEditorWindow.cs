@@ -74,8 +74,13 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         if (isChangeName)
         {
-            if(TryGetSeperatePath(ref objectName, out string path))
+            if (TryGetSeperatePath(ref objectName, out string path))
+            {
                 objectAddPaths.Add(path);
+
+                if(!string.IsNullOrEmpty(objectName))
+                    objectName = char.ToUpper(objectName[0]) + objectName.Substring(1);
+            }
         }
 
         if (GUILayout.Button("Generate MVC Structure"))
@@ -147,9 +152,9 @@ public class ScriptCreatorEditorWindow : EditorWindow
         }
 
         // 경로에서 `/`를 기준으로 폴더 구조 생성
-        string modelPath = string.Format(basePath, "LowLevel");
-        string viewPath = string.Format(basePath, "MiddleLevel");
-        string controllerPath = string.Format(basePath, "HighLevel");
+        string modelPath = string.Format(basePath, "LowLevel/UIModel");
+        string viewPath = string.Format(basePath, "MiddleLevel/UIView");
+        string controllerPath = string.Format(basePath, "HighLevel/UIController");
         string createPrefabPath = basePrefabPath;
         string createScriptName = $"{objectName}View";
         string createPrefabName = $"{objectName}Prefab";
