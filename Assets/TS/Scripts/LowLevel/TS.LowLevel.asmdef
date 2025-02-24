@@ -1,3 +1,16 @@
 {
-	"name": "LowLevel"
+    "name": "LowLevel",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f757b5b81e405704ea870f4279b0680c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
