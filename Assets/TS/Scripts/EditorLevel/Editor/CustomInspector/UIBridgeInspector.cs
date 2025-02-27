@@ -4,26 +4,25 @@ using UnityEditor;
 [CustomEditor(typeof(UIBridge))]
 public class UIBridgeInspector : Editor
 {
-    private SerializedProperty bridges = null;
+    private UIBridge wrapperTarget;
 
     private void OnEnable()
     {
-        bridges = serializedObject.FindProperty("bridges");
-
-        foreach(var property in serializedObject.GetIterator())
-        {
-
-        }
+        wrapperTarget = target as UIBridge;
     }
 
     public override void OnInspectorGUI()
     {
-        if (bridges != null)
+        foreach(var pair in wrapperTarget.Controllers)
         {
-            for (int i = 0; i < bridges.arraySize; i++)
+            EditorGUILayout.BeginHorizontal();
             {
-
+                EditorGUILayout.LabelField(pair.Key.ToString());
+                EditorGUILayout.LabelField(pair.Value.GetType().FullName);
             }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space();
         }
     }
 }

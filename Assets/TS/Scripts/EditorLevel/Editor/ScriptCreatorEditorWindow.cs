@@ -12,6 +12,8 @@ public class ScriptCreatorEditorWindow : EditorWindow
 {
     private string basePath = "Assets/TS/Scripts/{0}/";
     private string basePrefabPath = "Assets/TS/ResourcesAddressable/Prefabs/";
+    private string bridgePath = "Assets/TS/ResourcesAddressable/ScriptableObjects/UIBridge.asset";
+    private string typeEnumPath = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
     private string objectName = "";
     private List<string> objectAddPaths = null;
     private Action onEventAddPrefab = null;
@@ -179,6 +181,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         CreateScript(modelPath, $"{objectName}Model", GenerateModelCode(objectName));
         CreateScript(viewPath, createScriptName, GenerateViewCode(objectName));
         CreateScript(controllerPath, $"{objectName}Controller", GenerateControllerCode(objectName));
+        ModifyEnum(objectName);
         CreatePrefab(createPrefabPath, createPrefabName);
 
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH", createPrefabPath);
@@ -244,7 +247,7 @@ public class {name}View : BaseView<{name}Model>
         return $@"
 using UnityEngine;
 
-public class {name}Controller
+public class {name}Controller : BaseController
 {{
     private {name}Model model;
     private {name}View view;
@@ -312,17 +315,6 @@ public class {name}Controller
         return types.FirstOrDefault(t => t.Name == typeName);
     }
 
-    private void ForceCompile(Action onEventCompleteCompile)
-    {
-        CompilationPipeline.RequestScriptCompilation();
-        AssetDatabase.Refresh();
-
-        onEventAddPrefab = onEventCompleteCompile;
-
-        CompilationPipeline.compilationFinished += OnCompilationFinished;
-        //CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
-    }
-
     private void OnCompilationFinished(object context)
     {
         Debug.Log("✅ 컴파일 완료!");
@@ -333,18 +325,30 @@ public class {name}Controller
         CompilationPipeline.compilationFinished -= OnCompilationFinished;
     }
 
-    private void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
+    public void ModifyEnum(string insertLine)
     {
-        Debug.Log($"✅ Assembly 컴파일 완료: {assemblyPath}");
+        List<string> lines = new List<string>(File.ReadAllLines(typeEnumPath));
+        List<string> modifiedLines = new List<string>();
 
-        // 특정 Assembly에서 새로 추가된 타입을 확인 가능
-        var newTypes = System.AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(asm => asm.GetTypes())
-            .Where(t => !string.IsNullOrEmpty(t.Namespace) && t.Namespace.Contains("MiddleLevel")); // 원하는 네임스페이스만 필터링
-
-        foreach (var type in newTypes)
+        for (int i = 0; i < lines.Count; i++)
         {
-            Debug.Log($"🔹 Assembly에서 검색 가능해진 타입: {type.FullName}");
+            if (lines[i].Trim().StartsWith("MaxView"))
+            {
+                modifiedLines.Add($"    {insertLine},"); // 새로운 줄 추가
+                modifiedLines.Add(lines[i]); // 기존 MaxView 한 줄 아래로 내리기
+            }
+            //else if (lines[i].Trim().StartsWith("MaxPopup"))
+            //{
+            //    modifiedLines.Add(insertLine); // MaxPopup 한 줄 아래로 내리기 위해 빈 줄 추가
+            //    modifiedLines.Add(lines[i]);
+            //}
+            else
+            {
+                modifiedLines.Add(lines[i]);
+            }
         }
+
+        File.WriteAllLines(typeEnumPath, modifiedLines);
+        Debug.Log("파일 수정 완료: " + typeEnumPath);
     }
 }
