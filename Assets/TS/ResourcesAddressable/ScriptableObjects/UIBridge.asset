@@ -12,3 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6401af72f59c2a44a8b1e5b19421a57a, type: 3}
   m_Name: UIBridge
   m_EditorClassIdentifier: 
+  controllers:
+  - uiType: 7
+    typeName: Test9Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null

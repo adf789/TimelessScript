@@ -10,11 +10,12 @@ using Cysharp.Threading.Tasks;
 
 public class ScriptCreatorEditorWindow : EditorWindow
 {
-    private string basePath = "Assets/TS/Scripts/{0}/";
-    private string basePrefabPath = "Assets/TS/ResourcesAddressable/Prefabs/";
-    private string bridgePath = "Assets/TS/ResourcesAddressable/ScriptableObjects/UIBridge.asset";
+    private const string basePath = "Assets/TS/Scripts/{0}/";
+    private const string basePrefabPath = "Assets/TS/ResourcesAddressable/Prefabs/";
+    private const string bridgePath = "Assets/TS/ResourcesAddressable/ScriptableObjects/UIBridge.asset";
     private string typeEnumPath = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
     private string objectName = "";
+    private const string controllerTypeFormat = "{0}Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
     private List<string> objectAddPaths = null;
     private Action onEventAddPrefab = null;
 
@@ -185,7 +186,9 @@ public class ScriptCreatorEditorWindow : EditorWindow
         CreatePrefab(createPrefabPath, createPrefabName);
 
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH", createPrefabPath);
+        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_OBJECT_NAME", objectName);
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME", createScriptName);
+        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_CONTROLLER_TYPE", string.Format(controllerTypeFormat, objectName));
 
         AssetDatabase.Refresh();
     }
@@ -258,17 +261,25 @@ public class {name}Controller : BaseController
     private static void AttachScriptToPrefab()
     {
         string path = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
-        string name = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME");
+        string objectName = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_OBJECT_NAME");
+        string scriptName = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME");
+        string controllerTypeName = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_CONTROLLER_TYPE");
 
-        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(name))
+        if (string.IsNullOrEmpty(path) ||
+            string.IsNullOrEmpty(objectName) ||
+            string.IsNullOrEmpty(scriptName) ||
+            string.IsNullOrEmpty(controllerTypeName))
             return;
 
         Debug.Log($"AttachScriptToPrefab Start, path: {path}");
 
-        AddScriptToPrefab(path, name);
+        AddScriptToPrefab(path, scriptName);
+
+        AddTypeToBridge(objectName, controllerTypeName);
 
         EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
         EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME");
+        EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_SCRIPT_CONTROLLER_TYPE");
     }
 
     private static void AddScriptToPrefab(string prefabPath, string scriptName)
@@ -304,6 +315,23 @@ public class {name}Controller : BaseController
         else
         {
             Debug.Log($"프리팹 '{prefab.name}'에는 이미 '{scriptName}' 스크립트가 추가되어 있습니다.");
+        }
+    }
+
+    private static void AddTypeToBridge(string objectName, string typeName)
+    {
+        UIBridge bridge = AssetDatabase.LoadAssetAtPath<UIBridge>(bridgePath);
+
+        if (bridge == null)
+            return;
+
+        if(Enum.TryParse(typeof(UIType), objectName, out object result) &&
+            result is UIType uiType)
+        {
+            bridge.Add(uiType, typeName);
+
+            EditorUtility.SetDirty(bridge);  // 변경된 데이터 감지
+            AssetDatabase.SaveAssets();        // 저장
         }
     }
 

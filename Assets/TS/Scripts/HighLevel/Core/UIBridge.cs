@@ -5,19 +5,32 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "UIBridge", menuName = "ScriptableObjects/UIBridge")]
 public class UIBridge : ScriptableObject
 {
-    public IReadOnlyDictionary<UIType, BaseController> Controllers { get => controllers; }
+    [Serializable]
+    public struct BridgePair
+    {
+        public UIType uiType;
+        public string typeName;
+
+        public BridgePair(UIType uiType, string typeName)
+        {
+            this.uiType = uiType;
+            this.typeName = typeName;
+        }
+    }
+
+    public IReadOnlyList<BridgePair> Controllers { get => controllers; }
 
     [SerializeField]
-    private Dictionary<UIType, BaseController> controllers = new Dictionary<UIType, BaseController>();
+    private List<BridgePair> controllers = new List<BridgePair>();
 
-    public void Add(UIType uiType, BaseController controller)
+    public void Add(UIType uiType, string typeName)
     {
-        if(!controllers.ContainsKey(uiType))
-            controllers[uiType] = controller;
+        if (controllers.FindIndex(p => p.uiType == uiType) == -1)
+            controllers.Add(new BridgePair(uiType, typeName));
     }
 
     public void Remove(UIType uiType)
     {
-        controllers.Remove(uiType);
+        controllers.RemoveAll(p => p.uiType == uiType);
     }
 }
