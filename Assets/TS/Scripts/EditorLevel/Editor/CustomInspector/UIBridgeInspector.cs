@@ -22,10 +22,9 @@ public class UIBridgeInspector : Editor
         {
             EditorGUILayout.BeginHorizontal();
             {
-                EditorGUILayout.LabelField(pair.uiType.ToString());
-                EditorGUILayout.LabelField(pair.typeName);
+                EditorGUILayout.LabelField($"{pair.uiType}\t\t{pair.typeName}");
 
-                if (GUILayout.Button("제거"))
+                if (GUILayout.Button("제거", GUILayout.Width(80)))
                 {
                     wrapperTarget.Remove(pair.uiType);
                     break;

@@ -1,15 +1,28 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+public class BaseController<T, V> : BaseController where T: BaseView where V : BaseModel
+{
+    protected BaseView view = null;
+    protected BaseModel model = null;
+
+    public virtual T GetView<T>() where T : BaseView
+    {
+        return null;
+    }
+
+    public virtual V GetModel<V>() where V : BaseModel
+    {
+        return null;
+    }
+}
+
 
 public class BaseController
 {
     public IReadOnlyCollection<BaseController> ChildControllers { get => childControllers; }
 
     private Queue<BaseController> childControllers = null;
-
-    protected BaseView view = null;
-    protected BaseModel model = null;
 
     public bool AddChild(BaseController controller)
     {

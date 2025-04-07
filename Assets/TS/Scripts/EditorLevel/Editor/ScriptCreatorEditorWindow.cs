@@ -5,24 +5,23 @@ using System.Collections.Generic;
 using System;
 using UnityEditor.Compilation;
 using System.Linq;
-using System.Collections;
-using Cysharp.Threading.Tasks;
 
 public class ScriptCreatorEditorWindow : EditorWindow
 {
     private const string basePath = "Assets/TS/Scripts/{0}/";
     private const string basePrefabPath = "Assets/TS/ResourcesAddressable/Prefabs/";
-    private const string bridgePath = "Assets/TS/ResourcesAddressable/ScriptableObjects/UIBridge.asset";
+    private const string controllerTypeFormat = "{0}Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
     private string typeEnumPath = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
     private string objectName = "";
-    private const string controllerTypeFormat = "{0}Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
+    private string[] tabTitles = { "Script Creator", "Script Deletor" };
+    private int selectedTab = 0;
     private List<string> objectAddPaths = null;
     private Action onEventAddPrefab = null;
 
     [MenuItem("Tools/Create Script %e")] // Ctrl + E 단축키 설정
     public static void ShowWindow()
     {
-        GetWindow<ScriptCreatorEditorWindow>("Script Creator");
+        GetWindow<ScriptCreatorEditorWindow>("Script Generate");
     }
 
     private void OnEnable()
@@ -31,6 +30,25 @@ public class ScriptCreatorEditorWindow : EditorWindow
     }
 
     private void OnGUI()
+    {
+        // 탭 그리기
+        selectedTab = GUILayout.Toolbar(selectedTab, tabTitles);
+
+        GUILayout.Space(10);
+
+        // 각 탭에 대한 내용 표시
+        switch (selectedTab)
+        {
+            case 0:
+                DrawScriptGenerator();
+                break;
+            case 1:
+                DrawScriptDeletor();
+                break;
+        }
+    }
+
+    private void DrawScriptGenerator()
     {
         GUILayout.Label("Script Creator", EditorStyles.boldLabel);
 
@@ -59,7 +77,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
                     break;
                 }
 
-                if(index < objectAddPaths.Count - 1)
+                if (index < objectAddPaths.Count - 1)
                     GUILayout.Label(slash);
 
                 index++;
@@ -81,7 +99,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
             {
                 objectAddPaths.Add(path);
 
-                if(!string.IsNullOrEmpty(objectName))
+                if (!string.IsNullOrEmpty(objectName))
                     objectName = char.ToUpper(objectName[0]) + objectName.Substring(1);
             }
         }
@@ -89,6 +107,111 @@ public class ScriptCreatorEditorWindow : EditorWindow
         if (GUILayout.Button("Generate MVC Structure"))
         {
             GenerateMVCStructure();
+        }
+    }
+
+    private void DrawScriptDeletor()
+    {
+        UIBridge bridge = UIBridge.Get();
+
+        for(int i = 0; i < bridge.Controllers.Count; i++)
+        {
+            var pair = bridge.Controllers[i];
+
+            EditorGUILayout.BeginHorizontal();
+            {
+                if (GUILayout.Button($"Delete {pair.uiType}"))
+                {
+                    DeleteUI(bridge, pair);
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    private void DeleteUI(UIBridge bridge, UIBridge.BridgePair bridgePair)
+    {
+        string modelPath = string.Format(basePath, "LowLevel/UIModel");
+        string viewPath = string.Format(basePath, "MiddleLevel/UIView");
+        string controllerPath = string.Format(basePath, "HighLevel/UIController");
+
+        DeleteFileInFolder($"{bridgePair.uiType}Model", "*.cs", modelPath);
+        DeleteFileInFolder($"{bridgePair.uiType}View", "*.cs", viewPath);
+        DeleteFileInFolder($"{bridgePair.uiType}Controller", "*.cs", controllerPath);
+        if (DeleteFileInFolder($"{bridgePair.uiType}Prefab", "*.prefab", basePrefabPath))
+            bridge.Remove(bridgePair.uiType);
+
+        AssetDatabase.Refresh();
+    }
+
+    private bool DeleteFileInFolder(string deleteFileName, string extension, string folderPath)
+    {
+        if (string.IsNullOrEmpty(deleteFileName))
+        {
+            Debug.LogWarning("파일 이름이 비어 있습니다.");
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(folderPath))
+        {
+            Debug.LogWarning("폴더 이름이 비어 있습니다.");
+            return false;
+        }
+
+        string absolutePath = Path.Combine(Application.dataPath.Replace("Assets", ""), folderPath);
+
+        if (!Directory.Exists(absolutePath))
+        {
+            Debug.LogWarning("폴더 경로가 올바르지 않습니다.");
+            return false;
+        }
+
+        string[] csFiles = Directory.GetFiles(absolutePath, extension, SearchOption.AllDirectories);
+
+        foreach (string filePath in csFiles)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            if (fileName == deleteFileName)
+            {
+                // 삭제
+                File.Delete(filePath);
+                string metaFile = filePath + ".meta";
+                if (File.Exists(metaFile))
+                    File.Delete(metaFile);
+
+                Debug.Log($"파일 '{deleteFileName}' 삭제됨: {filePath}");
+
+                // 빈 폴더 자동 삭제
+                string fileFolder = Path.GetDirectoryName(filePath);
+                DeleteIfEmptyFolder(fileFolder);
+
+                AssetDatabase.Refresh();
+                return true;
+            }
+        }
+
+        Debug.LogWarning($"'{deleteFileName}' 파일을 해당 폴더 내에서 찾을 수 없습니다.");
+        return false;
+    }
+
+    private void DeleteIfEmptyFolder(string folderPath)
+    {
+        if (!Directory.Exists(folderPath))
+            return;
+
+        // 파일이 없고, 서브 폴더도 없으면 삭제
+        bool isEmpty = Directory.GetFiles(folderPath).Length == 0 &&
+                       Directory.GetDirectories(folderPath).Length == 0;
+
+        if (isEmpty)
+        {
+            Directory.Delete(folderPath);
+            string metaFile = folderPath + ".meta";
+            if (File.Exists(metaFile))
+                File.Delete(metaFile);
+
+            Debug.Log($"빈 폴더 삭제됨: {folderPath}");
         }
     }
 
@@ -250,10 +373,9 @@ public class {name}View : BaseView<{name}Model>
         return $@"
 using UnityEngine;
 
-public class {name}Controller : BaseController
+public class {name}Controller : BaseController<{name}View, {name}Model>
 {{
-    private {name}Model model;
-    private {name}View view;
+
 }}";
     }
 
@@ -320,7 +442,7 @@ public class {name}Controller : BaseController
 
     private static void AddTypeToBridge(string objectName, string typeName)
     {
-        UIBridge bridge = AssetDatabase.LoadAssetAtPath<UIBridge>(bridgePath);
+        UIBridge bridge = UIBridge.Get();
 
         if (bridge == null)
             return;

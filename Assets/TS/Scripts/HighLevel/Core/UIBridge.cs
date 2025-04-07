@@ -11,6 +11,7 @@ public class UIBridge : ScriptableObject
         public UIType uiType;
         public string typeName;
 
+
         public BridgePair(UIType uiType, string typeName)
         {
             this.uiType = uiType;
@@ -22,6 +23,14 @@ public class UIBridge : ScriptableObject
 
     [SerializeField]
     private List<BridgePair> controllers = new List<BridgePair>();
+
+    private const string bridgePath = "Assets/TS/ResourcesAddressable/ScriptableObjects/UIBridge.asset";
+
+    public static UIBridge Get()
+    {
+        // 임시 기능
+        return UnityEditor.AssetDatabase.LoadAssetAtPath<UIBridge>(bridgePath);
+    }
 
     public void Add(UIType uiType, string typeName)
     {
