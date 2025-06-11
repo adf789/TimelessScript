@@ -1,9 +1,7 @@
 {
     "name": "LowLevel",
     "rootNamespace": "",
-    "references": [
-        "GUID:f757b5b81e405704ea870f4279b0680c"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

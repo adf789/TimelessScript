@@ -2,8 +2,7 @@
     "name": "Game.MiddleLevel",
     "rootNamespace": "",
     "references": [
-        "GUID:42d23782591be1e42b8206c96a11e103",
-        "GUID:f757b5b81e405704ea870f4279b0680c"
+        "GUID:42d23782591be1e42b8206c96a11e103"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

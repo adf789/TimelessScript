@@ -114,6 +114,9 @@ public class ScriptCreatorEditorWindow : EditorWindow
     {
         UIBridge bridge = UIBridge.Get();
 
+        if (bridge == null || bridge.Controllers == null)
+            return;
+
         for(int i = 0; i < bridge.Controllers.Count; i++)
         {
             var pair = bridge.Controllers[i];
@@ -138,10 +141,14 @@ public class ScriptCreatorEditorWindow : EditorWindow
         DeleteFileInFolder($"{bridgePair.uiType}Model", "*.cs", modelPath);
         DeleteFileInFolder($"{bridgePair.uiType}View", "*.cs", viewPath);
         DeleteFileInFolder($"{bridgePair.uiType}Controller", "*.cs", controllerPath);
-        if (DeleteFileInFolder($"{bridgePair.uiType}Prefab", "*.prefab", basePrefabPath))
-            bridge.Remove(bridgePair.uiType);
+        DeleteFileInFolder($"{bridgePair.uiType}View", "*.prefab", basePrefabPath);
+
+        bridge.Remove(bridgePair.uiType);
+
+        DeleteEnum(bridgePair.uiType.ToString());
 
         AssetDatabase.Refresh();
+        AssetDatabase.SaveAssets();
     }
 
     private bool DeleteFileInFolder(string deleteFileName, string extension, string folderPath)
@@ -282,8 +289,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         string viewPath = string.Format(basePath, "MiddleLevel/UIView");
         string controllerPath = string.Format(basePath, "HighLevel/UIController");
         string createPrefabPath = basePrefabPath;
-        string createScriptName = $"{objectName}View";
-        string createPrefabName = $"{objectName}Prefab";
+        string createViewName = $"{objectName}View";
 
         if (objectAddPaths.Count > 0)
         {
@@ -300,20 +306,21 @@ public class ScriptCreatorEditorWindow : EditorWindow
         CreateDirectoryIfNotExist(controllerPath);
         CreateDirectoryIfNotExist(createPrefabPath);
 
-        createPrefabPath = $"{Path.Combine(createPrefabPath, createPrefabName).Replace("\\", "/")}.prefab";
+        createPrefabPath = $"{Path.Combine(createPrefabPath, createViewName).Replace("\\", "/")}.prefab";
 
         CreateScript(modelPath, $"{objectName}Model", GenerateModelCode(objectName));
-        CreateScript(viewPath, createScriptName, GenerateViewCode(objectName));
+        CreateScript(viewPath, createViewName, GenerateViewCode(objectName));
         CreateScript(controllerPath, $"{objectName}Controller", GenerateControllerCode(objectName));
-        ModifyEnum(objectName);
-        CreatePrefab(createPrefabPath, createPrefabName);
+        AddEnum(objectName);
+        CreatePrefab(createPrefabPath, createViewName);
 
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH", createPrefabPath);
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_OBJECT_NAME", objectName);
-        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME", createScriptName);
+        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME", createViewName);
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_CONTROLLER_TYPE", string.Format(controllerTypeFormat, objectName));
 
         AssetDatabase.Refresh();
+        AssetDatabase.SaveAssets();
     }
 
     private void CreateDirectoryIfNotExist(string path)
@@ -475,7 +482,7 @@ public class {name}Controller : BaseController<{name}View, {name}Model>
         CompilationPipeline.compilationFinished -= OnCompilationFinished;
     }
 
-    public void ModifyEnum(string insertLine)
+    public void AddEnum(string insertLine)
     {
         List<string> lines = new List<string>(File.ReadAllLines(typeEnumPath));
         List<string> modifiedLines = new List<string>();
@@ -496,6 +503,23 @@ public class {name}Controller : BaseController<{name}View, {name}Model>
             {
                 modifiedLines.Add(lines[i]);
             }
+        }
+
+        File.WriteAllLines(typeEnumPath, modifiedLines);
+        Debug.Log("파일 수정 완료: " + typeEnumPath);
+    }
+
+    public void DeleteEnum(string deleteType)
+    {
+        List<string> lines = new List<string>(File.ReadAllLines(typeEnumPath));
+        List<string> modifiedLines = new List<string>();
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (lines[i].Trim().Contains(deleteType))
+                continue;
+
+            modifiedLines.Add(lines[i]);
         }
 
         File.WriteAllLines(typeEnumPath, modifiedLines);

@@ -1,6 +1,7 @@
 public enum UIType
 {
-    Test,
+    Test2,
     MaxView,
+
     MaxPopup,
 }

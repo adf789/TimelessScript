@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "UIBridge", menuName = "ScriptableObjects/UIBridge")]
+[CreateAssetMenu(fileName = "UIBridge", menuName = "Scriptable Objects/UIBridge")]
 public class UIBridge : ScriptableObject
 {
     [Serializable]
