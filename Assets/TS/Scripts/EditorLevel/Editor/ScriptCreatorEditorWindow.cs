@@ -145,6 +145,8 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         bridge.Remove(bridgePair.uiType);
 
+        AssetDatabase.SaveAssetIfDirty(bridge);
+
         DeleteEnum(bridgePair.uiType.ToString());
 
         AssetDatabase.Refresh();
@@ -382,7 +384,7 @@ using UnityEngine;
 
 public class {name}Controller : BaseController<{name}View, {name}Model>
 {{
-
+    public override UIType UIType {{ get => UIType.{name}; }}
 }}";
     }
 
@@ -457,6 +459,9 @@ public class {name}Controller : BaseController<{name}View, {name}Model>
         if(Enum.TryParse(typeof(UIType), objectName, out object result) &&
             result is UIType uiType)
         {
+            if (uiType == UIType.MaxView || uiType == UIType.MaxPopup)
+                return;
+
             bridge.Add(uiType, typeName);
 
             EditorUtility.SetDirty(bridge);  // 변경된 데이터 감지

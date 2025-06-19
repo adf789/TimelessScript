@@ -21,6 +21,7 @@ public class BaseController<T, V> : BaseController where T: BaseView where V : B
 public class BaseController
 {
     public IReadOnlyCollection<BaseController> ChildControllers { get => childControllers; }
+    public virtual UIType UIType { get; }
 
     private Queue<BaseController> childControllers = null;
 

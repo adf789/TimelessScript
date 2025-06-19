@@ -15,7 +15,3 @@ MonoBehaviour:
   controllers:
   - uiType: 0
     typeName: TestController, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-  - uiType: 1
-    typeName: Test2Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
-  - uiType: 2
-    typeName: Test3Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null

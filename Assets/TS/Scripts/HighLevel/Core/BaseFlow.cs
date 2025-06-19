@@ -6,6 +6,12 @@ public abstract class BaseFlow : ScriptableObject
     protected UIType[] uis = null;
 
     public virtual GameState State { get; }
-    public abstract void Enter();
-    public abstract void Exit();
+    public virtual void Enter()
+    {
+    }
+
+    public virtual void Exit()
+    {
+
+    }
 }
