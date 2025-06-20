@@ -9,10 +9,8 @@ using System.Linq;
 public class ScriptCreatorEditorWindow : EditorWindow
 {
     private const string basePath = "Assets/TS/Scripts/{0}/";
-    private const string basePrefabPath = "Assets/TS/ResourcesAddressable/Prefabs/";
-    private const string controllerTypeFormat = "{0}Controller, HighLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
     private string typeEnumPath = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
-    private string objectName = "";
+    private string objectName = ""; 
     private string[] tabTitles = { "Script Creator", "Script Deletor" };
     private int selectedTab = 0;
     private List<string> objectAddPaths = null;
@@ -112,42 +110,39 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
     private void DrawScriptDeletor()
     {
-        UIBridge bridge = UIBridge.Get();
+        var uiTypes = Enum.GetValues(typeof(UIType));
+        int uiCount = uiTypes.GetLength(0);
 
-        if (bridge == null || bridge.Controllers == null)
+        if (uiCount == 0)
             return;
 
-        for(int i = 0; i < bridge.Controllers.Count; i++)
+        for(int i = 0; i < uiCount; i++)
         {
-            var pair = bridge.Controllers[i];
+            UIType uiType = (UIType)uiTypes.GetValue(i);
 
             EditorGUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button($"Delete {pair.uiType}"))
+                if (GUILayout.Button($"Delete {uiType}"))
                 {
-                    DeleteUI(bridge, pair);
+                    DeleteUI(uiType);
                 }
             }
             EditorGUILayout.EndHorizontal();
         }
     }
 
-    private void DeleteUI(UIBridge bridge, UIBridge.BridgePair bridgePair)
+    private void DeleteUI(UIType uiType)
     {
         string modelPath = string.Format(basePath, "LowLevel/UIModel");
         string viewPath = string.Format(basePath, "MiddleLevel/UIView");
         string controllerPath = string.Format(basePath, "HighLevel/UIController");
 
-        DeleteFileInFolder($"{bridgePair.uiType}Model", "*.cs", modelPath);
-        DeleteFileInFolder($"{bridgePair.uiType}View", "*.cs", viewPath);
-        DeleteFileInFolder($"{bridgePair.uiType}Controller", "*.cs", controllerPath);
-        DeleteFileInFolder($"{bridgePair.uiType}View", "*.prefab", basePrefabPath);
+        DeleteFileInFolder($"{uiType}Model", "*.cs", modelPath);
+        DeleteFileInFolder($"{uiType}View", "*.cs", viewPath);
+        DeleteFileInFolder($"{uiType}Controller", "*.cs", controllerPath);
+        DeleteFileInFolder($"{uiType}View", "*.prefab", StringDefine.PATH_VIEW_PREFAB);
 
-        bridge.Remove(bridgePair.uiType);
-
-        AssetDatabase.SaveAssetIfDirty(bridge);
-
-        DeleteEnum(bridgePair.uiType.ToString());
+        DeleteEnum(uiType.ToString());
 
         AssetDatabase.Refresh();
         AssetDatabase.SaveAssets();
@@ -290,7 +285,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         string modelPath = string.Format(basePath, "LowLevel/UIModel");
         string viewPath = string.Format(basePath, "MiddleLevel/UIView");
         string controllerPath = string.Format(basePath, "HighLevel/UIController");
-        string createPrefabPath = basePrefabPath;
+        string createPrefabPath = StringDefine.PATH_VIEW_PREFAB;
         string createViewName = $"{objectName}View";
 
         if (objectAddPaths.Count > 0)
@@ -319,7 +314,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH", createPrefabPath);
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_OBJECT_NAME", objectName);
         EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME", createViewName);
-        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_CONTROLLER_TYPE", string.Format(controllerTypeFormat, objectName));
+        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_SCRIPT_CONTROLLER_TYPE", string.Format(StringDefine.DEFINE_CONTROLLER_TYPE_NAME, objectName));
 
         AssetDatabase.Refresh();
         AssetDatabase.SaveAssets();
@@ -384,7 +379,8 @@ using UnityEngine;
 
 public class {name}Controller : BaseController<{name}View, {name}Model>
 {{
-    public override UIType UIType {{ get => UIType.{name}; }}
+    public override UIType UIType => UIType.Test;
+    public override bool IsPopup => base.IsPopup;
 }}";
     }
 
@@ -405,8 +401,6 @@ public class {name}Controller : BaseController<{name}View, {name}Model>
         Debug.Log($"AttachScriptToPrefab Start, path: {path}");
 
         AddScriptToPrefab(path, scriptName);
-
-        AddTypeToBridge(objectName, controllerTypeName);
 
         EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
         EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_SCRIPT_NAME");
@@ -446,26 +440,6 @@ public class {name}Controller : BaseController<{name}View, {name}Model>
         else
         {
             Debug.Log($"프리팹 '{prefab.name}'에는 이미 '{scriptName}' 스크립트가 추가되어 있습니다.");
-        }
-    }
-
-    private static void AddTypeToBridge(string objectName, string typeName)
-    {
-        UIBridge bridge = UIBridge.Get();
-
-        if (bridge == null)
-            return;
-
-        if(Enum.TryParse(typeof(UIType), objectName, out object result) &&
-            result is UIType uiType)
-        {
-            if (uiType == UIType.MaxView || uiType == UIType.MaxPopup)
-                return;
-
-            bridge.Add(uiType, typeName);
-
-            EditorUtility.SetDirty(bridge);  // 변경된 데이터 감지
-            AssetDatabase.SaveAssets();        // 저장
         }
     }
 

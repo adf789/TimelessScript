@@ -9,38 +9,71 @@ public class UIManager : MonoBehaviour
     private List<BaseController> baseUIs = new List<BaseController>();
     private List<BaseController> openUIs = new List<BaseController>();
 
-    public bool CheckOpendView()
+    private Dictionary<UIType, BaseController> readyUIs = null;
+
+    public bool CheckOpenedView()
     {
-        return openUIs.Any(c => c.UIType < UIType.MaxView);
+        return openUIs.Count > 0;
     }
 
     public BaseController GetController(UIType uiType)
     {
-        UIBridge bridge = UIBridge.Get();
+        if (readyUIs == null)
+            readyUIs = new Dictionary<UIType, BaseController>();
 
-        if (bridge == null)
-            return null;
+        if (readyUIs.TryGetValue(uiType, out var controller))
+            return controller;
 
-        string typeName = bridge.GetTypeName(uiType);
+        string typeName = string.Format(StringDefine.DEFINE_CONTROLLER_TYPE_NAME, uiType);
         Type type = Type.GetType(typeName);
-        BaseController controller = null;
+        BaseController newController = null;
 
         if (type != null)
-            controller = Activator.CreateInstance(type) as BaseController;
+            newController = Activator.CreateInstance(type) as BaseController;
 
-        return controller;
+        if (newController != null)
+        {
+            newController.SetEventEnter(Enter);
+            newController.SetEventExit(Exit);
+
+            readyUIs.Add(uiType, newController);
+        }
+
+        return newController;
     }
 
     /// <summary>
     /// Auto generate model.
     /// </summary>
-    public async UniTask Enter(UIType uiType)
+    public async UniTask Enter(BaseController controller)
     {
+        if (controller == null)
+            return;
 
+        controller.CreateView(transform);
     }
 
-    public async UniTask Exit(UIType uiType)
+    public async UniTask Exit(BaseController controller)
     {
+        if (controller == null)
+            return;
 
+        controller.DeleteView();
+    }
+
+    [ContextMenu("Test")]
+    public void Test()
+    {
+        var controller = GetController(UIType.Test);
+
+        controller.Enter().Forget();
+    }
+
+    [ContextMenu("Test1")]
+    public void Test1()
+    {
+        var controller = GetController(UIType.Test);
+
+        controller.Exit().Forget();
     }
 }
