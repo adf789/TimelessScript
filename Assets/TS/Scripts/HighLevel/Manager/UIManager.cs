@@ -64,6 +64,6 @@ public class UIManager : BaseManager<UIManager>
     [ContextMenu("Test")]
     public void Test()
     {
-        var manager = CameraManager.Instance;
+        
     }
 }
