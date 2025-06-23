@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class UIManager : MonoBehaviour
+public class UIManager : BaseManager<UIManager>
 {
     private List<BaseController> baseUIs = new List<BaseController>();
     private List<BaseController> openUIs = new List<BaseController>();
@@ -64,16 +64,6 @@ public class UIManager : MonoBehaviour
     [ContextMenu("Test")]
     public void Test()
     {
-        var controller = GetController(UIType.Test);
-
-        controller.Enter().Forget();
-    }
-
-    [ContextMenu("Test1")]
-    public void Test1()
-    {
-        var controller = GetController(UIType.Test);
-
-        controller.Exit().Forget();
+        var manager = CameraManager.Instance;
     }
 }

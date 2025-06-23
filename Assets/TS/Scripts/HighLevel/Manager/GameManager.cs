@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GameManager
+public class GameManager : BaseManager<GameManager>
 {
     
 }
