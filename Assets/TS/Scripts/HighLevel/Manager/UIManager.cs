@@ -6,22 +6,26 @@ using UnityEngine;
 
 public class UIManager : BaseManager<UIManager>
 {
-    private List<BaseController> baseUIs = new List<BaseController>();
-    private List<BaseController> openUIs = new List<BaseController>();
+    private List<BaseController> openControllers = new List<BaseController>();
 
-    private Dictionary<UIType, BaseController> readyUIs = null;
+    private Dictionary<UIType, BaseController> readyControllers = null;
 
     public bool CheckOpenedView()
     {
-        return openUIs.Count > 0;
+        return openControllers.Count > 0;
+    }
+
+    public bool CheckOpenedView(UIType uiType)
+    {
+        return openControllers.Any(c => c.UIType == uiType);
     }
 
     public BaseController GetController(UIType uiType)
     {
-        if (readyUIs == null)
-            readyUIs = new Dictionary<UIType, BaseController>();
+        if (readyControllers == null)
+            readyControllers = new Dictionary<UIType, BaseController>();
 
-        if (readyUIs.TryGetValue(uiType, out var controller))
+        if (readyControllers.TryGetValue(uiType, out var controller))
             return controller;
 
         string typeName = string.Format(StringDefine.DEFINE_CONTROLLER_TYPE_NAME, uiType);
@@ -36,7 +40,7 @@ public class UIManager : BaseManager<UIManager>
             newController.SetEventEnter(Enter);
             newController.SetEventExit(Exit);
 
-            readyUIs.Add(uiType, newController);
+            readyControllers.Add(uiType, newController);
         }
 
         return newController;
@@ -49,6 +53,12 @@ public class UIManager : BaseManager<UIManager>
     {
         if (controller == null)
             return;
+
+        if (CheckOpenedView(controller.UIType))
+            return;
+
+        // 호출 대기 중인 UI 삭제
+        readyControllers.Remove(controller.UIType);
 
         controller.CreateView(transform);
     }
