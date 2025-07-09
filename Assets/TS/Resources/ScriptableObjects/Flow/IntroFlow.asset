@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65aea88e00f69994792e3b3aa27fd6c3, type: 3}
   m_Name: IntroFlow
   m_EditorClassIdentifier: 
-  uis: 
+  uis: 00000000

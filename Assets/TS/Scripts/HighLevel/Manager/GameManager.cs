@@ -7,6 +7,11 @@ public class GameManager : BaseManager<GameManager>
         DontDestroyOnLoad(this);
     }
 
+    private void Start()
+    {
+        FlowManager.Instance.ChangeFlow(GameState.Intro);
+    }
+
     [ContextMenu("Test")]
     public void TestCode()
     {
