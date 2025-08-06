@@ -1,14 +1,12 @@
 using Unity.Burst;
 using Unity.Entities;
-using Unity.Transforms;
-using UnityEngine;
 
 public partial struct RotatingSystem : ISystem
 {
     //public void OnCreate(ref SystemState state)
-    //    => state.RequireForUpdate<RotateSpeed>();
+    //    => state.RequireForUpdate<>();
 
-    
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         var rotateJob = new RotateUpdateJob()
