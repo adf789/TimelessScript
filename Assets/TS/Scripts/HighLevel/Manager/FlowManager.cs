@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 public class FlowManager : BaseManager<FlowManager>
 {
@@ -18,6 +19,9 @@ public class FlowManager : BaseManager<FlowManager>
     {
         string flowName = $"{state}Flow";
 
-        return await ResourcesManager.Instance.LoadAssetByName<BaseFlow>(ResourceType.Flow, flowName);
+        var objectResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<ScriptableObject>();
+        var flowObject = await objectResourcesPath.LoadByName<ScriptableObject>(flowName);
+
+        return flowObject != null ? flowObject as BaseFlow : null;
     }
 }

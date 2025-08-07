@@ -1,0 +1,310 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7861702888844971944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Avatar
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &-7199297484817889282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Mesh
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &-6064782528972879615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_ScriptableObject
+  m_EditorClassIdentifier: 
+  resourceEntries:
+  - guid: aa7f67e64275d604282b545859eb9c3b
+    assetPath: Assets/TS/Resources/ScriptableObjects/Flow/IntroFlow.asset
+    displayName: IntroFlow
+  - guid: 2dcc3f488332e5f43a085fc0e99253ce
+    assetPath: Assets/TS/Resources/ScriptableObjects/Flow/HomeFlow.asset
+    displayName: HomeFlow
+  - guid: ca4dd91bea863184c9114735992b4f9e
+    assetPath: Assets/TS/Resources/ScriptableObjects/Flow/LoadingFlow.asset
+    displayName: LoadingFlow
+--- !u!114 &-3992443798061177277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_PhysicsMaterial
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &-1771676537800649665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_AnimationClip
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &-373883049764737161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_GameObject
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &-25286370874405263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Font
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43e48efb9b7445b42877bbccdc94daf9, type: 3}
+  m_Name: ResourcesPathRegistry
+  m_EditorClassIdentifier: 
+  typeMappings:
+  - typeName: UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: GameObject
+    resourcesPath: {fileID: -373883049764737161}
+    typeColor: {r: 0.44, g: 0.78000003, b: 0.63, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Texture2D, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Texture2D
+    resourcesPath: {fileID: 3191862323408983626}
+    typeColor: {r: 0.93, g: 0.54, b: 0.75, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Texture, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Texture
+    resourcesPath: {fileID: 3311366216566084196}
+    typeColor: {r: 0.64, g: 0.75, b: 0.5, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Sprite
+    resourcesPath: {fileID: 4581231461980139060}
+    typeColor: {r: 0.78000003, g: 0.33, b: 0.83, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Material, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Material
+    resourcesPath: {fileID: 5302480327180572225}
+    typeColor: {r: 0.76, g: 0.83, b: 0.55, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Mesh, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Mesh
+    resourcesPath: {fileID: -7199297484817889282}
+    typeColor: {r: 0.75, g: 0.55, b: 0.83, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.AudioClip, UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: AudioClip
+    resourcesPath: {fileID: 1097762494046782183}
+    typeColor: {r: 0.78000003, g: 0.52000004, b: 0.66, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.AnimationClip, UnityEngine.AnimationModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    displayName: AnimationClip
+    resourcesPath: {fileID: -1771676537800649665}
+    typeColor: {r: 0.61, g: 0.39000002, b: 0.61, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.RuntimeAnimatorController, UnityEngine.AnimationModule,
+      Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    displayName: RuntimeAnimatorController
+    resourcesPath: {fileID: 4731222830723883561}
+    typeColor: {r: 0.94, g: 0.95, b: 0.53000003, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.ScriptableObject, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    displayName: ScriptableObject
+    resourcesPath: {fileID: -6064782528972879615}
+    typeColor: {r: 0.49, g: 0.83, b: 0.42000002, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.TextAsset, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: TextAsset
+    resourcesPath: {fileID: 1417644412380969982}
+    typeColor: {r: 0.8, g: 0.36, b: 0.31, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Shader
+    resourcesPath: {fileID: 2906329052384532083}
+    typeColor: {r: 0.90000004, g: 0.90000004, b: 0.99, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Font, UnityEngine.TextRenderingModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    displayName: Font
+    resourcesPath: {fileID: -25286370874405263}
+    typeColor: {r: 0.96000004, g: 0.52000004, b: 0.91, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.PhysicsMaterial, UnityEngine.PhysicsModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    displayName: PhysicsMaterial
+    resourcesPath: {fileID: -3992443798061177277}
+    typeColor: {r: 0.61, g: 0.93, b: 0.85, a: 1}
+    isActive: 1
+  - typeName: UnityEngine.Avatar, UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    displayName: Avatar
+    resourcesPath: {fileID: -7861702888844971944}
+    typeColor: {r: 0.52000004, g: 0.36, b: 0.64, a: 1}
+    isActive: 1
+  defaultResourcesPath: {fileID: 0}
+--- !u!114 &1097762494046782183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_AudioClip
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &1417644412380969982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_TextAsset
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &2906329052384532083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Shader
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &3191862323408983626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Texture2D
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &3311366216566084196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Texture
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &4581231461980139060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Sprite
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &4731222830723883561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_RuntimeAnimatorController
+  m_EditorClassIdentifier: 
+  resourceEntries: []
+--- !u!114 &5302480327180572225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_Material
+  m_EditorClassIdentifier: 
+  resourceEntries: []

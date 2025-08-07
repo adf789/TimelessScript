@@ -330,34 +330,24 @@ public class SpriteSheetAnimationSupportInspector : Editor
 
     private void DrawMain(int i)
     {
-        //SpriteSheetAnimationSupport.SpriteSheetNode data = util.spriteSheets[i];
+        SpriteSheetAnimationSupport.SpriteSheetNode data = util.spriteSheets[i];
 
-        //string guidToPath = AssetDatabase.GUIDToAssetPath(data.guid);
+        string guidToPath = AssetDatabase.GUIDToAssetPath(data.guid);
 
-        //if (!string.IsNullOrEmpty(guidToPath))
-        //    data.sourceImage = AssetDatabase.LoadAssetAtPath<Sprite>(guidToPath);
+        if (!string.IsNullOrEmpty(guidToPath))
+            data.sourceImage = AssetDatabase.LoadAssetAtPath<Sprite>(guidToPath);
 
-        //data.sourceImage = (Sprite)EditorGUILayout.ObjectField("SourceImage", data.sourceImage, typeof(Sprite), false);
+        data.sourceImage = (Sprite)EditorGUILayout.ObjectField("SourceImage", data.sourceImage, typeof(Sprite), false);
 
-        //if (data.sourceImage == null)
-        //{
-        //    data.guid = string.Empty;
-        //    return;
-        //}
+        if (data.sourceImage == null)
+        {
+            data.guid = string.Empty;
+            return;
+        }
 
-        //(string, string) result = ResourcesPathObject.GetEditorGuids(data.sourceImage);
-        //string guid = result.Item1;
-        //string path = result.Item2;
+        var spriteResoursPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
 
-        //if (string.IsNullOrEmpty(guid))
-        //{
-        //    data.guid = string.Empty;
-        //    return;
-        //}
-
-        //data.guid = guid;
-
-        //ResourcesPathObject.SetPath(guid, path);
+        spriteResoursPath.AddResourceFromObject(data.sourceImage);
     }
 
     private void DrawPlayButton(int i)

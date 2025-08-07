@@ -6,45 +6,72 @@ using System.Collections.Generic;
 
 public class ResourceManageEditorWindow : EditorWindow
 {
-    private ResourcesPath selectedPath;
+    private ResourcesPath selectedManager;
+    private ResourcesTypeRegistry selectedRegistry;
+
+    // UI State
     private Vector2 scrollPosition;
-    private Vector2 pathScrollPosition;
+    private Vector2 managerScrollPosition;
+    private Vector2 registryScrollPosition;
     private string searchFilter = "";
     private UnityEngine.Object objectToAdd;
     private bool showAdvanced = false;
-    private bool showPathSelection = true;
+    private bool showManagerSelection = true;
+    private bool showRegistryPanel = true;
 
     // Window state
-    private List<ResourcesPath> availablePaths;
-    private string[] pathNames;
-    private int selectedPathIndex = 0;
+    private List<ResourcesPath> availableManagers;
+    private List<ResourcesTypeRegistry> availableRegistries;
+    private string[] managerNames;
+    private string[] registryNames;
+    private int selectedManagerIndex = 0;
+    private int selectedRegistryIndex = 0;
 
     // UI Settings
-    private const float WINDOW_MIN_WIDTH = 600f;
-    private const float WINDOW_MIN_HEIGHT = 400f;
+    private const float WINDOW_MIN_WIDTH = 800f;
+    private const float WINDOW_MIN_HEIGHT = 500f;
 
-    [MenuItem("Tools/Resource Path %&r")]
+    private enum ViewMode
+    {
+        ResourcesPath,
+        TypeRegistry,
+        Combined
+    }
+
+    private ViewMode currentViewMode = ViewMode.Combined;
+
+    [MenuItem("Window/Resource Management/Resource Manager %&r")]
     public static void OpenWindow()
     {
-        var window = GetWindow<ResourceManageEditorWindow>("Resource Path");
+        var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");
         window.minSize = new Vector2(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
         window.Show();
     }
 
-    // Context menu for ScriptableObject
+    // Context menu for ResourcesPath
     [MenuItem("CONTEXT/ResourcesPath/Open in Window")]
-    public static void OpenWindowWithPath(MenuCommand command)
+    public static void OpenWindowWithManager(MenuCommand command)
     {
-        var path = (ResourcesPath)command.context;
-        var window = GetWindow<ResourceManageEditorWindow>("GUID Resource Path");
+        var manager = (ResourcesPath)command.context;
+        var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");
         window.minSize = new Vector2(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
-        window.SetSelectedPath(path);
+        window.SetSelectedManager(manager);
+        window.Show();
+    }
+
+    // Open with ResourcesTypeRegistry
+    public static void OpenWindowWithRegistry(ResourcesTypeRegistry registry)
+    {
+        var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");
+        window.minSize = new Vector2(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
+        window.SetSelectedRegistry(registry);
+        window.currentViewMode = ViewMode.TypeRegistry;
         window.Show();
     }
 
     private void OnEnable()
     {
-        RefreshPathList();
+        RefreshAssetLists();
 
         // Subscribe to selection changes
         Selection.selectionChanged += OnSelectionChanged;
@@ -57,47 +84,83 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private void OnSelectionChanged()
     {
-        // Auto-select path if selected in Project window
-        if (Selection.activeObject is ResourcesPath path)
+        // Auto-select manager if selected in Project window
+        if (Selection.activeObject is ResourcesPath manager)
         {
-            SetSelectedPath(path);
+            SetSelectedManager(manager);
+        }
+        else if (Selection.activeObject is ResourcesTypeRegistry registry)
+        {
+            SetSelectedRegistry(registry);
         }
     }
 
-    public void SetSelectedPath(ResourcesPath path)
+    public void SetSelectedManager(ResourcesPath manager)
     {
-        selectedPath = path;
-        if (availablePaths != null && availablePaths.Contains(path))
+        selectedManager = manager;
+        if (availableManagers != null && availableManagers.Contains(manager))
         {
-            selectedPathIndex = availablePaths.IndexOf(path);
+            selectedManagerIndex = availableManagers.IndexOf(manager);
         }
-        showPathSelection = false;
+        showManagerSelection = false;
         Repaint();
     }
 
-    private void RefreshPathList()
+    public void SetSelectedRegistry(ResourcesTypeRegistry registry)
     {
-        // Find all GuidResourcesPath assets
-        string[] guids = AssetDatabase.FindAssets("t:ResourcesPath");
-        availablePaths = new List<ResourcesPath>();
+        selectedRegistry = registry;
+        if (availableRegistries != null && availableRegistries.Contains(registry))
+        {
+            selectedRegistryIndex = availableRegistries.IndexOf(registry);
+        }
+        showRegistryPanel = false;
+        Repaint();
+    }
 
-        foreach (string guid in guids)
+    private void RefreshAssetLists()
+    {
+        // Find all ResourcesPath assets
+        string[] managerGuids = AssetDatabase.FindAssets("t:ResourcesPath");
+        availableManagers = new List<ResourcesPath>();
+
+        foreach (string guid in managerGuids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            var ResourcesPath = AssetDatabase.LoadAssetAtPath<ResourcesPath>(path);
-            if (ResourcesPath != null)
+            var manager = AssetDatabase.LoadAssetAtPath<ResourcesPath>(path);
+            if (manager != null)
             {
-                availablePaths.Add(ResourcesPath);
+                availableManagers.Add(manager);
             }
         }
 
-        pathNames = availablePaths.Select(m => m.name).ToArray();
+        // Find all ResourcesTypeRegistry assets
+        string[] registryGuids = AssetDatabase.FindAssets("t:ResourcesTypeRegistry");
+        availableRegistries = new List<ResourcesTypeRegistry>();
 
-        // Auto-select first path if none selected
-        if (selectedPath == null && availablePaths.Count > 0)
+        foreach (string guid in registryGuids)
         {
-            selectedPath = availablePaths[0];
-            selectedPathIndex = 0;
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            var registry = AssetDatabase.LoadAssetAtPath<ResourcesTypeRegistry>(path);
+            if (registry != null)
+            {
+                availableRegistries.Add(registry);
+            }
+        }
+
+        managerNames = availableManagers.Select(m => m.name).ToArray();
+        registryNames = availableRegistries.Select(r => r.name).ToArray();
+
+        // Auto-select first items if none selected
+        if (selectedManager == null && availableManagers.Count > 0)
+        {
+            selectedManager = availableManagers[0];
+            selectedManagerIndex = 0;
+        }
+
+        if (selectedRegistry == null && availableRegistries.Count > 0)
+        {
+            selectedRegistry = availableRegistries[0];
+            selectedRegistryIndex = 0;
         }
     }
 
@@ -105,20 +168,18 @@ public class ResourceManageEditorWindow : EditorWindow
     {
         DrawToolbar();
 
-        if (selectedPath == null)
+        switch (currentViewMode)
         {
-            DrawNoPathSelected();
-            return;
+            case ViewMode.ResourcesPath:
+                DrawResourcesPathView();
+                break;
+            case ViewMode.TypeRegistry:
+                DrawTypeRegistryView();
+                break;
+            case ViewMode.Combined:
+                DrawCombinedView();
+                break;
         }
-
-        EditorGUILayout.Space(5);
-
-        if (showPathSelection)
-        {
-            DrawPathSelection();
-        }
-
-        DrawPathInterface();
     }
 
     private void DrawToolbar()
@@ -126,40 +187,265 @@ public class ResourceManageEditorWindow : EditorWindow
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
         // Title
-        GUILayout.Label("GUID Resource Path", EditorStyles.toolbarButton);
+        GUILayout.Label("Resource Manager", EditorStyles.toolbarButton);
 
         GUILayout.FlexibleSpace();
 
-        // Path selection toggle
-        string toggleText = showPathSelection ? "Hide Selection" : "Show Selection";
-        if (GUILayout.Button(toggleText, EditorStyles.toolbarButton, GUILayout.Width(100)))
+        // View mode selection
+        EditorGUI.BeginChangeCheck();
+        currentViewMode = (ViewMode)EditorGUILayout.EnumPopup(currentViewMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
+        if (EditorGUI.EndChangeCheck())
         {
-            showPathSelection = !showPathSelection;
+            Repaint();
+        }
+
+        // Toggle panels
+        if (currentViewMode == ViewMode.Combined)
+        {
+            string toggleText = showRegistryPanel ? "Hide Registry" : "Show Registry";
+            if (GUILayout.Button(toggleText, EditorStyles.toolbarButton, GUILayout.Width(90)))
+            {
+                showRegistryPanel = !showRegistryPanel;
+            }
         }
 
         // Refresh button
         if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(60)))
         {
-            RefreshPathList();
+            RefreshAssetLists();
         }
 
-        // Create new path
-        if (GUILayout.Button("Create New", EditorStyles.toolbarButton, GUILayout.Width(80)))
+        // Create new buttons
+        if (GUILayout.Button("Create", EditorStyles.toolbarDropDown, GUILayout.Width(60)))
         {
-            CreateNewPath();
+            ShowCreateMenu();
         }
 
         EditorGUILayout.EndHorizontal();
     }
 
-    private void DrawNoPathSelected()
+    private void ShowCreateMenu()
+    {
+        var menu = new GenericMenu();
+        menu.AddItem(new GUIContent("Resources Path"), false, CreateNewResourcesPath);
+        menu.AddItem(new GUIContent("Type Registry"), false, CreateNewTypeRegistry);
+        menu.ShowAsContext();
+    }
+
+    private void DrawResourcesPathView()
+    {
+        if (selectedManager == null)
+        {
+            DrawNoManagerSelected();
+            return;
+        }
+
+        EditorGUILayout.Space(5);
+
+        if (showManagerSelection)
+        {
+            DrawManagerSelection();
+        }
+
+        DrawManagerInterface();
+    }
+
+    private void DrawTypeRegistryView()
+    {
+        if (selectedRegistry == null)
+        {
+            DrawNoRegistrySelected();
+            return;
+        }
+
+        EditorGUILayout.Space(5);
+        DrawRegistryInterface();
+    }
+
+    private void DrawCombinedView()
+    {
+        EditorGUILayout.BeginHorizontal();
+
+        // Left panel - Type Registry
+        if (showRegistryPanel)
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(300));
+            DrawRegistryPanel();
+            EditorGUILayout.EndVertical();
+        }
+
+        // Right panel - ResourcesPath
+        EditorGUILayout.BeginVertical();
+        if (selectedManager == null)
+        {
+            DrawNoManagerSelected();
+        }
+        else
+        {
+            if (showManagerSelection)
+            {
+                DrawManagerSelection();
+            }
+            DrawManagerInterface();
+        }
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void DrawRegistryPanel()
+    {
+        EditorGUILayout.LabelField("Type Registry", EditorStyles.boldLabel);
+
+        if (availableRegistries.Count == 0)
+        {
+            EditorGUILayout.HelpBox("No Type Registries found.", MessageType.Info);
+            if (GUILayout.Button("Create New Type Registry"))
+            {
+                CreateNewTypeRegistry();
+            }
+            return;
+        }
+
+        // Registry selection
+        EditorGUI.BeginChangeCheck();
+        selectedRegistryIndex = EditorGUILayout.Popup("Current Registry", selectedRegistryIndex, registryNames);
+        if (EditorGUI.EndChangeCheck())
+        {
+            selectedRegistry = availableRegistries[selectedRegistryIndex];
+        }
+
+        if (selectedRegistry == null) return;
+
+        EditorGUILayout.Space(5);
+
+        // Registry stats
+        var mappings = selectedRegistry.GetAllMappings();
+        var activeMappings = selectedRegistry.GetActiveMappings();
+
+        EditorGUILayout.LabelField($"Total Types: {mappings.Count}", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField($"Active Types: {activeMappings.Count}", EditorStyles.miniLabel);
+
+        EditorGUILayout.Space(5);
+
+        // Type list
+        registryScrollPosition = EditorGUILayout.BeginScrollView(registryScrollPosition, "box", GUILayout.MaxHeight(400));
+
+        foreach (var mapping in activeMappings)
+        {
+            EditorGUILayout.BeginHorizontal("box");
+
+            // Type color indicator
+            var colorRect = GUILayoutUtility.GetRect(12, 12, GUILayout.Width(12));
+            EditorGUI.DrawRect(colorRect, mapping.TypeColor);
+
+            EditorGUILayout.BeginVertical();
+            EditorGUILayout.LabelField(mapping.DisplayName, EditorStyles.miniLabel);
+            int count = mapping.ResourcesPath?.Count ?? 0;
+            EditorGUILayout.LabelField($"{count} resources", EditorStyles.miniLabel);
+            EditorGUILayout.EndVertical();
+
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Select", GUILayout.Width(50)))
+            {
+                SetSelectedManager(mapping.ResourcesPath);
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        EditorGUILayout.EndScrollView();
+
+        EditorGUILayout.Space(5);
+
+        // Registry actions
+        if (GUILayout.Button("Open Registry Inspector"))
+        {
+            Selection.activeObject = selectedRegistry;
+            EditorGUIUtility.PingObject(selectedRegistry);
+        }
+    }
+
+    private void DrawRegistryInterface()
+    {
+        if (selectedRegistry == null) return;
+
+        EditorGUILayout.LabelField("Type Registry Management", EditorStyles.boldLabel);
+
+        var mappings = selectedRegistry.GetAllMappings();
+        EditorGUILayout.LabelField($"Total Type Mappings: {mappings.Count}");
+
+        EditorGUILayout.Space(5);
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Register Common Types"))
+        {
+            selectedRegistry.RegisterCommonUnityTypes();
+        }
+
+        if (GUILayout.Button("Validate All"))
+        {
+            selectedRegistry.ValidateAllMappings();
+        }
+
+        if (GUILayout.Button("Show Statistics"))
+        {
+            EditorUtility.DisplayDialog("Registry Statistics", selectedRegistry.GetStatistics(), "OK");
+        }
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space(10);
+
+        // Type mappings list
+        scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+
+        foreach (var mapping in mappings)
+        {
+            DrawTypeMappingEntry(mapping);
+        }
+
+        EditorGUILayout.EndScrollView();
+    }
+
+    private void DrawTypeMappingEntry(ResourcesTypeRegistry.TypeMapping mapping)
+    {
+        EditorGUILayout.BeginVertical("box");
+        EditorGUILayout.BeginHorizontal();
+
+        // Color indicator
+        var colorRect = GUILayoutUtility.GetRect(16, 16, GUILayout.Width(16));
+        EditorGUI.DrawRect(colorRect, mapping.TypeColor);
+
+        EditorGUILayout.BeginVertical();
+        EditorGUILayout.LabelField(mapping.DisplayName, EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"Resources: {mapping.ResourcesPath?.Count ?? 0}", EditorStyles.miniLabel);
+        EditorGUILayout.EndVertical();
+
+        GUILayout.FlexibleSpace();
+
+        if (GUILayout.Button("Open", GUILayout.Width(50)))
+        {
+            if (mapping.ResourcesPath != null)
+            {
+                SetSelectedManager(mapping.ResourcesPath);
+                currentViewMode = ViewMode.ResourcesPath;
+            }
+        }
+
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
+    }
+
+
+    private void DrawNoManagerSelected()
     {
         EditorGUILayout.BeginVertical();
         GUILayout.FlexibleSpace();
 
         EditorGUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        EditorGUILayout.LabelField("No GUID Resource Path Selected", EditorStyles.centeredGreyMiniLabel);
+        EditorGUILayout.LabelField("No Resources Path Selected", EditorStyles.centeredGreyMiniLabel);
         GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();
 
@@ -167,41 +453,67 @@ public class ResourceManageEditorWindow : EditorWindow
 
         EditorGUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        if (GUILayout.Button("Create New Path", GUILayout.Width(150), GUILayout.Height(30)))
+        if (GUILayout.Button("Create New Resources Path", GUILayout.Width(180), GUILayout.Height(30)))
         {
-            CreateNewPath();
+            CreateNewResourcesPath();
         }
         GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();
 
-        if (availablePaths?.Count > 0)
+        if (availableManagers?.Count > 0)
         {
             EditorGUILayout.Space(20);
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            EditorGUILayout.LabelField("Or select an existing path:", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("Or select an existing manager:", EditorStyles.centeredGreyMiniLabel);
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(10);
-            DrawPathList();
+            DrawManagerList();
         }
 
         GUILayout.FlexibleSpace();
         EditorGUILayout.EndVertical();
     }
 
-    private void DrawPathSelection()
+    private void DrawNoRegistrySelected()
+    {
+        EditorGUILayout.BeginVertical();
+        GUILayout.FlexibleSpace();
+
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.LabelField("No Type Registry Selected", EditorStyles.centeredGreyMiniLabel);
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space(10);
+
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        if (GUILayout.Button("Create New Type Registry", GUILayout.Width(180), GUILayout.Height(30)))
+        {
+            CreateNewTypeRegistry();
+        }
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.EndVertical();
+    }
+
+    private void DrawManagerSelection()
     {
         EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("Path Selection", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Resources Path Selection", EditorStyles.boldLabel);
 
-        if (availablePaths.Count == 0)
+        if (availableManagers.Count == 0)
         {
-            EditorGUILayout.HelpBox("No GUID Resource Paths found in project.", MessageType.Info);
-            if (GUILayout.Button("Create New Path"))
+            EditorGUILayout.HelpBox("No Resources Path found in project.", MessageType.Info);
+            if (GUILayout.Button("Create New Resources Path"))
             {
-                CreateNewPath();
+                CreateNewResourcesPath();
             }
         }
         else
@@ -209,22 +521,22 @@ public class ResourceManageEditorWindow : EditorWindow
             EditorGUILayout.BeginHorizontal();
 
             EditorGUI.BeginChangeCheck();
-            selectedPathIndex = EditorGUILayout.Popup("Current Path", selectedPathIndex, pathNames);
+            selectedManagerIndex = EditorGUILayout.Popup("Current Manager", selectedManagerIndex, managerNames);
             if (EditorGUI.EndChangeCheck())
             {
-                selectedPath = availablePaths[selectedPathIndex];
+                selectedManager = availableManagers[selectedManagerIndex];
             }
 
             if (GUILayout.Button("Ping", GUILayout.Width(50)))
             {
-                EditorGUIUtility.PingObject(selectedPath);
+                EditorGUIUtility.PingObject(selectedManager);
             }
 
             EditorGUILayout.EndHorizontal();
 
-            if (selectedPath != null)
+            if (selectedManager != null)
             {
-                EditorGUILayout.ObjectField("Selected Path", selectedPath, typeof(ResourcesPath), false);
+                EditorGUILayout.ObjectField("Selected Manager", selectedManager, typeof(ResourcesPath), false);
             }
         }
 
@@ -232,22 +544,22 @@ public class ResourceManageEditorWindow : EditorWindow
         EditorGUILayout.Space(5);
     }
 
-    private void DrawPathList()
+    private void DrawManagerList()
     {
-        pathScrollPosition = EditorGUILayout.BeginScrollView(pathScrollPosition, GUILayout.Height(150));
+        managerScrollPosition = EditorGUILayout.BeginScrollView(managerScrollPosition, GUILayout.Height(150));
 
-        foreach (var path in availablePaths)
+        foreach (var manager in availableManagers)
         {
             EditorGUILayout.BeginHorizontal("box");
 
-            EditorGUILayout.LabelField(path.name, EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"({path.Count} resources)", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(manager.name, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"({manager.Count} resources)", EditorStyles.miniLabel);
 
             GUILayout.FlexibleSpace();
 
             if (GUILayout.Button("Select", GUILayout.Width(60)))
             {
-                SetSelectedPath(path);
+                SetSelectedManager(manager);
             }
 
             EditorGUILayout.EndHorizontal();
@@ -256,24 +568,24 @@ public class ResourceManageEditorWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
-    private void DrawPathInterface()
+    private void DrawManagerInterface()
     {
-        if (selectedPath == null) return;
+        if (selectedManager == null) return;
 
         // Stats and actions bar
         EditorGUILayout.BeginHorizontal("box");
-        EditorGUILayout.LabelField($"Total Resources: {selectedPath.Count}", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField($"Total Resources: {selectedManager.Count}", EditorStyles.miniLabel);
         GUILayout.FlexibleSpace();
 
         if (GUILayout.Button("Validate References", GUILayout.Width(120)))
         {
-            selectedPath.ValidateReferences();
+            selectedManager.ValidateReferences();
         }
 
         if (GUILayout.Button("Focus Inspector", GUILayout.Width(100)))
         {
-            Selection.activeObject = selectedPath;
-            EditorGUIUtility.PingObject(selectedPath);
+            Selection.activeObject = selectedManager;
+            EditorGUIUtility.PingObject(selectedManager);
         }
 
         EditorGUILayout.EndHorizontal();
@@ -290,10 +602,10 @@ public class ResourceManageEditorWindow : EditorWindow
         EditorGUI.BeginDisabledGroup(objectToAdd == null);
         if (GUILayout.Button("Add", GUILayout.Width(60)))
         {
-            if (selectedPath.AddResourcesFromObject(objectToAdd))
+            if (selectedManager.AddResourceFromObject(objectToAdd))
             {
                 objectToAdd = null;
-                EditorUtility.SetDirty(selectedPath);
+                EditorUtility.SetDirty(selectedManager);
             }
         }
         EditorGUI.EndDisabledGroup();
@@ -316,8 +628,8 @@ public class ResourceManageEditorWindow : EditorWindow
             if (EditorUtility.DisplayDialog("Clear All Resources",
                 "Are you sure you want to clear all resource entries?", "Yes", "Cancel"))
             {
-                selectedPath.Clear();
-                EditorUtility.SetDirty(selectedPath);
+                selectedManager.Clear();
+                EditorUtility.SetDirty(selectedManager);
             }
         }
         EditorGUILayout.EndHorizontal();
@@ -361,9 +673,9 @@ public class ResourceManageEditorWindow : EditorWindow
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Duplicate Path"))
+            if (GUILayout.Button("Duplicate Manager"))
             {
-                DuplicatePath();
+                DuplicateManager();
             }
 
             if (GUILayout.Button("Merge with Another"))
@@ -383,7 +695,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private void DrawResourceList()
     {
-        var entries = selectedPath.GetAllEntries();
+        var entries = selectedManager.GetAllEntries();
         var filteredEntries = string.IsNullOrEmpty(searchFilter)
             ? entries
             : entries.Where(e => e.DisplayName.ToLower().Contains(searchFilter.ToLower()) ||
@@ -426,7 +738,7 @@ public class ResourceManageEditorWindow : EditorWindow
         }
     }
 
-    private void DrawResourceEntry(ResourcesPath.ResourcesEntry entry, bool isEven)
+    private void DrawResourceEntry(ResourcesPath.ResourceEntry entry, bool isEven)
     {
         var backgroundColor = isEven ? new Color(0.8f, 0.8f, 0.8f, 0.1f) : Color.clear;
         var originalColor = GUI.backgroundColor;
@@ -472,10 +784,10 @@ public class ResourceManageEditorWindow : EditorWindow
         if (GUILayout.Button("Remove", GUILayout.Height(16)))
         {
             if (EditorUtility.DisplayDialog("Remove Resource",
-                $"Remove {entry.DisplayName} from the resource path?", "Remove", "Cancel"))
+                $"Remove {entry.DisplayName} from the resource manager?", "Remove", "Cancel"))
             {
-                selectedPath.RemoveResources(entry.Guid);
-                EditorUtility.SetDirty(selectedPath);
+                selectedManager.RemoveResource(entry.Guid);
+                EditorUtility.SetDirty(selectedManager);
             }
         }
 
@@ -491,9 +803,9 @@ public class ResourceManageEditorWindow : EditorWindow
 
             if (newGuid != entry.Guid)
             {
-                selectedPath.RemoveResources(entry.Guid);
-                selectedPath.AddResourcesFromObject(newAsset);
-                EditorUtility.SetDirty(selectedPath);
+                selectedManager.RemoveResource(entry.Guid);
+                selectedManager.AddResourceFromObject(newAsset);
+                EditorUtility.SetDirty(selectedManager);
             }
         }
 
@@ -502,25 +814,47 @@ public class ResourceManageEditorWindow : EditorWindow
 
     #region Helper Methods
 
-    private void CreateNewPath()
+    private void CreateNewResourcesPath()
     {
         string path = EditorUtility.SaveFilePanelInProject(
-            "Create GUID Resource Path",
-            "New Resource Path",
+            "Create Resources Path",
+            "New Resources Path",
             "asset",
-            "Choose location for new GUID Resource Path");
+            "Choose location for new Resources Path");
 
         if (!string.IsNullOrEmpty(path))
         {
-            var newPath = CreateInstance<ResourcesPath>();
-            AssetDatabase.CreateAsset(newPath, path);
+            var newManager = CreateInstance<ResourcesPath>();
+            AssetDatabase.CreateAsset(newManager, path);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            RefreshPathList();
-            SetSelectedPath(newPath);
+            RefreshAssetLists();
+            SetSelectedManager(newManager);
 
-            EditorGUIUtility.PingObject(newPath);
+            EditorGUIUtility.PingObject(newManager);
+        }
+    }
+
+    private void CreateNewTypeRegistry()
+    {
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Type Registry",
+            "New Type Registry",
+            "asset",
+            "Choose location for new Type Registry");
+
+        if (!string.IsNullOrEmpty(path))
+        {
+            var newRegistry = CreateInstance<ResourcesTypeRegistry>();
+            AssetDatabase.CreateAsset(newRegistry, path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            RefreshAssetLists();
+            SetSelectedRegistry(newRegistry);
+
+            EditorGUIUtility.PingObject(newRegistry);
         }
     }
 
@@ -532,8 +866,8 @@ public class ResourceManageEditorWindow : EditorWindow
             string path = AssetDatabase.GUIDToAssetPath(selectedGUIDs[0]);
             if (AssetDatabase.IsValidFolder(path))
             {
-                selectedPath.PopulateFromFolder(path);
-                EditorUtility.SetDirty(selectedPath);
+                selectedManager.PopulateFromFolder(path);
+                EditorUtility.SetDirty(selectedManager);
             }
             else
             {
@@ -553,7 +887,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
         foreach (var obj in selectedObjects)
         {
-            if (selectedPath.AddResourcesFromObject(obj))
+            if (selectedManager.AddResourceFromObject(obj))
             {
                 addedCount++;
             }
@@ -561,7 +895,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
         if (addedCount > 0)
         {
-            EditorUtility.SetDirty(selectedPath);
+            EditorUtility.SetDirty(selectedManager);
             ShowNotification(new GUIContent($"Added {addedCount} assets"));
         }
         else
@@ -572,11 +906,11 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private void ExportToJSON()
     {
-        string path = EditorUtility.SaveFilePanel("Export Resource Path", "", selectedPath.name + ".json", "json");
+        string path = EditorUtility.SaveFilePanel("Export Resource Manager", "", selectedManager.name + ".json", "json");
         if (!string.IsNullOrEmpty(path))
         {
-            var data = new ResourcesPathData();
-            data.entries = selectedPath.GetAllEntries().ToArray();
+            var data = new ResourceManagerData();
+            data.entries = selectedManager.GetAllEntries().ToArray();
 
             string json = JsonUtility.ToJson(data, true);
             System.IO.File.WriteAllText(path, json);
@@ -587,24 +921,24 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private void ImportFromJSON()
     {
-        string path = EditorUtility.OpenFilePanel("Import Resource Path", "", "json");
+        string path = EditorUtility.OpenFilePanel("Import Resource Manager", "", "json");
         if (!string.IsNullOrEmpty(path))
         {
             try
             {
                 string json = System.IO.File.ReadAllText(path);
-                var data = JsonUtility.FromJson<ResourcesPathData>(json);
+                var data = JsonUtility.FromJson<ResourceManagerData>(json);
 
                 int importedCount = 0;
                 foreach (var entry in data.entries)
                 {
-                    if (selectedPath.AddResources(entry.Guid, entry.AssetPath, entry.DisplayName))
+                    if (selectedManager.AddResource(entry.Guid, entry.AssetPath, entry.DisplayName))
                     {
                         importedCount++;
                     }
                 }
 
-                EditorUtility.SetDirty(selectedPath);
+                EditorUtility.SetDirty(selectedManager);
                 ShowNotification(new GUIContent($"Imported {importedCount} resources"));
             }
             catch (System.Exception e)
@@ -616,7 +950,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private void ShowMissingReferences()
     {
-        var entries = selectedPath.GetAllEntries();
+        var entries = selectedManager.GetAllEntries();
         var missingEntries = entries.Where(e =>
             AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(e.AssetPath) == null).ToList();
 
@@ -633,51 +967,51 @@ public class ResourceManageEditorWindow : EditorWindow
         }
     }
 
-    private void DuplicatePath()
+    private void DuplicateManager()
     {
         string path = EditorUtility.SaveFilePanelInProject(
-            "Duplicate Resource Path",
-            selectedPath.name + "_Copy",
+            "Duplicate Resources Path",
+            selectedManager.name + "_Copy",
             "asset",
-            "Choose location for duplicated path");
+            "Choose location for duplicated manager");
 
         if (!string.IsNullOrEmpty(path))
         {
-            var duplicate = Instantiate(selectedPath);
+            var duplicate = Instantiate(selectedManager);
             AssetDatabase.CreateAsset(duplicate, path);
             AssetDatabase.SaveAssets();
 
-            RefreshPathList();
-            ShowNotification(new GUIContent("Path duplicated"));
+            RefreshAssetLists();
+            ShowNotification(new GUIContent("Manager duplicated"));
         }
     }
 
     private void MergeWithAnother()
     {
         // Simple implementation - could be expanded
-        var otherPath = EditorGUILayout.ObjectField("Merge with", null, typeof(ResourcesPath), false) as ResourcesPath;
-        if (otherPath != null && otherPath != selectedPath)
+        var otherManager = EditorGUILayout.ObjectField("Merge with", null, typeof(ResourcesPath), false) as ResourcesPath;
+        if (otherManager != null && otherManager != selectedManager)
         {
-            var otherEntries = otherPath.GetAllEntries();
+            var otherEntries = otherManager.GetAllEntries();
             int mergedCount = 0;
 
             foreach (var entry in otherEntries)
             {
-                if (selectedPath.AddResources(entry.Guid, entry.AssetPath, entry.DisplayName))
+                if (selectedManager.AddResource(entry.Guid, entry.AssetPath, entry.DisplayName))
                 {
                     mergedCount++;
                 }
             }
 
-            EditorUtility.SetDirty(selectedPath);
+            EditorUtility.SetDirty(selectedManager);
             ShowNotification(new GUIContent($"Merged {mergedCount} resources"));
         }
     }
 
     [System.Serializable]
-    private class ResourcesPathData
+    private class ResourceManagerData
     {
-        public ResourcesPath.ResourcesEntry[] entries;
+        public ResourcesPath.ResourceEntry[] entries;
     }
 
     #endregion

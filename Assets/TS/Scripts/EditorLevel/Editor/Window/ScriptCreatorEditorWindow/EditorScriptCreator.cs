@@ -86,6 +86,7 @@ public class {name}Window : EditorWindow
         return $@"
 using UnityEngine;
 using Unity.Entities;
+using UnityEditor;
 
 [CustomEditor(typeof({name}))]
 public class {name}Inspector : Editor

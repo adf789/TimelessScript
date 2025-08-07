@@ -6,11 +6,11 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(fileName = "New Resourcess Path", menuName = "Scriptable Objects/Resourcess Path")]
+[CreateAssetMenu(fileName = "New Resources Path", menuName = "Scriptable Objects/Resources Path")]
 public class ResourcesPath : ScriptableObject
 {
     [System.Serializable]
-    public class ResourcesEntry
+    public class ResourceEntry
     {
         [SerializeField] private string guid;
         [SerializeField] private string assetPath;
@@ -20,7 +20,7 @@ public class ResourcesPath : ScriptableObject
         public string AssetPath => assetPath;
         public string DisplayName => displayName;
 
-        public ResourcesEntry(string guid, string assetPath, string displayName = "")
+        public ResourceEntry(string guid, string assetPath, string displayName = "")
         {
             this.guid = guid;
             this.assetPath = assetPath;
@@ -38,28 +38,23 @@ public class ResourcesPath : ScriptableObject
         }
     }
 
-    [SerializeField] private List<ResourcesEntry> ResourcesEntries = new List<ResourcesEntry>();
+    [SerializeField] private List<ResourceEntry> resourceEntries = new List<ResourceEntry>();
 
     // Dictionary for fast GUID lookup (not serialized)
-    private Dictionary<string, ResourcesEntry> guidLookup;
-    private Dictionary<string, ResourcesEntry> pathLookup;
+    private Dictionary<string, ResourceEntry> guidLookup;
+    private Dictionary<string, ResourceEntry> pathLookup;
 
     private void OnEnable()
     {
         RefreshLookupTables();
     }
 
-    private void OnDisable()
-    {
-        TokenPool.Cancel(GetHashCode());
-    }
-
     private void RefreshLookupTables()
     {
-        guidLookup = new Dictionary<string, ResourcesEntry>();
-        pathLookup = new Dictionary<string, ResourcesEntry>();
+        guidLookup = new Dictionary<string, ResourceEntry>();
+        pathLookup = new Dictionary<string, ResourceEntry>();
 
-        foreach (var entry in ResourcesEntries)
+        foreach (var entry in resourceEntries)
         {
             if (!string.IsNullOrEmpty(entry.Guid))
             {
@@ -75,9 +70,9 @@ public class ResourcesPath : ScriptableObject
     #region Public API
 
     /// <summary>
-    /// Add a Resources entry with GUID and path
+    /// Add a resource entry with GUID and path
     /// </summary>
-    public bool AddResources(string guid, string assetPath, string displayName = "")
+    public bool AddResource(string guid, string assetPath, string displayName = "")
     {
         if (string.IsNullOrEmpty(guid) || string.IsNullOrEmpty(assetPath))
         {
@@ -87,12 +82,12 @@ public class ResourcesPath : ScriptableObject
 
         if (HasGuid(guid))
         {
-            Debug.LogWarning($"Resources with GUID {guid} already exists");
+            Debug.LogWarning($"Resource with GUID {guid} already exists");
             return false;
         }
 
-        var entry = new ResourcesEntry(guid, assetPath, displayName);
-        ResourcesEntries.Add(entry);
+        var entry = new ResourceEntry(guid, assetPath, displayName);
+        resourceEntries.Add(entry);
         RefreshLookupTables();
 
 #if UNITY_EDITOR
@@ -103,15 +98,15 @@ public class ResourcesPath : ScriptableObject
     }
 
     /// <summary>
-    /// Remove a Resources by GUID
+    /// Remove a resource by GUID
     /// </summary>
-    public bool RemoveResources(string guid)
+    public bool RemoveResource(string guid)
     {
         if (guidLookup == null) RefreshLookupTables();
 
         if (guidLookup.TryGetValue(guid, out var entry))
         {
-            ResourcesEntries.Remove(entry);
+            resourceEntries.Remove(entry);
             RefreshLookupTables();
 
 #if UNITY_EDITOR
@@ -145,9 +140,9 @@ public class ResourcesPath : ScriptableObject
     }
 
     /// <summary>
-    /// Get Resources entry by GUID
+    /// Get resource entry by GUID
     /// </summary>
-    public ResourcesEntry GetResourcesEntry(string guid)
+    public ResourceEntry GetResourceEntry(string guid)
     {
         if (guidLookup == null) RefreshLookupTables();
 
@@ -157,7 +152,7 @@ public class ResourcesPath : ScriptableObject
     /// <summary>
     /// Load asset by GUID
     /// </summary>
-    public async UniTask<T> LoadAsset<T>(string guid) where T : UnityEngine.Object
+    public async UniTask<T> Load<T>(string guid) where T : UnityEngine.Object
     {
         var assetPath = GetAssetPath(guid);
         if (string.IsNullOrEmpty(assetPath))
@@ -166,7 +161,7 @@ public class ResourcesPath : ScriptableObject
             return null;
         }
 
-        var request = Resources.LoadAsync<T>(ConvertToResourcessPath(assetPath));
+        var request = Resources.LoadAsync<T>(ConvertToResourcesPath(assetPath));
         var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode())) as T;
 
         if (loadedAsset == null)
@@ -176,9 +171,24 @@ public class ResourcesPath : ScriptableObject
     }
 
     /// <summary>
+    /// Load asset by GUID
+    /// </summary>
+    public T[] LoadAll<T>(string guid) where T : UnityEngine.Object
+    {
+        var assetPath = GetAssetPath(guid);
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            Debug.LogWarning($"No asset path found for GUID: {guid}");
+            return null;
+        }
+
+        return Resources.LoadAll<T>(ConvertToResourcesPath(assetPath));
+    }
+
+    /// <summary>
     /// Load asset by GUID (non-generic)
     /// </summary>
-    public async UniTask<UnityEngine.Object> LoadAsset(string guid, System.Type type)
+    public async UniTask<UnityEngine.Object> Load(string guid, System.Type type)
     {
         var assetPath = GetAssetPath(guid);
         if (string.IsNullOrEmpty(assetPath))
@@ -187,7 +197,7 @@ public class ResourcesPath : ScriptableObject
             return default;
         }
 
-        var request = Resources.LoadAsync(ConvertToResourcessPath(assetPath), type);
+        var request = Resources.LoadAsync(ConvertToResourcesPath(assetPath), type);
         var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode()));
 
         if (loadedAsset == null)
@@ -199,21 +209,18 @@ public class ResourcesPath : ScriptableObject
     /// <summary>
     /// Load asset by Name
     /// </summary>
-    public async UniTask<T> LoadAssetByName<T>(string name) where T : UnityEngine.Object
+    public async UniTask<T> LoadByName<T>(string name) where T : UnityEngine.Object
     {
-        if (ResourcesEntries == null)
+        var resourcesEntry = resourceEntries.Find(entry => entry.DisplayName == name);
+
+        if (resourcesEntry == null)
             return null;
 
-        var ResourcesEntry = ResourcesEntries.Find(entry => entry.DisplayName == name);
-
-        if (ResourcesEntry == null)
-            return null;
-
-        var request = Resources.LoadAsync<T>(ConvertToResourcessPath(ResourcesEntry.AssetPath));
+        var request = Resources.LoadAsync<T>(ConvertToResourcesPath(resourcesEntry.AssetPath));
         var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode())) as T;
 
         if (loadedAsset == null)
-            Debug.LogError($"Not found asset by path: {ResourcesEntry.AssetPath}");
+            Debug.LogError($"Not found asset by path: {resourcesEntry.AssetPath}");
 
         return loadedAsset;
     }
@@ -237,11 +244,11 @@ public class ResourcesPath : ScriptableObject
     }
 
     /// <summary>
-    /// Get all Resources entries
+    /// Get all resource entries
     /// </summary>
-    public List<ResourcesEntry> GetAllEntries()
+    public List<ResourceEntry> GetAllEntries()
     {
-        return new List<ResourcesEntry>(ResourcesEntries);
+        return new List<ResourceEntry>(resourceEntries);
     }
 
     /// <summary>
@@ -271,7 +278,7 @@ public class ResourcesPath : ScriptableObject
     /// </summary>
     public void Clear()
     {
-        ResourcesEntries.Clear();
+        resourceEntries.Clear();
         RefreshLookupTables();
 
 #if UNITY_EDITOR
@@ -286,9 +293,9 @@ public class ResourcesPath : ScriptableObject
 #if UNITY_EDITOR
 
     /// <summary>
-    /// Add Resources from Unity Object (Editor only)
+    /// Add resource from Unity Object (Editor only)
     /// </summary>
-    public bool AddResourcesFromObject(UnityEngine.Object obj, string displayName = "")
+    public bool AddResourceFromObject(UnityEngine.Object obj, string displayName = "")
     {
         if (obj == null)
         {
@@ -299,7 +306,7 @@ public class ResourcesPath : ScriptableObject
         string assetPath = AssetDatabase.GetAssetPath(obj);
         string guid = AssetDatabase.AssetPathToGUID(assetPath);
 
-        return AddResources(guid, assetPath, displayName);
+        return AddResource(guid, assetPath, displayName);
     }
 
     /// <summary>
@@ -309,15 +316,15 @@ public class ResourcesPath : ScriptableObject
     {
         bool hasChanges = false;
 
-        for (int i = ResourcesEntries.Count - 1; i >= 0; i--)
+        for (int i = resourceEntries.Count - 1; i >= 0; i--)
         {
-            var entry = ResourcesEntries[i];
+            var entry = resourceEntries[i];
             string actualPath = AssetDatabase.GUIDToAssetPath(entry.Guid);
 
             if (string.IsNullOrEmpty(actualPath))
             {
                 Debug.LogWarning($"Removing entry with invalid GUID: {entry.Guid}");
-                ResourcesEntries.RemoveAt(i);
+                resourceEntries.RemoveAt(i);
                 hasChanges = true;
             }
             else if (actualPath != entry.AssetPath)
@@ -352,12 +359,12 @@ public class ResourcesPath : ScriptableObject
 
             if (!AssetDatabase.IsValidFolder(assetPath) && !HasGuid(guid))
             {
-                AddResources(guid, assetPath);
+                AddResource(guid, assetPath);
                 addedCount++;
             }
         }
 
-        Debug.Log($"Added {addedCount} Resourcess from folder: {folderPath}");
+        Debug.Log($"Added {addedCount} resources from folder: {folderPath}");
     }
 
 #endif
@@ -366,25 +373,25 @@ public class ResourcesPath : ScriptableObject
 
     #region Utility Methods
 
-    private string ConvertToResourcessPath(string assetPath)
+    private string ConvertToResourcesPath(string assetPath)
     {
-        // Convert asset path to Resourcess path for runtime loading
-        const string ResourcessFolder = "Resourcess/";
-        int ResourcessIndex = assetPath.IndexOf(ResourcessFolder);
+        // Convert asset path to Resources path for runtime loading
+        const string resourcesFolder = "Resources/";
+        int resourcesIndex = assetPath.IndexOf(resourcesFolder);
 
-        if (ResourcessIndex >= 0)
+        if (resourcesIndex >= 0)
         {
-            string ResourcesPath = assetPath.Substring(ResourcessIndex + ResourcessFolder.Length);
-            return System.IO.Path.ChangeExtension(ResourcesPath, null);
+            string resourcePath = assetPath.Substring(resourcesIndex + resourcesFolder.Length);
+            return System.IO.Path.ChangeExtension(resourcePath, null);
         }
 
         return assetPath;
     }
 
     /// <summary>
-    /// Get Resources count
+    /// Get resource count
     /// </summary>
-    public int Count => ResourcesEntries.Count;
+    public int Count => resourceEntries.Count;
 
     #endregion
 }

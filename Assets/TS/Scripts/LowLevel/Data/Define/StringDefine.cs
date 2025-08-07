@@ -8,5 +8,6 @@ public class StringDefine
     public const string PATH_VIEW_PREFAB = "Assets/TS/Resources/Prefabs/UI/{0}/";
     public const string PATH_LOAD_VIEW_PREFAB = "Prefabs/UI/{0}{1}";
     public const string PATH_SCRIPT = "Assets/TS/Scripts/{0}/";
+    public const string PATH_RESOURCES_REGISTRY = "ScriptableObjects/ResourcesPath/ResourcesPathRegistry";
     #endregion PATH
 }

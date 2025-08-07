@@ -179,29 +179,24 @@ public class SpriteSheetAnimationSupport : BaseUnit
             return;
 
         string key = spriteSheets[spriteIndex].key;
-        //string path = ResourceManager.GetPath(spriteSheets[spriteIndex].guid);
+        string guid = spriteSheets[spriteIndex].guid;
 
-        //if (loadedSprites != null && loadedSprites.ContainsKey(key))
-        //    return;
+        if (loadedSprites != null && loadedSprites.ContainsKey(key))
+            return;
 
-        //if (string.IsNullOrEmpty(path))
-        //{
-        //    Debug.LogError($"경로를 찾지 못했습니다. (guid: {spriteSheets[spriteIndex].guid})");
-        //    return;
-        //}
+        var spriteResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
+        Sprite[] currentSprites = spriteResourcesPath.LoadAll<Sprite>(guid);
 
-        //Sprite[] currentSprites = await UtilModel.Resources.LoadAllAsync<Sprite>(path);
+        if (loadedSprites == null)
+            loadedSprites = new Dictionary<string, Sprite[]>();
 
-        //if (loadedSprites == null)
-        //    loadedSprites = new Dictionary<string, Sprite[]>();
+        if (currentSprites == null || currentSprites.Length == 0)
+        {
+            Debug.LogError($"{guid} 에 Sprite 가 없습니다.");
+            return;
+        }
 
-        //if (currentSprites == null || currentSprites.Length == 0)
-        //{
-        //    Debug.LogError($"{path} 에 Sprite 가 없습니다.");
-        //    return;
-        //}
-
-        //loadedSprites[key] = currentSprites;
+        loadedSprites[key] = currentSprites;
     }
 
     public void SetAnimation(string key, bool isLoop = true)
