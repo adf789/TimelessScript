@@ -1,0 +1,34 @@
+{
+    "name": "MouseInputSystem",
+    "maps": [
+        {
+            "name": "Mouse",
+            "id": "ce649475-54eb-4b6b-8d20-e592266e14cb",
+            "actions": [
+                {
+                    "name": "MouseScrollY",
+                    "type": "PassThrough",
+                    "id": "3d6b2432-8df3-45e0-a6a4-f0832d999508",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "4676e8ba-aca2-400d-8098-a2b186d7e5a0",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MouseScrollY",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

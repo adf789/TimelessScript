@@ -120,7 +120,7 @@ public class UIScriptCreator : BaseScriptCreator
 
     public override void DrawCustomOptions()
     {
-        selectedUIType = (UIScriptType)EditorGUILayout.EnumPopup("UI 타입 선택", selectedUIType);
+        selectedUIType = (UIScriptType)EditorGUILayout.EnumPopup("Select UI Type", selectedUIType);
     }
 
     private string GenerateModelCode(string name)

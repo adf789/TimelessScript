@@ -32,7 +32,7 @@ public class ECSScriptCreator : BaseScriptCreator
 
         if (checkComponent)
         {
-            string componentPath = string.Format(StringDefine.PATH_SCRIPT, "LowLevel/Data/Component");
+            string componentPath = string.Format(StringDefine.PATH_SCRIPT, "LowLevel/Data/ComponentData");
 
             if(!string.IsNullOrEmpty(addPath))
                 componentPath = Path.Combine(componentPath, addPath);

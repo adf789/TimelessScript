@@ -11,7 +11,8 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private enum CreateScriptType
     {
         UI,
-        ECS
+        ECS,
+        Editor
     }
 
     private string objectName = ""; 
@@ -26,6 +27,36 @@ public class ScriptCreatorEditorWindow : EditorWindow
     public static void ShowWindow()
     {
         GetWindow<ScriptCreatorEditorWindow>("Script Generate");
+    }
+
+    // CreateScriptType 타입 추가 시 수정 필요
+    private BaseScriptCreator GetCurrentCreator()
+    {
+        if (creators.TryGetValue(selectedScriptType, out var creator))
+            return creator;
+
+        switch (selectedScriptType)
+        {
+            case CreateScriptType.UI:
+                creator = new UIScriptCreator();
+                break;
+
+            case CreateScriptType.ECS:
+                creator = new ECSScriptCreator();
+                break;
+
+            case CreateScriptType.Editor:
+                creator = new EditorScriptCreator();
+                break;
+
+            default:
+                throw new Exception($"Wrong script type: {selectedScriptType}");
+        }
+
+        if (creator != null)
+            creators.Add(selectedScriptType, creator);
+
+        return creator;
     }
 
     private void OnEnable()
@@ -85,7 +116,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
     private bool DrawScriptTypes()
     {
-        CreateScriptType type = (CreateScriptType)EditorGUILayout.EnumPopup("생성 타입 선택", selectedScriptType);
+        CreateScriptType type = (CreateScriptType)EditorGUILayout.EnumPopup("Select Type", selectedScriptType);
         bool change = type != selectedScriptType;
         selectedScriptType = type;
 
@@ -131,7 +162,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         {
-            objectName = EditorGUILayout.TextField("ObjectName", objectName);
+            objectName = EditorGUILayout.TextField("Script Name", objectName);
             objectName = objectName.Trim();
         }
         return EditorGUI.EndChangeCheck();
@@ -232,35 +263,10 @@ public class ScriptCreatorEditorWindow : EditorWindow
     [UnityEditor.Callbacks.DidReloadScripts]
     private static void AttachScriptToPrefab()
     {
-        if (instance != null)
+        if (instance == null)
             return;
 
         instance.GetCurrentCreator()?.OnAfterReload();
-    }
-
-    private BaseScriptCreator GetCurrentCreator()
-    {
-        if(creators.TryGetValue(selectedScriptType, out var creator))
-            return creator;
-
-        switch (selectedScriptType)
-        {
-            case CreateScriptType.UI:
-                creator = new UIScriptCreator();
-                break;
-
-            case CreateScriptType.ECS:
-                creator = new ECSScriptCreator();
-                break;
-
-            default:
-                throw new Exception($"Wrong script type: {selectedScriptType}");
-        }
-
-        if(creator != null)
-            creators.Add(selectedScriptType, creator);
-
-        return creator;
     }
 
     private void OnCompilationFinished(object context)
