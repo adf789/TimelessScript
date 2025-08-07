@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 public class ResourceManageEditorWindow : EditorWindow
 {
-    private ResourcePath selectedPath;
+    private ResourcesPath selectedPath;
     private Vector2 scrollPosition;
     private Vector2 pathScrollPosition;
     private string searchFilter = "";
@@ -15,7 +15,7 @@ public class ResourceManageEditorWindow : EditorWindow
     private bool showPathSelection = true;
 
     // Window state
-    private List<ResourcePath> availablePaths;
+    private List<ResourcesPath> availablePaths;
     private string[] pathNames;
     private int selectedPathIndex = 0;
 
@@ -32,10 +32,10 @@ public class ResourceManageEditorWindow : EditorWindow
     }
 
     // Context menu for ScriptableObject
-    [MenuItem("CONTEXT/ResourcePath/Open in Window")]
+    [MenuItem("CONTEXT/ResourcesPath/Open in Window")]
     public static void OpenWindowWithPath(MenuCommand command)
     {
-        var path = (ResourcePath)command.context;
+        var path = (ResourcesPath)command.context;
         var window = GetWindow<ResourceManageEditorWindow>("GUID Resource Path");
         window.minSize = new Vector2(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
         window.SetSelectedPath(path);
@@ -58,13 +58,13 @@ public class ResourceManageEditorWindow : EditorWindow
     private void OnSelectionChanged()
     {
         // Auto-select path if selected in Project window
-        if (Selection.activeObject is ResourcePath path)
+        if (Selection.activeObject is ResourcesPath path)
         {
             SetSelectedPath(path);
         }
     }
 
-    public void SetSelectedPath(ResourcePath path)
+    public void SetSelectedPath(ResourcesPath path)
     {
         selectedPath = path;
         if (availablePaths != null && availablePaths.Contains(path))
@@ -77,17 +77,17 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private void RefreshPathList()
     {
-        // Find all GuidResourcePath assets
-        string[] guids = AssetDatabase.FindAssets("t:ResourcePath");
-        availablePaths = new List<ResourcePath>();
+        // Find all GuidResourcesPath assets
+        string[] guids = AssetDatabase.FindAssets("t:ResourcesPath");
+        availablePaths = new List<ResourcesPath>();
 
         foreach (string guid in guids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            var resourcePath = AssetDatabase.LoadAssetAtPath<ResourcePath>(path);
-            if (resourcePath != null)
+            var ResourcesPath = AssetDatabase.LoadAssetAtPath<ResourcesPath>(path);
+            if (ResourcesPath != null)
             {
-                availablePaths.Add(resourcePath);
+                availablePaths.Add(ResourcesPath);
             }
         }
 
@@ -224,7 +224,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
             if (selectedPath != null)
             {
-                EditorGUILayout.ObjectField("Selected Path", selectedPath, typeof(ResourcePath), false);
+                EditorGUILayout.ObjectField("Selected Path", selectedPath, typeof(ResourcesPath), false);
             }
         }
 
@@ -290,7 +290,7 @@ public class ResourceManageEditorWindow : EditorWindow
         EditorGUI.BeginDisabledGroup(objectToAdd == null);
         if (GUILayout.Button("Add", GUILayout.Width(60)))
         {
-            if (selectedPath.AddResourceFromObject(objectToAdd))
+            if (selectedPath.AddResourcesFromObject(objectToAdd))
             {
                 objectToAdd = null;
                 EditorUtility.SetDirty(selectedPath);
@@ -426,7 +426,7 @@ public class ResourceManageEditorWindow : EditorWindow
         }
     }
 
-    private void DrawResourceEntry(ResourcePath.ResourceEntry entry, bool isEven)
+    private void DrawResourceEntry(ResourcesPath.ResourcesEntry entry, bool isEven)
     {
         var backgroundColor = isEven ? new Color(0.8f, 0.8f, 0.8f, 0.1f) : Color.clear;
         var originalColor = GUI.backgroundColor;
@@ -474,7 +474,7 @@ public class ResourceManageEditorWindow : EditorWindow
             if (EditorUtility.DisplayDialog("Remove Resource",
                 $"Remove {entry.DisplayName} from the resource path?", "Remove", "Cancel"))
             {
-                selectedPath.RemoveResource(entry.Guid);
+                selectedPath.RemoveResources(entry.Guid);
                 EditorUtility.SetDirty(selectedPath);
             }
         }
@@ -491,8 +491,8 @@ public class ResourceManageEditorWindow : EditorWindow
 
             if (newGuid != entry.Guid)
             {
-                selectedPath.RemoveResource(entry.Guid);
-                selectedPath.AddResourceFromObject(newAsset);
+                selectedPath.RemoveResources(entry.Guid);
+                selectedPath.AddResourcesFromObject(newAsset);
                 EditorUtility.SetDirty(selectedPath);
             }
         }
@@ -512,7 +512,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
         if (!string.IsNullOrEmpty(path))
         {
-            var newPath = CreateInstance<ResourcePath>();
+            var newPath = CreateInstance<ResourcesPath>();
             AssetDatabase.CreateAsset(newPath, path);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -553,7 +553,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
         foreach (var obj in selectedObjects)
         {
-            if (selectedPath.AddResourceFromObject(obj))
+            if (selectedPath.AddResourcesFromObject(obj))
             {
                 addedCount++;
             }
@@ -575,7 +575,7 @@ public class ResourceManageEditorWindow : EditorWindow
         string path = EditorUtility.SaveFilePanel("Export Resource Path", "", selectedPath.name + ".json", "json");
         if (!string.IsNullOrEmpty(path))
         {
-            var data = new ResourcePathData();
+            var data = new ResourcesPathData();
             data.entries = selectedPath.GetAllEntries().ToArray();
 
             string json = JsonUtility.ToJson(data, true);
@@ -593,12 +593,12 @@ public class ResourceManageEditorWindow : EditorWindow
             try
             {
                 string json = System.IO.File.ReadAllText(path);
-                var data = JsonUtility.FromJson<ResourcePathData>(json);
+                var data = JsonUtility.FromJson<ResourcesPathData>(json);
 
                 int importedCount = 0;
                 foreach (var entry in data.entries)
                 {
-                    if (selectedPath.AddResource(entry.Guid, entry.AssetPath, entry.DisplayName))
+                    if (selectedPath.AddResources(entry.Guid, entry.AssetPath, entry.DisplayName))
                     {
                         importedCount++;
                     }
@@ -655,7 +655,7 @@ public class ResourceManageEditorWindow : EditorWindow
     private void MergeWithAnother()
     {
         // Simple implementation - could be expanded
-        var otherPath = EditorGUILayout.ObjectField("Merge with", null, typeof(ResourcePath), false) as ResourcePath;
+        var otherPath = EditorGUILayout.ObjectField("Merge with", null, typeof(ResourcesPath), false) as ResourcesPath;
         if (otherPath != null && otherPath != selectedPath)
         {
             var otherEntries = otherPath.GetAllEntries();
@@ -663,7 +663,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
             foreach (var entry in otherEntries)
             {
-                if (selectedPath.AddResource(entry.Guid, entry.AssetPath, entry.DisplayName))
+                if (selectedPath.AddResources(entry.Guid, entry.AssetPath, entry.DisplayName))
                 {
                     mergedCount++;
                 }
@@ -675,9 +675,9 @@ public class ResourceManageEditorWindow : EditorWindow
     }
 
     [System.Serializable]
-    private class ResourcePathData
+    private class ResourcesPathData
     {
-        public ResourcePath.ResourceEntry[] entries;
+        public ResourcesPath.ResourcesEntry[] entries;
     }
 
     #endregion

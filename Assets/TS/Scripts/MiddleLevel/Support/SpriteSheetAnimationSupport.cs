@@ -3,6 +3,7 @@
 using System;
 //using System.Collections;
 using System.Collections.Generic;
+using System.Resources;
 //using TMPro;                        // TextMeshPro 관련 클래스 모음 ( UnityEngine.UI.Text 대신 이걸 사용 )
 using Cysharp.Threading.Tasks;      // UniTask 관련 클래스 모음
 //using System.Threading;             // 쓰레드
@@ -178,7 +179,7 @@ public class SpriteSheetAnimationSupport : BaseUnit
             return;
 
         string key = spriteSheets[spriteIndex].key;
-        //string path = ResourcesPathObject.GetPath(spriteSheets[spriteIndex].guid);
+        //string path = ResourceManager.GetPath(spriteSheets[spriteIndex].guid);
 
         //if (loadedSprites != null && loadedSprites.ContainsKey(key))
         //    return;

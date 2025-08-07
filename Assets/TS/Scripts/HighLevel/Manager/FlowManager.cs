@@ -1,20 +1,23 @@
-using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class FlowManager : BaseManager<FlowManager>
 {
     public BaseFlow CurrentFlow { get; private set; }
 
-    public void ChangeFlow(GameState state)
+    public async UniTask ChangeFlow(GameState state)
     {
         if (CurrentFlow != null && CurrentFlow.State == state)
             return;
 
-        CurrentFlow = LoadFlow(state);
+        CurrentFlow = await LoadFlow(state);
+
         CurrentFlow.Enter();
     }
 
-    private BaseFlow LoadFlow(GameState state)
+    private async UniTask<BaseFlow> LoadFlow(GameState state)
     {
-        return Resources.Load<BaseFlow>(string.Format(StringDefine.PATH_LOAD_FLOW, state));
+        string flowName = $"{state}Flow";
+
+        return await ResourcesManager.Instance.LoadAssetByName<BaseFlow>(ResourceType.Flow, flowName);
     }
 }

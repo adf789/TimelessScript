@@ -26,6 +26,7 @@ public static class TokenPool
             return;
 
         updateToken[hashCode].Cancel();
+        updateToken[hashCode].Dispose();
 
         updateToken.Remove(hashCode);
     }

@@ -3,10 +3,10 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 
-[CustomEditor(typeof(ResourcePath))]
-public class ResourcePathInspector : Editor
+[CustomEditor(typeof(ResourcesPath))]
+public class ResourcesPathInspector : Editor
 {
-    private ResourcePath resourcePath;
+    private ResourcesPath ResourcesPath;
     private Vector2 scrollPosition;
     private string searchFilter = "";
     private UnityEngine.Object objectToAdd;
@@ -14,7 +14,7 @@ public class ResourcePathInspector : Editor
 
     private void OnEnable()
     {
-        resourcePath = (ResourcePath)target;
+        ResourcesPath = (ResourcesPath)target;
     }
 
     public override void OnInspectorGUI()
@@ -24,11 +24,11 @@ public class ResourcePathInspector : Editor
         // Header
         EditorGUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        EditorGUILayout.LabelField("Resource Path", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Resources Path", EditorStyles.boldLabel);
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("Open in Window", GUILayout.Width(100)))
         {
-            ResourceManageEditorWindow.OpenWindowWithPath(new MenuCommand(resourcePath));
+            ResourceManageEditorWindow.OpenWindowWithPath(new MenuCommand(ResourcesPath));
         }
         EditorGUILayout.EndHorizontal();
 
@@ -36,19 +36,19 @@ public class ResourcePathInspector : Editor
 
         // Stats
         EditorGUILayout.BeginHorizontal("box");
-        EditorGUILayout.LabelField($"Total Resources: {resourcePath.Count}", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField($"Total Resources: {ResourcesPath.Count}", EditorStyles.miniLabel);
         GUILayout.FlexibleSpace();
         if (GUILayout.Button("Validate References", GUILayout.Width(120)))
         {
-            resourcePath.ValidateReferences();
+            ResourcesPath.ValidateReferences();
         }
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space(5);
 
-        // Add new resource section
+        // Add new Resources section
         EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("Add New Resource", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Add New Resources", EditorStyles.boldLabel);
 
         EditorGUILayout.BeginHorizontal();
         objectToAdd = EditorGUILayout.ObjectField("Asset", objectToAdd, typeof(UnityEngine.Object), false);
@@ -56,10 +56,10 @@ public class ResourcePathInspector : Editor
         EditorGUI.BeginDisabledGroup(objectToAdd == null);
         if (GUILayout.Button("Add", GUILayout.Width(60)))
         {
-            if (resourcePath.AddResourceFromObject(objectToAdd))
+            if (ResourcesPath.AddResourcesFromObject(objectToAdd))
             {
                 objectToAdd = null;
-                EditorUtility.SetDirty(resourcePath);
+                EditorUtility.SetDirty(ResourcesPath);
             }
         }
         EditorGUI.EndDisabledGroup();
@@ -75,8 +75,8 @@ public class ResourcePathInspector : Editor
                 string path = AssetDatabase.GUIDToAssetPath(selectedGUIDs[0]);
                 if (AssetDatabase.IsValidFolder(path))
                 {
-                    resourcePath.PopulateFromFolder(path);
-                    EditorUtility.SetDirty(resourcePath);
+                    ResourcesPath.PopulateFromFolder(path);
+                    EditorUtility.SetDirty(ResourcesPath);
                 }
                 else
                 {
@@ -92,10 +92,10 @@ public class ResourcePathInspector : Editor
         if (GUILayout.Button("Clear All"))
         {
             if (EditorUtility.DisplayDialog("Clear All Resources",
-                "Are you sure you want to clear all resource entries?", "Yes", "Cancel"))
+                "Are you sure you want to clear all Resources entries?", "Yes", "Cancel"))
             {
-                resourcePath.Clear();
-                EditorUtility.SetDirty(resourcePath);
+                ResourcesPath.Clear();
+                EditorUtility.SetDirty(ResourcesPath);
             }
         }
         EditorGUILayout.EndHorizontal();
@@ -141,8 +141,8 @@ public class ResourcePathInspector : Editor
 
         EditorGUILayout.Space(10);
 
-        // Resource list
-        var entries = resourcePath.GetAllEntries();
+        // Resources list
+        var entries = ResourcesPath.GetAllEntries();
         var filteredEntries = string.IsNullOrEmpty(searchFilter)
             ? entries
             : entries.Where(e => e.DisplayName.ToLower().Contains(searchFilter.ToLower()) ||
@@ -157,7 +157,7 @@ public class ResourcePathInspector : Editor
             for (int i = 0; i < filteredEntries.Count; i++)
             {
                 var entry = filteredEntries[i];
-                DrawResourceEntry(entry, i % 2 == 0);
+                DrawResourcesEntry(entry, i % 2 == 0);
             }
 
             EditorGUILayout.EndScrollView();
@@ -165,14 +165,14 @@ public class ResourcePathInspector : Editor
         else
         {
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("No resources found.", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("No Resources found.", EditorStyles.centeredGreyMiniLabel);
             EditorGUILayout.EndVertical();
         }
 
         EditorGUILayout.Space(10);
     }
 
-    private void DrawResourceEntry(ResourcePath.ResourceEntry entry, bool isEven)
+    private void DrawResourcesEntry(ResourcesPath.ResourcesEntry entry, bool isEven)
     {
         var backgroundColor = isEven ? new Color(0.8f, 0.8f, 0.8f, 0.1f) : Color.clear;
         var originalColor = GUI.backgroundColor;
@@ -209,11 +209,11 @@ public class ResourcePathInspector : Editor
 
         if (GUILayout.Button("Remove", GUILayout.Height(16)))
         {
-            if (EditorUtility.DisplayDialog("Remove Resource",
-                $"Remove {entry.DisplayName} from the resource path?", "Remove", "Cancel"))
+            if (EditorUtility.DisplayDialog("Remove Resources",
+                $"Remove {entry.DisplayName} from the Resources path?", "Remove", "Cancel"))
             {
-                resourcePath.RemoveResource(entry.Guid);
-                EditorUtility.SetDirty(resourcePath);
+                ResourcesPath.RemoveResources(entry.Guid);
+                EditorUtility.SetDirty(ResourcesPath);
             }
         }
 
@@ -229,9 +229,9 @@ public class ResourcePathInspector : Editor
 
             if (newGuid != entry.Guid)
             {
-                resourcePath.RemoveResource(entry.Guid);
-                resourcePath.AddResourceFromObject(newAsset);
-                EditorUtility.SetDirty(resourcePath);
+                ResourcesPath.RemoveResources(entry.Guid);
+                ResourcesPath.AddResourcesFromObject(newAsset);
+                EditorUtility.SetDirty(ResourcesPath);
             }
         }
 
@@ -240,40 +240,40 @@ public class ResourcePathInspector : Editor
 
     private void ExportToJSON()
     {
-        string path = EditorUtility.SaveFilePanel("Export Resource Path", "", "resource_path.json", "json");
+        string path = EditorUtility.SaveFilePanel("Export Resources Path", "", "Resources_path.json", "json");
         if (!string.IsNullOrEmpty(path))
         {
-            var data = new ResourcePathData();
-            data.entries = resourcePath.GetAllEntries().ToArray();
+            var data = new ResourcesPathData();
+            data.entries = ResourcesPath.GetAllEntries().ToArray();
 
             string json = JsonUtility.ToJson(data, true);
             System.IO.File.WriteAllText(path, json);
 
-            EditorUtility.DisplayDialog("Export Complete", $"Resource path exported to:\n{path}", "OK");
+            EditorUtility.DisplayDialog("Export Complete", $"Resources path exported to:\n{path}", "OK");
         }
     }
 
     private void ImportFromJSON()
     {
-        string path = EditorUtility.OpenFilePanel("Import Resource Path", "", "json");
+        string path = EditorUtility.OpenFilePanel("Import Resources Path", "", "json");
         if (!string.IsNullOrEmpty(path))
         {
             try
             {
                 string json = System.IO.File.ReadAllText(path);
-                var data = JsonUtility.FromJson<ResourcePathData>(json);
+                var data = JsonUtility.FromJson<ResourcesPathData>(json);
 
                 int importedCount = 0;
                 foreach (var entry in data.entries)
                 {
-                    if (resourcePath.AddResource(entry.Guid, entry.AssetPath, entry.DisplayName))
+                    if (ResourcesPath.AddResources(entry.Guid, entry.AssetPath, entry.DisplayName))
                     {
                         importedCount++;
                     }
                 }
 
-                EditorUtility.SetDirty(resourcePath);
-                EditorUtility.DisplayDialog("Import Complete", $"Imported {importedCount} resources.", "OK");
+                EditorUtility.SetDirty(ResourcesPath);
+                EditorUtility.DisplayDialog("Import Complete", $"Imported {importedCount} Resources.", "OK");
             }
             catch (System.Exception e)
             {
@@ -284,7 +284,7 @@ public class ResourcePathInspector : Editor
 
     private void ShowMissingReferences()
     {
-        var entries = resourcePath.GetAllEntries();
+        var entries = ResourcesPath.GetAllEntries();
         var missingEntries = entries.Where(e =>
             AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(e.AssetPath) == null).ToList();
 
@@ -297,14 +297,14 @@ public class ResourcePathInspector : Editor
         }
         else
         {
-            EditorUtility.DisplayDialog("No Missing References", "All resource references are valid!", "OK");
+            EditorUtility.DisplayDialog("No Missing References", "All Resources references are valid!", "OK");
         }
     }
 
     [System.Serializable]
-    private class ResourcePathData
+    private class ResourcesPathData
     {
-        public ResourcePath.ResourceEntry[] entries;
+        public ResourcesPath.ResourcesEntry[] entries;
     }
 }
 #endif

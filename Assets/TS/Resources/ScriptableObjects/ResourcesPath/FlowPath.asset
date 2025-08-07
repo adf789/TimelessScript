@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
   m_Name: FlowPath
   m_EditorClassIdentifier: 
-  resourceEntries:
+  ResourcesEntries:
   - guid: aa7f67e64275d604282b545859eb9c3b
     assetPath: Assets/TS/Resources/ScriptableObjects/Flow/IntroFlow.asset
     displayName: IntroFlow

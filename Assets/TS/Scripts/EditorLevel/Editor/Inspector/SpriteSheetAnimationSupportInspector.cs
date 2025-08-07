@@ -215,7 +215,6 @@ public class SpriteSheetAnimationSupportInspector : Editor
             {
                 PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
 
-                //EditorUtility.SetDirty(ResourcesPathObject.GetEditorSaveObject());
                 EditorUtility.SetDirty(target);
 
                 serializedObject.ApplyModifiedProperties();

@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class GameManager : BaseManager<GameManager>
@@ -9,12 +10,12 @@ public class GameManager : BaseManager<GameManager>
 
     private void Start()
     {
-        FlowManager.Instance.ChangeFlow(GameState.Intro);
+        FlowManager.Instance.ChangeFlow(GameState.Intro).Forget();
     }
 
     [ContextMenu("Test")]
     public void TestCode()
     {
-        FlowManager.Instance.ChangeFlow(GameState.Loading);
+        FlowManager.Instance.ChangeFlow(GameState.Loading).Forget();
     }
 }

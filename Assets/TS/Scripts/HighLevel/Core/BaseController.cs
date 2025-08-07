@@ -25,7 +25,7 @@ public class BaseController
     public IReadOnlyCollection<BaseController> ChildControllers { get => childControllers; }
     public virtual UIType UIType { get; }
     public virtual bool IsPopup { get; }
-    public virtual string ViewPath { get => string.Format(StringDefine.PATH_LOAD_VIEW_PREFAB, UIType); }
+    public virtual string ViewPath { get => string.Format(StringDefine.PATH_LOAD_VIEW_PREFAB, UIType, (IsPopup ? "Popup" : "View")); }
 
     private Queue<BaseController> childControllers = null;
     private Func<BaseController, UniTask> onEventEnter = null;
