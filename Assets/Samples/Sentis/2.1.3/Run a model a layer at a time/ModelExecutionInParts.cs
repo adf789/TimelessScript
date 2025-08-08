@@ -1,7 +1,8 @@
 using UnityEngine;
-using Unity.Sentis;
+
 using System;
 using System.Collections;
+using Unity.InferenceEngine;
 
 public class ModelExecutionInParts : MonoBehaviour
 {

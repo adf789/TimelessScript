@@ -1,0 +1,16 @@
+{
+  "MsBuild": {
+    "UseBundledOnly": false
+  },
+  "FormattingOptions": {
+    "EnableEditorConfigSupport": true,
+    "OrganizeImports": true
+  },
+  "RoslynExtensionsOptions": {
+    "enableAnalyzersSupport": true
+  },
+  "enableRoslynAnalyzers": true,
+  "sdk": {
+    "path": "/usr/bin/dotnet"
+  }
+}

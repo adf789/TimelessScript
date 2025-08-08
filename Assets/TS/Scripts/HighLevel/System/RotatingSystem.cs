@@ -9,7 +9,7 @@ public partial struct RotatingSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var rotateJob = new RotateUpdateJob()
+        RotateUpdateJob rotateJob = new RotateUpdateJob()
         {
             deltaTime = SystemAPI.Time.DeltaTime
         };
