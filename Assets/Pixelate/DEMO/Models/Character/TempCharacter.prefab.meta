@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0080f36ef723c464e8e16094b5ac1f32
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 194727
+  packageName: Pixelate - Pixel art converter
+  packageVersion: 1.05
+  assetPath: Assets/Pixelate/DEMO/Models/Character/TempCharacter.prefab
+  uploadId: 709463

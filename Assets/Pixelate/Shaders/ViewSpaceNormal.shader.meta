@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 04b408d0f02c3dc468fe86aa5f158a66
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 194727
+  packageName: Pixelate - Pixel art converter
+  packageVersion: 1.05
+  assetPath: Assets/Pixelate/Shaders/ViewSpaceNormal.shader
+  uploadId: 709463

@@ -40,7 +40,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private ViewMode currentViewMode = ViewMode.Combined;
 
-    [MenuItem("Window/Resource Management/Resource Manager %&r")]
+    [MenuItem("Tools/Resource Manager %&r")]
     public static void OpenWindow()
     {
         var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");

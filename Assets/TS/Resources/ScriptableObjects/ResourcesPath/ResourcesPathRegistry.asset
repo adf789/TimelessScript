@@ -86,7 +86,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
   m_Name: ResourcesPath_GameObject
   m_EditorClassIdentifier: 
-  resourceEntries: []
+  resourceEntries:
+  - guid: 17559c1925ab2af47942d1c14e89ff84
+    assetPath: Assets/TS/Resources/Prefabs/Character/TestCharacter.prefab
+    displayName: TestCharacter
 --- !u!114 &-25286370874405263
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -281,7 +284,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
   m_Name: ResourcesPath_Sprite
   m_EditorClassIdentifier: 
-  resourceEntries: []
+  resourceEntries:
+  - guid: 93b8824ab061f0f4e9440b824f206ec3
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_PickUp.png
+    displayName: Character_PickUp
+  - guid: bbbaf36ec5c6401459b9e54454f8eff7
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Idle.png
+    displayName: Character_Idle
+  - guid: 0779a9727e271024581dd1d3d4df70c7
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Interact.png
+    displayName: Character_Interact
+  - guid: 31ab93839e3913a45856b81656ac273f
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Walking.png
+    displayName: Character_Walking
+  - guid: e3f123cd664ad0d4f9e443f862e33e06
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Idle.png
+    displayName: Character_Jump_Idle
+  - guid: c0043a80cb2b2c34d9f075a7713931b5
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Land.png
+    displayName: Character_Jump_Land
+  - guid: 526dbe93ccaffcd419fb42dfdc6ff910
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Idle.png
+    displayName: Character_Jump_Idle
+  - guid: a4663883493a7be4cbdf2f9319637487
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Land.png
+    displayName: Character_Jump_Land
 --- !u!114 &4731222830723883561
 MonoBehaviour:
   m_ObjectHideFlags: 0

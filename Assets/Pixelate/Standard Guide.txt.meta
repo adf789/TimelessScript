@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 10c4084f4e37ea548b82e151e345df7a
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 194727
+  packageName: Pixelate - Pixel art converter
+  packageVersion: 1.05
+  assetPath: Assets/Pixelate/Standard Guide.txt
+  uploadId: 709463

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: db9ae88b31efdb748a2f56acafca65fc
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 194727
+  packageName: Pixelate - Pixel art converter
+  packageVersion: 1.05
+  assetPath: Assets/Pixelate/URP Guide.txt
+  uploadId: 709463

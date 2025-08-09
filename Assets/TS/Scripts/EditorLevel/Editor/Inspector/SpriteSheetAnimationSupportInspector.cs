@@ -344,7 +344,12 @@ public class SpriteSheetAnimationSupportInspector : Editor
             data.guid = string.Empty;
             return;
         }
+        
+        // GUID 삽입
+        string assetPath = AssetDatabase.GetAssetPath(data.sourceImage);
+        data.guid = AssetDatabase.AssetPathToGUID(assetPath);
 
+        // 리소스 추가
         var spriteResoursPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
 
         spriteResoursPath.AddResourceFromObject(data.sourceImage);

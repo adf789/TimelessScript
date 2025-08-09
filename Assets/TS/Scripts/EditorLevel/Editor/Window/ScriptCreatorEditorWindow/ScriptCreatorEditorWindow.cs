@@ -15,7 +15,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         Editor
     }
 
-    private string objectName = ""; 
+    private string objectName = "";
     private string[] tabTitles = { "Script Creator", "Script Deletor" };
     private int selectedTab = 0;
     private CreateScriptType selectedScriptType = CreateScriptType.UI;
@@ -251,13 +251,35 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         string addPath = null;
 
-        if(objectAddPaths.Count > 0)
+        if (objectAddPaths.Count > 0)
             addPath = $"{string.Join('/', objectAddPaths)}/";
 
         GetCurrentCreator()?.Create(addPath, objectName);
 
-        AssetDatabase.Refresh();
+        FullRefresh();
+    }
+
+    private void FullRefresh()
+    {
+        Debug.Log("즉시 컴파일 시작!");
+
+        // 컴파일 완료 콜백 등록
+        CompilationPipeline.compilationStarted += OnCompilationStarted;
+        CompilationPipeline.compilationFinished += OnCompilationFinished;
+
+        // 1. 에셋 데이터베이스 새로고침
+        AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+
+        // 2. 스크립트 컴파일 요청
+        CompilationPipeline.RequestScriptCompilation();
+
+        // 3. 도메인 리로드
+        EditorUtility.RequestScriptReload();
+
+        // 4. 에셋 저장
         AssetDatabase.SaveAssets();
+
+        Debug.Log("컴파일 요청 완료");
     }
 
     [UnityEditor.Callbacks.DidReloadScripts]
@@ -269,10 +291,16 @@ public class ScriptCreatorEditorWindow : EditorWindow
         instance.GetCurrentCreator()?.OnAfterReload();
     }
 
-    private void OnCompilationFinished(object context)
+    static void OnCompilationStarted(object obj)
     {
-        Debug.Log("✅ 컴파일 완료!");
-
+        
+    }
+    
+    static void OnCompilationFinished(object obj)
+    {
+        CompilationPipeline.compilationStarted -= OnCompilationStarted;
         CompilationPipeline.compilationFinished -= OnCompilationFinished;
+        
+        Debug.Log("컴파일 완료!");
     }
 }
