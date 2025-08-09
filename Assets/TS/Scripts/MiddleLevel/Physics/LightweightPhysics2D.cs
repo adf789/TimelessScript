@@ -155,7 +155,7 @@ public class LightweightPhysics2D : MonoBehaviour
 
     void HandleGroundCollision(LightweightCollider2D groundCollider, GroundObject ground)
     {
-        Vector2 separation = groundCollider.GetSeparationVector(collider2D);
+        Vector2 separation = collider2D.GetSeparationVector(groundCollider);
 
         // 일방통행 플랫폼 처리
         if (ground.isOneWayPlatform)
@@ -171,7 +171,7 @@ public class LightweightPhysics2D : MonoBehaviour
         else
         {
             // 일반 지면 충돌
-            position += separation;
+            position = separation;
 
             // 충돌 노멀 계산
             Vector2 normal = separation.normalized;
@@ -180,7 +180,7 @@ public class LightweightPhysics2D : MonoBehaviour
             velocity = ground.CalculateCollisionResponse(velocity, normal);
 
             // 바닥 판정 (위쪽으로 분리된 경우)
-            if (separation.y > 0)
+            if (separation.y < 0)
             {
                 isGrounded = true;
             }

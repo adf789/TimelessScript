@@ -28,6 +28,7 @@ public class GroundObject : MonoBehaviour
             // Ground는 중력 받지 않고 고정
             physics2D.useGravity = false;
             physics2D.mass = float.MaxValue; // 무한대 질량으로 움직이지 않게
+            physics2D.isStatic = true;
             
             // 초기 속도 0
             physics2D.velocity = Vector2.zero;
