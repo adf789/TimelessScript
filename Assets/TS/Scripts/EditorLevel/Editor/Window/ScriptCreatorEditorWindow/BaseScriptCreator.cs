@@ -1,6 +1,7 @@
 
 using System;
 using System.IO;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,10 +11,14 @@ public abstract class BaseScriptCreator : Editor
     public abstract void Create(string addPath, string assetName);
     public virtual void DrawCustomOptions() { }
     public virtual void OnAfterReload() { }
+    
+    // ê²½ë¡œ ë¯¸ë¦¬ë³´ê¸° ê´€ë ¨ ë©”ì„œë“œë“¤
+    public virtual List<string> GetFinalPaths(string addPath, string assetName) { return new List<string>(); }
+    public virtual void DrawPathPreview(string addPath, string assetName) { }
 
     public virtual void DrawScriptDeletor()
     {
-        EditorGUILayout.LabelField("Áö¿øÇÏÁö ¾Ê´Â Å¸ÀÔÀÔ´Ï´Ù.");
+        EditorGUILayout.HelpBox("ì§€ì›í•˜ì§€ ì•ŠëŠ” íƒ€ì…ì…ë‹ˆë‹¤.", MessageType.Info);
     }
 
     protected virtual void CreateScript(string path, string fileName, string content)
@@ -33,7 +38,7 @@ public abstract class BaseScriptCreator : Editor
         if (string.IsNullOrEmpty(path))
             return;
 
-        // ¸ğµç ÇÏÀ§ µğ·ºÅä¸® Æ÷ÇÔÇÏ¿© »ı¼º
+        // ëª¨ë“  ê²½ë¡œ êµ¬ë¶„ìë¥¼ í‘œì¤€í™”í•˜ì—¬ ì²˜ë¦¬
         string normalizedPath = path.Replace("\\", "/");
         if (!Directory.Exists(normalizedPath))
         {
@@ -45,13 +50,13 @@ public abstract class BaseScriptCreator : Editor
     {
         if (string.IsNullOrEmpty(deleteFileName))
         {
-            Debug.LogWarning("ÆÄÀÏ ÀÌ¸§ÀÌ ºñ¾î ÀÖ½À´Ï´Ù.");
+            Debug.LogWarning("íŒŒì¼ ì´ë¦„ì´ ê³µë°± ìƒíƒœì…ë‹ˆë‹¤.");
             return false;
         }
 
         if (string.IsNullOrEmpty(folderPath))
         {
-            Debug.LogWarning("Æú´õ ÀÌ¸§ÀÌ ºñ¾î ÀÖ½À´Ï´Ù.");
+            Debug.LogWarning("í´ë” ì´ë¦„ì´ ê³µë°± ìƒíƒœì…ë‹ˆë‹¤.");
             return false;
         }
 
@@ -59,7 +64,7 @@ public abstract class BaseScriptCreator : Editor
 
         if (!Directory.Exists(absolutePath))
         {
-            Debug.LogWarning("Æú´õ °æ·Î°¡ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù.");
+            Debug.LogWarning("í´ë” ê²½ë¡œê°€ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤.");
             return false;
         }
 
@@ -71,15 +76,15 @@ public abstract class BaseScriptCreator : Editor
 
             if (fileName == deleteFileName)
             {
-                // »èÁ¦
+                // ì‚­ì œ
                 File.Delete(filePath);
                 string metaFile = filePath + ".meta";
                 if (File.Exists(metaFile))
                     File.Delete(metaFile);
 
-                Debug.Log($"ÆÄÀÏ '{deleteFileName}' »èÁ¦µÊ: {filePath}");
+                Debug.Log($"íŒŒì¼ '{deleteFileName}' ì‚­ì œë¨: {filePath}");
 
-                // ºó Æú´õ ÀÚµ¿ »èÁ¦
+                // ë¹ˆ í´ë” ìë™ ì‚­ì œ
                 string fileFolder = Path.GetDirectoryName(filePath);
                 DeleteIfEmptyFolder(fileFolder);
 
@@ -88,7 +93,7 @@ public abstract class BaseScriptCreator : Editor
             }
         }
 
-        Debug.LogWarning($"'{deleteFileName}' ÆÄÀÏÀ» ÇØ´ç Æú´õ ³»¿¡¼­ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+        Debug.LogWarning($"'{deleteFileName}' íŒŒì¼ì„ í•´ë‹¹ í´ë” ê²½ë¡œì—ì„œ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
         return false;
     }
 
@@ -97,7 +102,7 @@ public abstract class BaseScriptCreator : Editor
         if (!Directory.Exists(folderPath))
             return;
 
-        // ÆÄÀÏÀÌ ¾ø°í, ¼­ºê Æú´õµµ ¾øÀ¸¸é »èÁ¦
+        // í´ë”ê°€ ë¹„ì–´ìˆê³ , ë‹¤ë¥¸ íŒŒì¼ë“¤ì´ ì—†ëŠ”ì§€ í™•ì¸
         bool isEmpty = Directory.GetFiles(folderPath).Length == 0 &&
                        Directory.GetDirectories(folderPath).Length == 0;
 
@@ -108,7 +113,76 @@ public abstract class BaseScriptCreator : Editor
             if (File.Exists(metaFile))
                 File.Delete(metaFile);
 
-            Debug.Log($"ºó Æú´õ »èÁ¦µÊ: {folderPath}");
+            Debug.Log($"ë¹ˆ í´ë” ì‚­ì œë¨: {folderPath}");
+        }
+    }
+    
+    // Ping ê¸°ëŠ¥ì„ ìœ„í•œ ìœ í‹¸ë¦¬í‹° ë©”ì„œë“œ
+    protected virtual void PingFolder(string folderPath)
+    {
+        if (string.IsNullOrEmpty(folderPath))
+        {
+            Debug.LogWarning("ê²½ë¡œê°€ ë¹„ì–´ìˆìŠµë‹ˆë‹¤.");
+            return;
+        }
+
+        // Assets í´ë” ê¸°ì¤€ìœ¼ë¡œ ìƒëŒ€ ê²½ë¡œ ë§Œë“¤ê¸°
+        string assetsRelativePath = folderPath;
+        if (folderPath.StartsWith(Application.dataPath))
+        {
+            assetsRelativePath = "Assets" + folderPath.Substring(Application.dataPath.Length);
+        }
+        else if (!folderPath.StartsWith("Assets/"))
+        {
+            // StringDefine.PATH_SCRIPT ë“±ì´ ì´ë¯¸ Assets/ë¡œ ì‹œì‘í•˜ë¯€ë¡œ ì¤‘ë³µ ë°©ì§€
+            assetsRelativePath = folderPath.TrimStart('/');
+        }
+
+        // ê²½ë¡œë¥¼ í‘œì¤€í™”
+        assetsRelativePath = assetsRelativePath.Replace("\\", "/");
+
+        // í´ë”ê°€ ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë©´ ìƒì„± ì—¬ë¶€ í™•ì¸
+        if (!Directory.Exists(assetsRelativePath) && !AssetDatabase.IsValidFolder(assetsRelativePath))
+        {
+            if (EditorUtility.DisplayDialog("í´ë” ìƒì„±", 
+                $"í´ë”ê°€ ì¡´ì¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.\n'{assetsRelativePath}'\n\ní´ë”ë¥¼ ìƒì„±í•˜ì‹œê² ìŠµë‹ˆê¹Œ?", 
+                "ìƒì„±", "ì·¨ì†Œ"))
+            {
+                // í´ë” ìƒì„±
+                string[] pathParts = assetsRelativePath.Split('/');
+                string currentPath = pathParts[0]; // "Assets"
+                
+                for (int i = 1; i < pathParts.Length; i++)
+                {
+                    string newPath = currentPath + "/" + pathParts[i];
+                    if (!AssetDatabase.IsValidFolder(newPath))
+                    {
+                        AssetDatabase.CreateFolder(currentPath, pathParts[i]);
+                    }
+                    currentPath = newPath;
+                }
+                
+                AssetDatabase.Refresh();
+                Debug.Log($"í´ë” ìƒì„± ì™„ë£Œ: {assetsRelativePath}");
+            }
+            else
+            {
+                Debug.Log("í´ë” ìƒì„±ì´ ì·¨ì†Œë˜ì—ˆìŠµë‹ˆë‹¤.");
+                return;
+            }
+        }
+
+        // í´ë”ë¥¼ Project ì°½ì—ì„œ í•˜ì´ë¼ì´íŠ¸
+        UnityEngine.Object folderObj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetsRelativePath);
+        if (folderObj != null)
+        {
+            EditorGUIUtility.PingObject(folderObj);
+            Selection.activeObject = folderObj;
+            Debug.Log($"í´ë”ë¡œ ì´ë™: {assetsRelativePath}");
+        }
+        else
+        {
+            Debug.LogWarning($"í´ë” ê°ì²´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {assetsRelativePath}");
         }
     }
 }

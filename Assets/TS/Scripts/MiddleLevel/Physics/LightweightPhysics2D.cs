@@ -171,7 +171,7 @@ public class LightweightPhysics2D : MonoBehaviour
         else
         {
             // 일반 지면 충돌
-            position = separation;
+            position += separation;
 
             // 충돌 노멀 계산
             Vector2 normal = separation.normalized;

@@ -45,13 +45,13 @@ public class UIScriptCreator : BaseScriptCreator
         CreateDirectoryIfNotExist(viewPath);
         CreateDirectoryIfNotExist(createPrefabPath);
 
-        // Unit ÀÇ °æ¿ì
+        // Unit ï¿½ï¿½ ï¿½ï¿½ï¿½
         if(selectedUIType == UIScriptType.Unit)
         {
             CreateScript(modelPath, createModelName, GenerateUnitModelCode(assetName));
             CreateScript(viewPath, createViewName, GenerateUnitCode(assetName));
         }
-        // View, Popup ÀÇ °æ¿ì
+        // View, Popup ï¿½ï¿½ ï¿½ï¿½ï¿½
         else
         {
             string controllerPath = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Controller/{selectedUIType}");
@@ -101,18 +101,32 @@ public class UIScriptCreator : BaseScriptCreator
         int uiCount = uiTypes.GetLength(0);
 
         if (uiCount == 0)
+        {
+            EditorGUILayout.HelpBox("ì‚­ì œí•  UI ìš”ì†Œê°€ ì—†ìŠµë‹ˆë‹¤.", MessageType.Info);
             return;
+        }
+
+        EditorGUILayout.LabelField("UI ìŠ¤í¬ë¦½íŠ¸ ì‚­ì œ", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("ì£¼ì˜: ì‚­ì œëœ UIëŠ” ë³µêµ¬í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.", MessageType.Warning);
+        EditorGUILayout.Space();
 
         for (int i = 0; i < uiCount; i++)
         {
             UIType uiType = (UIType)uiTypes.GetValue(i);
 
-            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.BeginHorizontal("box");
             {
-                if (GUILayout.Button($"Delete {uiType}"))
+                EditorGUILayout.LabelField(uiType.ToString(), GUILayout.ExpandWidth(true));
+                
+                GUI.backgroundColor = Color.red;
+                if (GUILayout.Button("ì‚­ì œ", GUILayout.Width(60)))
                 {
-                    DeleteUI(uiType);
+                    if (EditorUtility.DisplayDialog("í™•ì¸", $"{uiType} ìŠ¤í¬ë¦½íŠ¸ë¥¼ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?", "ì‚­ì œ", "ì·¨ì†Œ"))
+                    {
+                        DeleteUI(uiType);
+                    }
                 }
+                GUI.backgroundColor = Color.white;
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -120,7 +134,124 @@ public class UIScriptCreator : BaseScriptCreator
 
     public override void DrawCustomOptions()
     {
-        selectedUIType = (UIScriptType)EditorGUILayout.EnumPopup("Select UI Type", selectedUIType);
+        EditorGUILayout.LabelField("ì˜µì…˜ ì„¤ì •", EditorStyles.boldLabel);
+        
+        EditorGUILayout.BeginVertical("helpbox");
+        {
+            selectedUIType = (UIScriptType)EditorGUILayout.EnumPopup("UI íƒ€ì… ì„ íƒ", selectedUIType);
+            
+            // UI íƒ€ì…ì— ë”°ë¥¸ ì„¤ëª… ì œê³µ
+            string description = selectedUIType switch
+            {
+                UIScriptType.View => "View: ì „ì²´ í™”ë©´ì„ ì°¨ì§€í•˜ëŠ” UI (ì˜ˆ: ë©”ì¸ ë©”ë‰´, ê²Œì„ í™”ë©´)",
+                UIScriptType.Popup => "Popup: ì„ì‹œë¡œ ë‚˜íƒ€ë‚˜ëŠ” UI (ì˜ˆ: ëŒ€í™”ìƒì, ì•Œë¦¼ì°½)",
+                UIScriptType.Unit => "Unit: ì¬ì‚¬ìš© ê°€ëŠ¥í•œ ì‘ì€ UI ìš”ì†Œ (ì˜ˆ: ë¦¬ìŠ¤íŠ¸ ì•„ì´í…œ, ë²„íŠ¼)",
+                _ => ""
+            };
+            
+            if (!string.IsNullOrEmpty(description))
+            {
+                EditorGUILayout.HelpBox(description, MessageType.Info);
+            }
+        }
+        EditorGUILayout.EndVertical();
+    }
+    
+    public override List<string> GetFinalPaths(string addPath, string assetName)
+    {
+        var paths = new List<string>();
+        
+        string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{selectedUIType}");
+        string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{selectedUIType}");
+        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedUIType);
+        string createViewName = $"{assetName}{selectedUIType}";
+        string createModelName = $"{assetName}{selectedUIType}Model";
+        
+        if (!string.IsNullOrEmpty(addPath))
+        {
+            modelPath = Path.Combine(modelPath, addPath);
+            viewPath = Path.Combine(viewPath, addPath);
+            createPrefabPath = Path.Combine(createPrefabPath, addPath);
+        }
+        
+        // Unit íƒ€ì…ì€ ë‹¤ë¥¸ êµ¬ì¡°
+        if (selectedUIType == UIScriptType.Unit)
+        {
+            paths.Add($"{modelPath.Replace("\\", "/")}/{createModelName}.cs");
+            paths.Add($"{viewPath.Replace("\\", "/")}/{createViewName}.cs");
+        }
+        else
+        {
+            // View, Popup íƒ€ì…
+            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Controller/{selectedUIType}");
+            if (!string.IsNullOrEmpty(addPath))
+                controllerPath = Path.Combine(controllerPath, addPath);
+            
+            paths.Add($"{controllerPath.Replace("\\", "/")}/{assetName}Controller.cs");
+            paths.Add($"{modelPath.Replace("\\", "/")}/{createModelName}.cs");
+            paths.Add($"{viewPath.Replace("\\", "/")}/{createViewName}.cs");
+        }
+        
+        // í”„ë¦¬íŒ¹ ê²½ë¡œ
+        paths.Add($"{createPrefabPath.Replace("\\", "/")}/{createViewName}.prefab");
+        
+        return paths;
+    }
+    
+    public override void DrawPathPreview(string addPath, string assetName)
+    {
+        EditorGUILayout.LabelField("ìƒì„± ê²½ë¡œ ë¯¸ë¦¬ë³´ê¸°", EditorStyles.boldLabel);
+        
+        EditorGUILayout.BeginVertical("helpbox");
+        {
+            var finalPaths = GetFinalPaths(addPath, assetName);
+            
+            if (finalPaths.Count == 0)
+            {
+                EditorGUILayout.HelpBox("ìƒì„±ë  íŒŒì¼ì´ ì—†ìŠµë‹ˆë‹¤.", MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.LabelField($"ì´ {finalPaths.Count}ê°œ íŒŒì¼ì´ ìƒì„±ë©ë‹ˆë‹¤:", EditorStyles.miniLabel);
+                EditorGUILayout.Space();
+                
+                foreach (string path in finalPaths)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    {
+                        string normalizedPath = path.Replace("\\", "/");
+                        
+                        // íŒŒì¼ íƒ€ì… ì•„ì´ì½˜ í‘œì‹œ
+                        string fileType = Path.GetExtension(normalizedPath);
+                        string icon = fileType switch
+                        {
+                            ".cs" => "cs Script Icon",
+                            ".prefab" => "Prefab Icon", 
+                            _ => "DefaultAsset Icon"
+                        };
+                        
+                        GUIContent content = EditorGUIUtility.IconContent(icon);
+                        EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
+                        
+                        EditorGUILayout.LabelField(normalizedPath, EditorStyles.miniLabel, GUILayout.ExpandWidth(true));
+                        
+                        // Ping ë²„íŠ¼
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
+                        if (GUILayout.Button("ğŸ“", GUILayout.Width(25), GUILayout.Height(16)))
+                        {
+                            PingFolder(folderPath);
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                
+                EditorGUILayout.Space();
+                EditorGUILayout.HelpBox("ğŸ“ ë²„íŠ¼ì„ í´ë¦­í•˜ë©´ í•´ë‹¹ í´ë”ë¡œ ì´ë™í•©ë‹ˆë‹¤.", MessageType.Info);
+            }
+        }
+        EditorGUILayout.EndVertical();
+        
+        EditorGUILayout.Space();
     }
 
     private string GenerateModelCode(string name)
@@ -206,7 +337,7 @@ public class {name}Controller : BaseController<{name}, {name}Model>
             bool isFirstPopup = item1.Contains("Popup");
             bool isSecondPopup = item2.Contains("Popup");
 
-            // °°Àº Á¾·ùÀÇ UIÀÎ °æ¿ì
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ UIï¿½ï¿½ ï¿½ï¿½ï¿½
             if ((isFirstPopup && isSecondPopup) ||
             (!isFirstPopup && !isSecondPopup))
             {
@@ -221,42 +352,42 @@ public class {name}Controller : BaseController<{name}, {name}Model>
         modifiedLines.Add("}");
 
         File.WriteAllLines(typeEnumPath, modifiedLines);
-        Debug.Log("ÆÄÀÏ ¼öÁ¤ ¿Ï·á: " + typeEnumPath);
+        Debug.Log($"UI ì—´ê±°í˜• ì—…ë°ì´íŠ¸ ì™„ë£Œ: {typeEnumPath}");
     }
 
     private void AddScriptToPrefab(string prefabPath, string scriptName, UIScriptType uiScriptType)
     {
-        // ÇÁ¸®ÆÕ ·Îµå
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab == null)
         {
-            Debug.LogError($"ÇÁ¸®ÆÕÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: {prefabPath}");
+            Debug.LogError($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½: {prefabPath}");
             return;
         }
 
-        // ÄÄÆ÷³ÍÆ® Å¸ÀÔ Ã£±â
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® Å¸ï¿½ï¿½ Ã£ï¿½ï¿½
         Type scriptType = GetTypeFromUnityAssembly(scriptName, uiScriptType);
         if (scriptType == null)
         {
-            Debug.LogError($"½ºÅ©¸³Æ® '{scriptName}'À»(¸¦) Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogError($"ï¿½ï¿½Å©ï¿½ï¿½Æ® '{scriptName}'ï¿½ï¿½(ï¿½ï¿½) Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
             return;
         }
 
-        // ÇÁ¸®ÆÕ¿¡ ½ºÅ©¸³Æ® Ãß°¡ (ÀÌ¹Ì Ãß°¡µÇ¾î ÀÖÀ¸¸é ¹«½Ã)
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Õ¿ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ® ï¿½ß°ï¿½ (ï¿½Ì¹ï¿½ ï¿½ß°ï¿½ï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         if (prefab.GetComponent(scriptType) == null)
         {
             GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
             instance.AddComponent(scriptType);
 
-            // ÇÁ¸®ÆÕ Àû¿ë ÈÄ »èÁ¦
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
             GameObject.DestroyImmediate(instance);
 
-            Debug.Log($"'{scriptName}' ½ºÅ©¸³Æ®¸¦ ÇÁ¸®ÆÕ '{prefab.name}'¿¡ Ãß°¡Çß½À´Ï´Ù.");
+            Debug.Log($"'{scriptName}' ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ '{prefab.name}'ï¿½ï¿½ ï¿½ß°ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
         }
         else
         {
-            Debug.Log($"ÇÁ¸®ÆÕ '{prefab.name}'¿¡´Â ÀÌ¹Ì '{scriptName}' ½ºÅ©¸³Æ®°¡ Ãß°¡µÇ¾î ÀÖ½À´Ï´Ù.");
+            Debug.Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ '{prefab.name}'ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ '{scriptName}' ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ß°ï¿½ï¿½Ç¾ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.");
         }
     }
 
@@ -295,12 +426,12 @@ public class {name}Controller : BaseController<{name}, {name}Model>
         }
 
         File.WriteAllLines(typeEnumPath, modifiedLines);
-        Debug.Log("ÆÄÀÏ ¼öÁ¤ ¿Ï·á: " + typeEnumPath);
+        Debug.Log($"UI ì—´ê±°í˜• ì—…ë°ì´íŠ¸ ì™„ë£Œ: {typeEnumPath}");
     }
 
     private Type GetTypeFromUnityAssembly(string typeName, UIScriptType uiScriptType)
     {
-        var unityAssembly = uiScriptType == UIScriptType.Unit ? typeof(BaseUnit).Assembly : typeof(BaseView).Assembly; // UnityEngine ¾î¼Àºí¸®¸¸ °Ë»ö
+        var unityAssembly = uiScriptType == UIScriptType.Unit ? typeof(BaseUnit).Assembly : typeof(BaseView).Assembly; // UnityEngine ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½
         var types = unityAssembly.GetTypes();
 
         return types.FirstOrDefault(t => t.Name == typeName);
