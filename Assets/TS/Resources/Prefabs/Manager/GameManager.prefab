@@ -33,6 +33,7 @@ Transform:
   - {fileID: 4194627543058786326}
   - {fileID: 4386019993051515750}
   - {fileID: 830782464544235364}
+  - {fileID: 7394863741112358117}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6250044982121014311
@@ -47,6 +48,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4ab0b00fe5e599469a3a45cda9ba6ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  dragSpeed: 0.03
+  dragRange: {fileID: 4267798726671495052}
+  dragPadding: {x: 0, y: 0, z: 0, w: 0}
+  isLimitDragX: 1
+  isLimitDragY: 1
+--- !u!1 &6512728254771524658
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7394863741112358117}
+  - component: {fileID: 1939930256528808739}
+  m_Layer: 0
+  m_Name: EventSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7394863741112358117
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6512728254771524658}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3214262558968597275}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1939930256528808739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6512728254771524658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
 --- !u!1 &6569619806010914113
 GameObject:
   m_ObjectHideFlags: 0
@@ -167,6 +220,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: CameraManager
       objectReference: {fileID: 0}
+    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 6250044982121014311}
+    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnDrag
+      objectReference: {fileID: 0}
+    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: GameManager, HighLevel
+      objectReference: {fileID: 0}
+    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6660272452424060912, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
     - {fileID: 4838116470969281231, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
@@ -178,6 +255,11 @@ PrefabInstance:
 --- !u!20 &1100246149445140831 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 2944495126145470101, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+  m_PrefabInstance: {fileID: 2853081750336065482}
+  m_PrefabAsset: {fileID: 0}
+--- !u!61 &4267798726671495052 stripped
+BoxCollider2D:
+  m_CorrespondingSourceObject: {fileID: 2063329127576903750, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
   m_PrefabInstance: {fileID: 2853081750336065482}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &4386019993051515750 stripped

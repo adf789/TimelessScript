@@ -45,7 +45,8 @@ public class PickingSupport : MonoBehaviour
 
     private void Awake()
     {
-       
+        if (pickingCamera == null)
+            pickingCamera = GetComponent<Camera>();
     }
 
     private void Start()
@@ -271,7 +272,6 @@ public class PickingSupport : MonoBehaviour
         Vector3 camOffset = mouseWorldBeforeZoom - mouseWorldAfterZoom;
         pickingCamera.transform.position += camOffset;
         
-        OnDrag();
         pickObjects.Clear();
     }
 
