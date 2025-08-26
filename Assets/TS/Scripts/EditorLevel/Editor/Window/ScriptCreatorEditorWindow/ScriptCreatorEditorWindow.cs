@@ -27,7 +27,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
     public static void ShowWindow()
     {
         var window = GetWindow<ScriptCreatorEditorWindow>("Unity Script Creator");
-        window.minSize = new Vector2(400, 500);
+        window.minSize = new Vector2(400, 600);
         window.Show();
     }
 

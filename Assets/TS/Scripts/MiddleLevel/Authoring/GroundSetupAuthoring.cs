@@ -85,16 +85,13 @@ public class GroundSetupAuthoring : MonoBehaviour
             {
                 presetBuffer.Add(new GroundPresetBuffer
                 {
-                    preset = new GroundPreset
-                    {
-                        name = preset.name,
-                        groundType = preset.groundType,
-                        size = new float2(preset.size.x, preset.size.y),
-                        bounciness = preset.bounciness,
-                        friction = preset.friction,
-                        isOneWayPlatform = preset.isOneWayPlatform,
-                        gizmoColor = new float4(preset.gizmoColor.r, preset.gizmoColor.g, preset.gizmoColor.b, preset.gizmoColor.a)
-                    }
+                    name = preset.name,
+                    groundType = preset.groundType,
+                    size = new float2(preset.size.x, preset.size.y),
+                    bounciness = preset.bounciness,
+                    friction = preset.friction,
+                    isOneWayPlatform = preset.isOneWayPlatform,
+                    gizmoColor = new float4(preset.gizmoColor.r, preset.gizmoColor.g, preset.gizmoColor.b, preset.gizmoColor.a)
                 });
             }
         }

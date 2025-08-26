@@ -84,13 +84,13 @@ public class EditorScriptCreator : BaseScriptCreator
             case EditorScriptType.Window:
                 if (!string.IsNullOrEmpty(addPath))
                     path = Path.Combine(path, addPath);
-                paths.Add($"{path.Replace("\\", "/")}/{assetName}EditorWindow.cs");
+                paths.Add($"{path.Replace("\\", "/")}{assetName}EditorWindow.cs");
                 break;
 
             case EditorScriptType.Inspector:
                 if (!string.IsNullOrEmpty(addPath))
                     path = Path.Combine(path, addPath);
-                paths.Add($"{path.Replace("\\", "/")}/{assetName}Inspector.cs");
+                paths.Add($"{path.Replace("\\", "/")}{assetName}Inspector.cs");
                 break;
         }
         

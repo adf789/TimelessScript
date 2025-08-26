@@ -23,8 +23,8 @@ public class ColliderAuthoring : MonoBehaviour
                 position = float2.zero // 런타임에 업데이트
             });
             
-            AddComponent(entity, new ColliderBounds());
-            AddComponent(entity, new CollisionInfo());
+            AddComponent(entity, new ColliderBoundsComponent());
+            AddComponent(entity, new CollisionInfoComponent());
             AddBuffer<CollisionBuffer>(entity);
         }
     }

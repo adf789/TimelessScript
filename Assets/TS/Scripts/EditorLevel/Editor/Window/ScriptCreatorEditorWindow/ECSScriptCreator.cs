@@ -9,14 +9,15 @@ public class ECSScriptCreator : BaseScriptCreator
     private enum EcsScriptType
     {
         Component,
+        Buffer,
         Authoring,
         Job,
         System,
     }
 
     // 그룹별 스크립트 체크박스들
-    private bool[] groupCheckboxes = new bool[4] { false, false, false, false };
-    private string[] checkboxLabels = { "Component", "Authoring", "Job", "System" };
+    private bool[] groupCheckboxes = new bool[5] { false, false, false, false, false };
+    private string[] checkboxLabels = { "Component", "Buffer", "Authoring", "Job", "System" };
 
     public override void Create(string addPath, string assetName)
     {
@@ -27,6 +28,7 @@ public class ECSScriptCreator : BaseScriptCreator
         }
 
         bool checkComponent = groupCheckboxes[(int)EcsScriptType.Component];
+        bool checkBuffer = groupCheckboxes[(int)EcsScriptType.Buffer];
         bool checkAuthoring = groupCheckboxes[(int)EcsScriptType.Authoring];
         bool checkJob = groupCheckboxes[(int)EcsScriptType.Job];
         bool checkSystem = groupCheckboxes[(int)EcsScriptType.System];
@@ -40,6 +42,17 @@ public class ECSScriptCreator : BaseScriptCreator
 
             CreateDirectoryIfNotExist(componentPath);
             CreateScript(componentPath, $"{assetName}Component", GenerateComponentCode(assetName));
+        }
+
+        if (checkBuffer)
+        {
+            string componentPath = string.Format(StringDefine.PATH_SCRIPT, "LowLevel/Data/BufferData");
+
+            if(!string.IsNullOrEmpty(addPath))
+                componentPath = Path.Combine(componentPath, addPath);
+
+            CreateDirectoryIfNotExist(componentPath);
+            CreateScript(componentPath, $"{assetName}Buffer", GenerateBufferCode(assetName));
         }
 
         if (checkAuthoring)
@@ -94,6 +107,7 @@ public class ECSScriptCreator : BaseScriptCreator
                     string description = checkboxLabels[i] switch
                     {
                         "Component" => "Component - ECS 데이터 구조체",
+                        "Buffer" => "Buffer - ECS 버퍼 역할 데이터 구조체",
                         "Authoring" => "Authoring - MonoBehaviour에서 ECS로 데이터 변환",
                         "Job" => "Job - 병렬 처리를 위한 Job 시스템",
                         "System" => "System - ECS 업데이트 로직",
@@ -116,6 +130,7 @@ public class ECSScriptCreator : BaseScriptCreator
         var paths = new List<string>();
         
         bool checkComponent = groupCheckboxes[(int)EcsScriptType.Component];
+        bool checkBuffer = groupCheckboxes[(int)EcsScriptType.Buffer];
         bool checkAuthoring = groupCheckboxes[(int)EcsScriptType.Authoring];
         bool checkJob = groupCheckboxes[(int)EcsScriptType.Job];
         bool checkSystem = groupCheckboxes[(int)EcsScriptType.System];
@@ -125,7 +140,15 @@ public class ECSScriptCreator : BaseScriptCreator
             string componentPath = string.Format(StringDefine.PATH_SCRIPT, "LowLevel/Data/ComponentData");
             if (!string.IsNullOrEmpty(addPath))
                 componentPath = Path.Combine(componentPath, addPath);
-            paths.Add($"{componentPath.Replace("\\", "/")}/{assetName}Component.cs");
+            paths.Add($"{componentPath.Replace("\\", "/")}{assetName}Component.cs");
+        }
+
+        if (checkBuffer)
+        {
+            string componentPath = string.Format(StringDefine.PATH_SCRIPT, "LowLevel/Data/BufferData");
+            if (!string.IsNullOrEmpty(addPath))
+                componentPath = Path.Combine(componentPath, addPath);
+            paths.Add($"{componentPath.Replace("\\", "/")}{assetName}Buffer.cs");
         }
         
         if (checkAuthoring)
@@ -133,7 +156,7 @@ public class ECSScriptCreator : BaseScriptCreator
             string authoringPath = string.Format(StringDefine.PATH_SCRIPT, "MiddleLevel/Authoring");
             if (!string.IsNullOrEmpty(addPath))
                 authoringPath = Path.Combine(authoringPath, addPath);
-            paths.Add($"{authoringPath.Replace("\\", "/")}/{assetName}Authoring.cs");
+            paths.Add($"{authoringPath.Replace("\\", "/")}{assetName}Authoring.cs");
         }
         
         if (checkJob)
@@ -141,7 +164,7 @@ public class ECSScriptCreator : BaseScriptCreator
             string jobPath = string.Format(StringDefine.PATH_SCRIPT, "MiddleLevel/Job");
             if (!string.IsNullOrEmpty(addPath))
                 jobPath = Path.Combine(jobPath, addPath);
-            paths.Add($"{jobPath.Replace("\\", "/")}/{assetName}Job.cs");
+            paths.Add($"{jobPath.Replace("\\", "/")}{assetName}Job.cs");
         }
         
         if (checkSystem)
@@ -149,7 +172,7 @@ public class ECSScriptCreator : BaseScriptCreator
             string systemPath = string.Format(StringDefine.PATH_SCRIPT, "HighLevel/System");
             if (!string.IsNullOrEmpty(addPath))
                 systemPath = Path.Combine(systemPath, addPath);
-            paths.Add($"{systemPath.Replace("\\", "/")}/{assetName}System.cs");
+            paths.Add($"{systemPath.Replace("\\", "/")}{assetName}System.cs");
         }
         
         return paths;
@@ -187,6 +210,8 @@ public class ECSScriptCreator : BaseScriptCreator
                         string fileName = Path.GetFileNameWithoutExtension(normalizedPath);
                         if (fileName.EndsWith("Component"))
                             labelStyle.normal.textColor = Color.cyan;
+                        else if (fileName.EndsWith("Buffer"))
+                            labelStyle.normal.textColor = Color.aquamarine;
                         else if (fileName.EndsWith("Authoring"))
                             labelStyle.normal.textColor = Color.green;
                         else if (fileName.EndsWith("Job"))
@@ -219,8 +244,21 @@ public class ECSScriptCreator : BaseScriptCreator
     {
         return $@"
 using Unity.Entities;
+using Unity.Mathematics;
 
 public struct {name}Component : IComponentData
+{{
+    
+}}";
+    }
+
+    private string GenerateBufferCode(string name)
+    {
+        return $@"
+using Unity.Entities;
+using Unity.Mathematics;
+
+public struct {name}Buffer : IBufferElementData
 {{
     
 }}";

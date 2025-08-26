@@ -29,7 +29,8 @@ public class PhysicsAuthoring : MonoBehaviour
                 isStatic = authoring.isStatic
             });
             
-            AddComponent(entity, new PhysicsEvents());
+            AddComponent(entity, new PhysicsEventsComponent());
+            
             AddBuffer<TriggerBuffer>(entity);
         }
     }

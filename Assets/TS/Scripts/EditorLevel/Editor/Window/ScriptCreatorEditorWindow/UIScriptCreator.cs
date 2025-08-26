@@ -177,8 +177,8 @@ public class UIScriptCreator : BaseScriptCreator
         // Unit 타입은 다른 구조
         if (selectedUIType == UIScriptType.Unit)
         {
-            paths.Add($"{modelPath.Replace("\\", "/")}/{createModelName}.cs");
-            paths.Add($"{viewPath.Replace("\\", "/")}/{createViewName}.cs");
+            paths.Add($"{modelPath.Replace("\\", "/")}{createModelName}.cs");
+            paths.Add($"{viewPath.Replace("\\", "/")}{createViewName}.cs");
         }
         else
         {
@@ -187,13 +187,13 @@ public class UIScriptCreator : BaseScriptCreator
             if (!string.IsNullOrEmpty(addPath))
                 controllerPath = Path.Combine(controllerPath, addPath);
             
-            paths.Add($"{controllerPath.Replace("\\", "/")}/{assetName}Controller.cs");
-            paths.Add($"{modelPath.Replace("\\", "/")}/{createModelName}.cs");
-            paths.Add($"{viewPath.Replace("\\", "/")}/{createViewName}.cs");
+            paths.Add($"{controllerPath.Replace("\\", "/")}{assetName}Controller.cs");
+            paths.Add($"{modelPath.Replace("\\", "/")}{createModelName}.cs");
+            paths.Add($"{viewPath.Replace("\\", "/")}{createViewName}.cs");
         }
         
         // 프리팹 경로
-        paths.Add($"{createPrefabPath.Replace("\\", "/")}/{createViewName}.prefab");
+        paths.Add($"{createPrefabPath.Replace("\\", "/")}{createViewName}.prefab");
         
         return paths;
     }

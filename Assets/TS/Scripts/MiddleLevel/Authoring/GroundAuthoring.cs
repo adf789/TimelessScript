@@ -24,7 +24,7 @@ public class GroundAuthoring : MonoBehaviour
             });
             
             // 초기 충돌 데이터
-            AddComponent(entity, new GroundCollisionData());
+            AddComponent(entity, new GroundCollisionComponent());
         }
     }
 }
