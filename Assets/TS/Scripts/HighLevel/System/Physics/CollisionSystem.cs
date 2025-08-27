@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 
 [BurstCompile]
-public partial struct LightweightCollisionSystem : ISystem
+public partial struct CollisionSystem : ISystem
 {
     private CollisionSystemComponent collisionConfig;
     

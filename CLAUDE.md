@@ -91,3 +91,61 @@ The project includes extensive custom editor tools:
 - ECS components follow Unity DOTS conventions with authoring/runtime separation
 - Resource loading uses type-based registry pattern
 - Editor code is strictly separated in EditorLevel assembly
+
+## File Reference Format
+
+For VSCode integrated terminal with Claude Code, use these settings and formats:
+
+### VSCode Terminal Settings
+Add to `settings.json` to prevent path wrapping and enable file links:
+```json
+{
+  "terminal.integrated.enableFileLinks": true,
+  "terminal.integrated.wordWrap": false,
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.lineHeight": 1.2
+}
+```
+
+### File Path Format (Clickable Links)
+For long paths that wrap in terminal, use multiple format options:
+
+**Option 1: Full Path** (if terminal is wide enough):
+- `.\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12`
+
+**Option 2: Shortened Names** (for narrow terminals):
+- `.\Assets\TS\Scripts\LowLevel\Data\CompData\Physics\LightweightPhysicsComp.cs:12`
+
+**Option 3: DOS 8.3 Format** (Windows short names):
+- `.\ASSETS~1\TS\SCRIPT~1\LOWLEV~1\DATA\COMPDA~1\PHYSIC~1\LIGHTW~1.CS:12`
+
+**Option 4: Copy-paste format**:
+```
+.\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12
+```
+
+### File Reference Structure
+```
+Physics System Files:
+- .\Assets\TS\Scripts\HighLevel\System\Physics\PhysicsSystem.cs:22
+- .\Assets\TS\Scripts\MiddleLevel\Job\Physics\PhysicsUpdateJob.cs:23  
+- .\Assets\TS\Scripts\MiddleLevel\Job\Physics\PhysicsCollisionJob.cs:36
+- .\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12
+```
+
+### Terminal Width Management
+1. **Expand terminal panel**: Drag terminal panel height to maximum
+2. **Horizontal scroll**: Use `Shift + Mouse Wheel` to scroll horizontally  
+3. **Word wrap off**: Prevents automatic line breaking of file paths
+4. **Ctrl+Click**: Click on any part of the file path to open
+
+### Alternative: Copy-Paste Commands
+For very long paths, provide both clickable link and command:
+```
+File: LightweightPhysicsComponent.cs:12
+Path: .\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12  
+Cmd:  code -g ".\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12"
+```
+
+Environment: Windows + VSCode integrated terminal + Claude Code CLI

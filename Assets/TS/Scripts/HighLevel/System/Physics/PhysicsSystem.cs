@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 [BurstCompile]
-public partial struct LightweightPhysicsSystem : ISystem
+public partial struct PhysicsSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
