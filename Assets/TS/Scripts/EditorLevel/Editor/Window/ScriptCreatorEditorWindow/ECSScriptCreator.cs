@@ -295,7 +295,8 @@ using Unity.Transforms;
 public partial struct {name}Job : IJobEntity
 {{
     
-    public void Execute(ref LocalTransform localTransform)
+    public void Execute(Entity entity,
+    ref LocalTransform localTransform)
     {{
 
     }}

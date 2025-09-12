@@ -2,11 +2,12 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 
 [BurstCompile]
-public partial struct CollisionDetectionJob : IJobEntity
+public partial struct CollisionDetectionJob : IJob
 {
     [ReadOnly] public NativeArray<Entity> allEntities;
     [ReadOnly] public NativeArray<ColliderBoundsComponent> allBounds;

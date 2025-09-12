@@ -344,52 +344,8 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 3521715169015592492, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7497076683051236044, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1912325871}
-    - targetCorrespondingSourceObject: {fileID: 7497076683051236044, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1912325872}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
---- !u!1 &1912325870 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7497076683051236044, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  m_PrefabInstance: {fileID: 1912325869}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1912325871
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1912325870}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdf5bf0bda3d82645bf8084584b230a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::PhysicsAuthoring
-  velocity: {x: 0, y: 0}
-  gravity: {x: 0, y: -9.81}
-  mass: 1
-  drag: 0.98
-  useGravity: 1
-  isStatic: 0
---- !u!114 &1912325872
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1912325870}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
-  size: {x: 1.63, y: 3.72}
-  offset: {x: 0, y: 0.09}
-  isTrigger: 0
 --- !u!1 &2103076442
 GameObject:
   m_ObjectHideFlags: 0

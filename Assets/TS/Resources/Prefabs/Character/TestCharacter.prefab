@@ -123,7 +123,7 @@ MonoBehaviour:
     customFrameDelay: 
   - sourceImage: {fileID: 4199067622019808784, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
     guid: 0779a9727e271024581dd1d3d4df70c7
-    key: Interactr
+    key: Interact
     frameDelay: 1
     isCustomDelay: 0
     isDefault: 0
@@ -158,6 +158,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4448617964647131482}
+  - component: {fileID: 4019544190974294588}
+  - component: {fileID: 1210792406335689658}
   m_Layer: 0
   m_Name: TestCharacter
   m_TagString: Untagged
@@ -181,3 +183,36 @@ Transform:
   - {fileID: 7790838629798168360}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4019544190974294588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7497076683051236044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdf5bf0bda3d82645bf8084584b230a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.MiddleLevel::PhysicsAuthoring
+  velocity: {x: 0, y: 0}
+  gravity: {x: 0, y: -9.81}
+  mass: 1
+  drag: 0.98
+  useGravity: 1
+  isStatic: 0
+--- !u!114 &1210792406335689658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7497076683051236044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
+  size: {x: 1.63, y: 3.72}
+  offset: {x: 0, y: 0.09}
+  isTrigger: 0

@@ -1,6 +1,7 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 
 [BurstCompile]
 public partial struct CollisionSystem : ISystem
@@ -49,7 +50,7 @@ public partial struct CollisionSystem : ISystem
             useSpacialHashing = collisionConfig.useSpacialHashing,
             cellSize = collisionConfig.cellSize
         };
-        collisionDetectionJob.Run();
+        collisionDetectionJob.Schedule(state.Dependency).Complete();
         
         // 4. 메모리 정리 (Job 완료 후 System에서 직접 해제)
         colliderEntities.Dispose();
