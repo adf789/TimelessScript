@@ -1,30 +1,18 @@
-//=========================================================================================================
-#pragma warning disable CS1998
 using System;
-//using System.Collections;
+using UnityEngine;
+using Unity.Entities;
+using UnityEngine.UI;
 using System.Collections.Generic;
-using System.Resources;
-//using TMPro;                        // TextMeshPro 관련 클래스 모음 ( UnityEngine.UI.Text 대신 이걸 사용 )
-using Cysharp.Threading.Tasks;      // UniTask 관련 클래스 모음
-//using System.Threading;             // 쓰레드
-using UnityEngine;                  // UnityEngine 기본
-using UnityEngine.UI;               // UnityEngine의 UI 기본
-//=========================================================================================================
+using Cysharp.Threading.Tasks;
 
-public class SpriteSheetAnimationSupport : BaseUnit
+public class SpriteSheetAnimationAuthoring : MonoBehaviour
 {
-    //============================================================
-    //=========    Coding rule에 맞춰서 작업 바랍니다.   =========
-    //========= Coding rule region은 절대 지우지 마세요. =========
-    //=========    문제 시 '김철옥'에게 문의 바랍니다.   =========
-    //============================================================
-
     /// <summary>
     /// UnityEngine 기능이 있는 데이터라서
     /// 여기에 포함함
     /// </summary>
     [Serializable]
-    public class SpriteSheetNode
+    public class Node
     {
 #if UNITY_EDITOR
         public Sprite sourceImage;
@@ -36,9 +24,9 @@ public class SpriteSheetAnimationSupport : BaseUnit
         public bool isDefault;
         public int[] customFrameDelay;
 
-        public SpriteSheetNode() { }
+        public Node() { }
 
-        public SpriteSheetNode(SpriteSheetNode copyNode)
+        public Node(Node copyNode)
         {
 #if UNITY_EDITOR
             sourceImage = copyNode.sourceImage;
@@ -51,7 +39,7 @@ public class SpriteSheetAnimationSupport : BaseUnit
 
     public bool IsLoaded { get; private set; }
     public string CurrentKey { get; private set; }
-    
+
     [SerializeField]
     private SpriteRenderer spriteRenderer = null;
     [SerializeField]
@@ -62,7 +50,7 @@ public class SpriteSheetAnimationSupport : BaseUnit
 
     [Header("이미지 리스트")]
     [SerializeField]
-    public List<SpriteSheetNode> spriteSheets = new List<SpriteSheetNode>();
+    public List<Node> spriteSheets = new List<Node>();
 
     private Dictionary<string, Sprite[]> loadedSprites = null;
     private int currentSpriteSheetIndex = 0;
@@ -71,6 +59,22 @@ public class SpriteSheetAnimationSupport : BaseUnit
     private int passingFrame = 0;
     private bool isLoop = true;
 
+    private class Baker : Baker<SpriteSheetAnimationAuthoring>
+    {
+        public override void Bake(SpriteSheetAnimationAuthoring authoring)
+        {
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+            // authoring MonoBehaviour 인스턴스를 관리형 컴포넌트로 추가합니다.
+            AddComponentObject(entity, authoring);
+
+            AddComponent(entity, new SpriteSheetAnimationComponent());
+
+            AddBuffer<SpriteSheetNodeBuffer>(entity);
+        }
+
+    }
+    
     private void OnValidate()
     {
         if(spriteRenderer != null || TryGetComponent(out spriteRenderer))
@@ -378,7 +382,7 @@ public class SpriteSheetAnimationSupport : BaseUnit
         if (spriteSheets.Count <= currentSpriteSheetIndex || currentSpriteSheetIndex < 0)
             return 0;
 
-        SpriteSheetNode node = spriteSheets[currentSpriteSheetIndex];
+        Node node = spriteSheets[currentSpriteSheetIndex];
 
         if (!node.isCustomDelay)
             return node.frameDelay;
