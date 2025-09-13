@@ -1,5 +1,6 @@
 
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
@@ -14,17 +15,60 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        // 관리형 컴포넌트(MonoBehaviour)를 다룰 때는 Entities.ForEach를 사용하는 것이 가장 확실합니다.
-        // WithoutBurst()를 통해 이 코드가 메인 스레드에서 실행되어야 함을 명시합니다.
         Entities
             .WithoutBurst()
-            .ForEach((SpriteSheetAnimationAuthoring authoringComponent, ref SpriteSheetAnimationComponent animComponent) =>
+            .ForEach((SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component) =>
             {
-                // 이제 authoringComponent 변수를 통해 SpriteSheetAnimationAuthoring의
-                // public 메서드나 프로퍼티에 직접 접근할 수 있습니다.
-                // 예시: authoringComponent.SetAnimation("idle", true);
-                // 예시: authoringComponent.SetFlip(true, false);
-                Debug.LogError("Test: " + authoringComponent.name);
+                if (!authoring.IsLoaded)
+                {
+                    authoring.Initialize();
+                    authoring.LoadAnimations();
+                    return;
+                }
+
+                if (!CheckAnimationFrame(authoring, ref component))
+                    return;
+
+                authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
             }).Run();
+    }
+
+    private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    {
+        if (component.PassingFrame < authoring.GetFrameDelay(component.CurrentAnimationIndex))
+        {
+            component.PassingFrame++;
+            return false;
+        }
+        else
+        {
+            component.PassingFrame = 0;
+            return true;
+        }
+    }
+
+/// <summary>
+/// 테스트용
+/// </summary>
+/// <param name="authoring"></param>
+/// <param name="component"></param>
+/// <param name="key"></param>
+    public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component, FixedString64Bytes key)
+    {
+        if (authoring.TryGetSpriteSheetIndex(key, out var index, out var defaultKey))
+        {
+            component.CurrentKey = key;
+            component.CurrentAnimationCount = authoring.GetSpriteSheetCount(key);
+        }
+        else
+        {
+            component.CurrentKey = defaultKey;
+            component.CurrentAnimationCount = authoring.GetSpriteSheetCount(defaultKey);
+        }
+
+        component.CurrentSpriteSheetIndex = index;
+        component.CurrentAnimationIndex = -1;
+
+        authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 using Unity.Entities;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
+using Unity.Collections;
 
 public class SpriteSheetAnimationAuthoring : MonoBehaviour
 {
@@ -37,8 +37,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         }
     }
 
-    public bool IsLoaded { get; private set; }
-    public string CurrentKey { get; private set; }
+    public bool IsLoaded => loadedSprites != null;
 
     [SerializeField]
     private SpriteRenderer spriteRenderer = null;
@@ -46,18 +45,13 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     private Image spriteImage = null;
     [Header("이미지 크기")]
     [SerializeField]
-    public Vector2 size;
+    private Vector2 size;
 
     [Header("이미지 리스트")]
     [SerializeField]
     public List<Node> spriteSheets = new List<Node>();
 
-    private Dictionary<string, Sprite[]> loadedSprites = null;
-    private int currentSpriteSheetIndex = 0;
-    private int currentAnimationIndex = 0;
-    private int currentAnimationCount = 0;
-    private int passingFrame = 0;
-    private bool isLoop = true;
+    private Dictionary<FixedString64Bytes, Sprite[]> loadedSprites = null;
 
     private class Baker : Baker<SpriteSheetAnimationAuthoring>
     {
@@ -68,9 +62,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             // authoring MonoBehaviour 인스턴스를 관리형 컴포넌트로 추가합니다.
             AddComponentObject(entity, authoring);
 
-            AddComponent(entity, new SpriteSheetAnimationComponent());
-
-            AddBuffer<SpriteSheetNodeBuffer>(entity);
+            AddComponent(entity, new SpriteSheetAnimationComponent(true));
         }
 
     }
@@ -99,130 +91,95 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             spriteImage = GetComponent<Image>();
     }
 
-#if UNITY_EDITOR
-    /// <summary>
-    /// 에디터용
-    /// </summary>
-    public void InitializeByEditor()
+    public void Initialize()
     {
         Awake();
-    }
-#endif
-
-    private void Update()
-    {
-        OnUpdateAnimation();
     }
 
     public void Reset()
     {
-        IsLoaded = false;
         loadedSprites = null;
     }
 
     private void OnDestroy()
     {
-        IsLoaded = false;
-
         loadedSprites = null;
     }
 
-    public void OnUpdateAnimation()
+    public void OnUpdateAnimation(string key, int frame, ref int index)
     {
         if (!IsLoaded)
             return;
 
-        if (!CheckAnimationFrame())
+        if (frame < GetFrameDelay(index))
             return;
 
-        NextAnimation();
+        SetAnimationByIndex(key, NextAnimationIndex(key, ref index));
     }
 
-    private bool CheckAnimationFrame()
+    private int NextAnimationIndex(string key, ref int index)
     {
-        if (passingFrame < GetFrameDelay())
+        index++;
+
+        if (index >= GetSpriteSheetCount(key))
         {
-            passingFrame++;
-            return false;
+            index = 0;
         }
-        else
-        {
-            passingFrame = 0;
-            return true;
-        }
+
+        return index;
     }
 
-    public async UniTask LoadAnimationsAsync(bool force = false)
+    public void LoadAnimations(bool force = false)
     {
         if (IsLoaded && !force)
             return;
 
-        UniTask[] tasks = new UniTask[spriteSheets.Count];
+        Dictionary<FixedString64Bytes, Sprite[]> loadSprites = new Dictionary<FixedString64Bytes, Sprite[]>();
 
         for (int i = 0; i < spriteSheets.Count; ++i)
         {
-            tasks[i] = LoadSpriteAsync(i);
+            if (TryLoadSprite(i, out var key, out var sprites))
+                loadSprites[key] = sprites;
         }
 
-        await UniTask.WhenAll(tasks);
-
-        IsLoaded = true;
+        loadedSprites = loadSprites;
     }
 
-    private async UniTask LoadSpriteAsync(int spriteIndex)
+    private bool TryLoadSprite(int spriteIndex, out string key, out Sprite[] sprites)
     {
+        key = null;
+        sprites = null;
+
         if (spriteIndex < 0)
-            return;
+            return false;
 
         if (spriteIndex >= spriteSheets.Count)
-            return;
+            return false;
 
-        string key = spriteSheets[spriteIndex].key;
+        key = spriteSheets[spriteIndex].key;
         string guid = spriteSheets[spriteIndex].guid;
 
-        if (loadedSprites != null && loadedSprites.ContainsKey(key))
-            return;
-
         var spriteResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
-        Sprite[] currentSprites = spriteResourcesPath.LoadAll<Sprite>(guid);
+        sprites = spriteResourcesPath.LoadAll<Sprite>(guid);
 
-        if (loadedSprites == null)
-            loadedSprites = new Dictionary<string, Sprite[]>();
-
-        if (currentSprites == null || currentSprites.Length == 0)
+        if (sprites == null || sprites.Length == 0)
         {
             Debug.LogError($"{guid} 에 Sprite 가 없습니다.");
-            return;
+            return false;
         }
 
-        loadedSprites[key] = currentSprites;
+        return true;
     }
 
-    public void SetAnimation(string key, bool isLoop = true)
-    {
-        this.isLoop = isLoop;
-
-        SetSpriteSheet(key);
-    }
-
-    private void SetSpriteSheet(string key)
-    {
-        CurrentKey = GetKey(key, out currentSpriteSheetIndex);
-        currentAnimationIndex = 0;
-        currentAnimationCount = GetSpriteSheetCount(CurrentKey);
-
-        SetAnimationByIndex(currentAnimationIndex);
-    }
-
-    private void SetAnimationByIndex(int animationIndex)
+    public void SetAnimationByIndex(FixedString64Bytes key, int animationIndex)
     {
         if (loadedSprites == null)
             return;
 
-        if (string.IsNullOrEmpty(CurrentKey))
+        if (key.IsEmpty)
             return;
 
-        if (loadedSprites.TryGetValue(CurrentKey, out var sprites))
+        if (loadedSprites.TryGetValue(key, out var sprites))
         {
             if (sprites.Length <= animationIndex)
                 return;
@@ -300,38 +257,18 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     public void SetSpriteSheetImages(List<(string key, Sprite[] sprites)> spritePairs)
     {
         if (loadedSprites == null)
-            loadedSprites = new Dictionary<string, Sprite[]>();
+            loadedSprites = new Dictionary<FixedString64Bytes, Sprite[]>();
 
         for (int i = 0; i < spritePairs.Count; i++)
         {
             if (loadedSprites == null)
-                loadedSprites = new Dictionary<string, Sprite[]>();
+                loadedSprites = new Dictionary<FixedString64Bytes, Sprite[]>();
 
             if (spritePairs[i].sprites == null || spritePairs[i].sprites.Length == 0)
                 continue;
 
             loadedSprites[spritePairs[i].key] = spritePairs[i].sprites;
         }
-    }
-
-    private void NextAnimation()
-    {
-        SetAnimationByIndex(NextAnimationIndex());
-    }
-
-    private int NextAnimationIndex()
-    {
-        currentAnimationIndex++;
-
-        if (currentAnimationIndex >= currentAnimationCount)
-        {
-            if (isLoop)
-                currentAnimationIndex = 0;
-            else
-                currentAnimationIndex = currentAnimationCount - 1;
-        }
-
-        return currentAnimationIndex;
     }
 
     public Vector2 GetSize()
@@ -364,7 +301,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return (false, false);
     }
 
-    private int GetSpriteSheetCount(string key)
+    public int GetSpriteSheetCount(FixedString64Bytes key)
     {
         if (loadedSprites == null)
             return 0;
@@ -377,28 +314,28 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return 0;
     }
 
-    private int GetFrameDelay()
+    public int GetFrameDelay(int index)
     {
-        if (spriteSheets.Count <= currentSpriteSheetIndex || currentSpriteSheetIndex < 0)
+        if (spriteSheets.Count <= index || index < 0)
             return 0;
 
-        Node node = spriteSheets[currentSpriteSheetIndex];
+        Node node = spriteSheets[index];
 
         if (!node.isCustomDelay)
             return node.frameDelay;
 
-        if (node.customFrameDelay == null || node.customFrameDelay.Length <= currentAnimationIndex)
+        if (node.customFrameDelay == null || node.customFrameDelay.Length <= index)
             return node.frameDelay;
 
-        return node.customFrameDelay[currentAnimationIndex];
+        return node.customFrameDelay[index];
     }
 
     /// <summary>
     /// 애니메이션 Key 값이 없으면 기본 값을 반환함
     /// </summary>
-    private string GetKey(string key, out int spriteSheetIndex)
+    public bool TryGetSpriteSheetIndex(FixedString64Bytes key, out int spriteSheetIndex, out FixedString64Bytes defaultKey)
     {
-        string defaultkey = string.Empty;
+        defaultKey = string.Empty;
         spriteSheetIndex = 0;
 
         for (int index = 0; index < spriteSheets.Count; index++)
@@ -406,17 +343,17 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             if (spriteSheets[index].key == key)
             {
                 spriteSheetIndex = index;
-                return key;
+                return true;
             }
 
             if (spriteSheets[index].isDefault)
             {
                 spriteSheetIndex = index;
-                defaultkey = spriteSheets[index].key;
+                defaultKey = spriteSheets[index].key;
             }
         }
 
-        return defaultkey;
+        return false;
     }
 
     public int GetLayer()

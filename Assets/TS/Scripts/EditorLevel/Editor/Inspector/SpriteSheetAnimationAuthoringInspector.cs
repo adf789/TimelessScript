@@ -57,12 +57,12 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         StopAnimation();
     }
 
-    private void UpdateAnimation()
+    private void UpdateAnimation(string key, int frame, ref int index)
     {
         if (!IsPlayingTestAnimation)
             return;
 
-        inspectorTarget.OnUpdateAnimation();
+        inspectorTarget.OnUpdateAnimation(key, frame, ref index);
     }
 
     private async UniTask PlayAnimation(int index)
@@ -70,17 +70,25 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         if (IsPlayingTestAnimation)
             StopAnimation();
         else
-            await inspectorTarget.LoadAnimationsAsync(true);
+            inspectorTarget.LoadAnimations(true);
 
         playingSpriteSheetIndex = index;
         var spriteSheet = inspectorTarget.spriteSheets[index];
 
-        inspectorTarget.InitializeByEditor();
-        inspectorTarget.SetAnimation(spriteSheet.key);
+        inspectorTarget.Initialize();
+        string key = spriteSheet.key;
+        int frame = 0;
+        int animationIndex = 0;
 
         while (true)
         {
-            UpdateAnimation();
+            int prevIndex = animationIndex;
+            UpdateAnimation(key, frame, ref animationIndex);
+
+            if (prevIndex > animationIndex)
+                frame = 0;
+            else
+                frame++;
 
             await UniTask.Delay(20, cancellationToken: TokenPool.Get(GetHashCode()));
         }
