@@ -29,7 +29,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
                 if (!CheckAnimationFrame(authoring, ref component))
                     return;
 
-                authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
+                SetAnimation(authoring, ref component);
             }).Run();
     }
 
@@ -53,21 +53,26 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 /// <param name="authoring"></param>
 /// <param name="component"></param>
 /// <param name="key"></param>
-    public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component, FixedString64Bytes key)
+    public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
-        if (authoring.TryGetSpriteSheetIndex(key, out var index, out var defaultKey))
+        if (!component.StartKey.IsEmpty)
         {
-            component.CurrentKey = key;
-            component.CurrentAnimationCount = authoring.GetSpriteSheetCount(key);
-        }
-        else
-        {
-            component.CurrentKey = defaultKey;
-            component.CurrentAnimationCount = authoring.GetSpriteSheetCount(defaultKey);
-        }
+            if (authoring.TryGetSpriteSheetIndex(component.StartKey, out var index, out var defaultKey))
+            {
+                component.CurrentKey = component.StartKey;
+                component.CurrentAnimationCount = authoring.GetSpriteSheetCount(component.StartKey);
+            }
+            else
+            {
+                component.CurrentKey = defaultKey;
+                component.CurrentAnimationCount = authoring.GetSpriteSheetCount(defaultKey);
+            }
 
-        component.CurrentSpriteSheetIndex = index;
-        component.CurrentAnimationIndex = -1;
+            component.CurrentSpriteSheetIndex = index;
+            component.CurrentAnimationIndex = -1;
+
+            component.StartKey = string.Empty;
+        }
 
         authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
     }

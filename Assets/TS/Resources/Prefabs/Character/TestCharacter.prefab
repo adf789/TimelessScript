@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 4448617964647131482}
   - component: {fileID: 4019544190974294588}
   - component: {fileID: 1210792406335689658}
+  - component: {fileID: 8896050616517539629}
   m_Layer: 0
   m_Name: TestCharacter
   m_TagString: Untagged
@@ -188,3 +189,16 @@ MonoBehaviour:
   size: {x: 1.63, y: 3.72}
   offset: {x: 0, y: 0.09}
   isTrigger: 0
+--- !u!114 &8896050616517539629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7497076683051236044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d0c226443970424fa5215bce8413c06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.MiddleLevel::BehaviorAuthoring
+  check: 0

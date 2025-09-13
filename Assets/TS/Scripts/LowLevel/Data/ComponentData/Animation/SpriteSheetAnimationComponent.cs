@@ -5,6 +5,7 @@ using Unity.Mathematics;
 
 public struct SpriteSheetAnimationComponent : IComponentData
 {
+    public FixedString64Bytes StartKey;
     public FixedString64Bytes CurrentKey;
     public int CurrentSpriteSheetIndex;
     public int CurrentAnimationIndex;
@@ -12,12 +13,13 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public int PassingFrame;
     public bool IsLoop;
 
-    public SpriteSheetAnimationComponent(bool isLoop)
+    public SpriteSheetAnimationComponent(FixedString64Bytes startKey, bool isLoop)
     {
         IsLoop = isLoop;
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;
         PassingFrame = 0;
+        StartKey = startKey;
         CurrentKey = string.Empty;
         CurrentSpriteSheetIndex = 0;
     }
