@@ -1,6 +1,8 @@
 using Unity.Burst;
 using Unity.Entities;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(CollisionSystem))]
 [BurstCompile]
 public partial struct GroundSystem : ISystem
 {

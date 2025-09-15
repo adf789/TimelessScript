@@ -82,7 +82,6 @@ public class ResourcesPath : ScriptableObject
 
         if (HasGuid(guid))
         {
-            Debug.LogWarning($"Resource with GUID {guid} already exists");
             return false;
         }
 

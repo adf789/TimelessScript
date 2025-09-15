@@ -2,7 +2,7 @@ using Unity.Mathematics;
 
 namespace Utility
 {
-    public static partial class Physics
+    public static class Physics
     {
         /// <summary>
         /// Collision

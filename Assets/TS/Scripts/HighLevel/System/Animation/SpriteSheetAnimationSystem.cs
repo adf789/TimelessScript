@@ -19,16 +19,13 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
         RefRW<SpriteSheetAnimationComponent>>()){
             if (!authoring.Value.IsLoaded)
-                {
-                    authoring.Value.Initialize();
-                    authoring.Value.LoadAnimations();
-                    return;
-                }
+            {
+                authoring.Value.Initialize();
+                authoring.Value.LoadAnimations();
+                return;
+            }
 
-                if (!CheckAnimationFrame(authoring.Value, ref component.ValueRW))
-                    return;
-
-                SetAnimation(authoring.Value, ref component.ValueRW);
+            SetAnimation(authoring.Value, ref component.ValueRW);
         }
     }
 
@@ -67,11 +64,16 @@ public partial class SpriteSheetAnimationSystem : SystemBase
                 component.CurrentAnimationCount = authoring.GetSpriteSheetCount(defaultKey);
             }
 
-            component.CurrentSpriteSheetIndex = index;
             component.CurrentAnimationIndex = -1;
-
             component.StartKey = string.Empty;
         }
+        else if (!component.IsLoop && component.IsLastAnimation)
+        {
+            component.CurrentAnimationIndex = -1;
+            component.CurrentKey = authoring.GetDefaultAnimationKey();
+            component.IsLoop = true;
+        }else if (!CheckAnimationFrame(authoring, ref component))
+            return;
 
         authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
     }

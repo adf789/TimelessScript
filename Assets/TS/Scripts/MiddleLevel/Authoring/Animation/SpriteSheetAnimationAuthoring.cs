@@ -327,6 +327,19 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return node.customFrameDelay[index];
     }
 
+    public FixedString64Bytes GetDefaultAnimationKey()
+    {
+        for (int index = 0; index < spriteSheets.Count; index++)
+        {
+            if (spriteSheets[index].isDefault)
+            {
+                return spriteSheets[index].key;
+            }
+        }
+
+        return string.Empty;
+    }
+
     /// <summary>
     /// 애니메이션 Key 값이 없으면 기본 값을 반환함
     /// </summary>

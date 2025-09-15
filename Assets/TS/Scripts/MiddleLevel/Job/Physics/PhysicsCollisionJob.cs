@@ -27,12 +27,12 @@ public partial struct PhysicsCollisionJob : IJobEntity
             var collision = collisions[i];
             if (collision.isTrigger)
                 continue;
-                
+
             // 위치 보정
             float2 currentPos = transform.Position.xy;
             currentPos += collision.separationVector;
             transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
-            
+
             // 속도 반응 (간단한 반발)
             float2 normal = math.normalize(collision.separationVector);
             if (math.abs(normal.y) > math.abs(normal.x))
@@ -45,17 +45,12 @@ public partial struct PhysicsCollisionJob : IJobEntity
             }
         }
         
-        // 레이캐스트 기반 지면 감지 (안정적)
-        CheckGroundWithRaycast(ref physics, in transform);
+        CheckGround(ref physics);
     }
     
     [BurstCompile]
-    private static void CheckGroundWithRaycast(ref LightweightPhysicsComponent physics, in LocalTransform transform)
+    private static void CheckGround(ref LightweightPhysicsComponent physics)
     {
-        // 캐릭터 아래쪽으로 짧은 레이캐스트
-        float2 rayStart = transform.Position.xy;
-        float2 rayEnd = rayStart + new float2(0, -0.1f); // 0.1 유닛 아래로
-        
         // 간단한 지면 감지 - 속도가 거의 0이고 아래쪽으로 움직이지 않으면 grounded
         bool isMovingDown = physics.velocity.y < -float.Epsilon;
         bool hasLowVerticalVelocity = math.abs(physics.velocity.y) < 0.05f;

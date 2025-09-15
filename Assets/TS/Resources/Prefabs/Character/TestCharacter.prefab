@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -3909446657684410890, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
+  m_Sprite: {fileID: 8703416756418759922, guid: bbbaf36ec5c6401459b9e54454f8eff7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -118,7 +118,35 @@ MonoBehaviour:
   - sourceImage: {fileID: 4199067622019808784, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
     guid: 0779a9727e271024581dd1d3d4df70c7
     key: Interact
-    frameDelay: 1
+    frameDelay: 10
+    isCustomDelay: 0
+    isDefault: 0
+    customFrameDelay: 
+  - sourceImage: {fileID: -1524609319717364542, guid: 526dbe93ccaffcd419fb42dfdc6ff910, type: 3}
+    guid: 526dbe93ccaffcd419fb42dfdc6ff910
+    key: Jump_Idle
+    frameDelay: 10
+    isCustomDelay: 0
+    isDefault: 0
+    customFrameDelay: 
+  - sourceImage: {fileID: -8156856332418018191, guid: a4663883493a7be4cbdf2f9319637487, type: 3}
+    guid: a4663883493a7be4cbdf2f9319637487
+    key: Jump_Land
+    frameDelay: 5
+    isCustomDelay: 0
+    isDefault: 0
+    customFrameDelay: 
+  - sourceImage: {fileID: 3224967595496546753, guid: 93b8824ab061f0f4e9440b824f206ec3, type: 3}
+    guid: 93b8824ab061f0f4e9440b824f206ec3
+    key: PickUp
+    frameDelay: 10
+    isCustomDelay: 0
+    isDefault: 0
+    customFrameDelay: 
+  - sourceImage: {fileID: 8451177624645023579, guid: 31ab93839e3913a45856b81656ac273f, type: 3}
+    guid: 31ab93839e3913a45856b81656ac273f
+    key: Walking
+    frameDelay: 10
     isCustomDelay: 0
     isDefault: 0
     customFrameDelay: 
