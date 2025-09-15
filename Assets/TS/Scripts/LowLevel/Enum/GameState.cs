@@ -4,3 +4,9 @@ public enum GameState
     Loading,
     Home
 }
+
+public enum AnimationState
+{
+    Idle,
+    Interact
+}

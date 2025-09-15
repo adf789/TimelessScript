@@ -17,10 +17,13 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     #region Value
     private bool folder = true;
+    private bool isDirty = false;
     private List<bool> dataFolders = new List<bool>();
     private List<bool> defaultValues = new List<bool>();
     private int count = 0;
     private int playingSpriteSheetIndex = -1;
+
+    private SerializedProperty state = null;
     #endregion Value
 
     #region Function
@@ -48,6 +51,8 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
     private void OnEnable()
     {
         inspectorTarget = (SpriteSheetAnimationAuthoring) target;
+
+        state = serializedObject.FindProperty("state");
 
         ResetValues();
     }
@@ -103,146 +108,166 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     public override void OnInspectorGUI()
     {
-        try
+        EditorGUI.BeginChangeCheck();
         {
-            if (count < inspectorTarget.spriteSheets.Count)
-            {
-                // 개수가 줄어든 것
-                while (count < inspectorTarget.spriteSheets.Count)
-                {
-                    int removeIndex = inspectorTarget.spriteSheets.Count - 1;
+            EditorGUILayout.PropertyField(state);
+        }
+        if(EditorGUI.EndChangeCheck())
+            SetReadyDirty();
 
-                    dataFolders.RemoveAt(removeIndex);
-                    defaultValues.RemoveAt(removeIndex);
-                    inspectorTarget.spriteSheets.RemoveAt(removeIndex);
+        try
+            {
+                if (count < inspectorTarget.spriteSheets.Count)
+                {
+                    // 개수가 줄어든 것
+                    while (count < inspectorTarget.spriteSheets.Count)
+                    {
+                        int removeIndex = inspectorTarget.spriteSheets.Count - 1;
+
+                        dataFolders.RemoveAt(removeIndex);
+                        defaultValues.RemoveAt(removeIndex);
+                        inspectorTarget.spriteSheets.RemoveAt(removeIndex);
+
+                        SetReadyDirty();
+                    }
                 }
-            }
-            else if (count > inspectorTarget.spriteSheets.Count)
-            {
-                // 개수가 늘어난 것
-                while (count > inspectorTarget.spriteSheets.Count)
+                else if (count > inspectorTarget.spriteSheets.Count)
                 {
-                    inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node());
-                    dataFolders.Add(false);
-                    defaultValues.Add(defaultValues.Count == 0);
+                    // 개수가 늘어난 것
+                    while (count > inspectorTarget.spriteSheets.Count)
+                    {
+                        inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node());
+                        dataFolders.Add(false);
+                        defaultValues.Add(defaultValues.Count == 0);
+
+                        SetReadyDirty();
+                    }
                 }
-            }
 
-            GUILayout.BeginHorizontal();
-            {
-                folder = EditorGUILayout.Foldout(folder, "Sheet");
-                count = EditorGUILayout.IntField(inspectorTarget.spriteSheets.Count, GUILayout.Width(50));
-            }
-            GUILayout.EndHorizontal();
-
-            if (!folder)
-                return;
-
-            EditorGUILayout.Space(6);
-
-            GUILayout.BeginVertical("실제 리소스 정보는 ResourcesPathObject에 저장됩니다.\n커밋하실 때 같이 올려주세요.", "window");
-            {
-                EditorGUILayout.Space(16);
-
-                for (int i = 0; i < inspectorTarget.spriteSheets.Count; ++i)
+                GUILayout.BeginHorizontal();
                 {
+                    folder = EditorGUILayout.Foldout(folder, "Sheet");
+                    count = EditorGUILayout.IntField(inspectorTarget.spriteSheets.Count, GUILayout.Width(50));
+                }
+                GUILayout.EndHorizontal();
+
+                if (!folder)
+                    return;
+
+                EditorGUILayout.Space(6);
+
+                GUILayout.BeginVertical("실제 리소스 정보는 ResourcesPathObject에 저장됩니다.\n커밋하실 때 같이 올려주세요.", "window");
+                {
+                    EditorGUILayout.Space(16);
+
+                    for (int i = 0; i < inspectorTarget.spriteSheets.Count; ++i)
+                    {
+                        EditorGUI.indentLevel = 1;
+
+                        GUILayout.BeginHorizontal();
+                        {
+                            EditorGUILayout.Space(10, false);
+
+                            GUILayout.BeginVertical(style: "window");
+                            {
+                                EditorGUILayout.Space(-20, false);
+
+                                dataFolders[i] = EditorGUILayout.Foldout(dataFolders[i], "Element");
+
+                                EditorGUI.indentLevel = 2;
+
+                                if (dataFolders[i])
+                                {
+                                    EditorGUI.BeginDisabledGroup(IsPlayingTestAnimation);
+                                    DrawKey(i);
+                                    DrawDefaultValue(i);
+                                    DrawFrameDelay(i);
+                                    DrawMain(i);
+                                    EditorGUI.EndDisabledGroup();
+                                    DrawPlayButton(i);
+                                }
+                            }
+                            GUILayout.EndVertical();
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+
                     EditorGUI.indentLevel = 1;
 
                     GUILayout.BeginHorizontal();
                     {
-                        EditorGUILayout.Space(10, false);
-
-                        GUILayout.BeginVertical(style: "window");
+                        if (GUILayout.Button("+", GUILayout.Width(22)))
                         {
-                            EditorGUILayout.Space(-20, false);
-
-                            dataFolders[i] = EditorGUILayout.Foldout(dataFolders[i], "Element");
-
-                            EditorGUI.indentLevel = 2;
-
-                            if (dataFolders[i])
+                            if (inspectorTarget.spriteSheets.Count < int.MaxValue)
                             {
-                                EditorGUI.BeginDisabledGroup(IsPlayingTestAnimation);
-                                DrawKey(i);
-                                DrawDefaultValue(i);
-                                DrawFrameDelay(i);
-                                DrawMain(i);
-                                EditorGUI.EndDisabledGroup();
-                                DrawPlayButton(i);
+                                if (inspectorTarget.spriteSheets.Count == 0)
+                                    inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node());
+                                else
+                                    inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node(inspectorTarget.spriteSheets[^1]));
+
+                                count = inspectorTarget.spriteSheets.Count;
+                                dataFolders.Add(true);
+                                defaultValues.Add(defaultValues.Count == 0);
                             }
                         }
-                        GUILayout.EndVertical();
+
+                        if (GUILayout.Button("-", GUILayout.Width(22)))
+                        {
+                            if (inspectorTarget.spriteSheets.Count > 0)
+                            {
+                                int removeIndex = inspectorTarget.spriteSheets.Count - 1;
+                                count = removeIndex;
+                                dataFolders.RemoveAt(removeIndex);
+                                defaultValues.RemoveAt(removeIndex);
+                                inspectorTarget.spriteSheets.RemoveAt(removeIndex);
+                            }
+                        }
                     }
                     GUILayout.EndHorizontal();
+
+                    EditorGUI.indentLevel = 0;
                 }
+                GUILayout.EndVertical();
 
-                EditorGUI.indentLevel = 1;
-
-                GUILayout.BeginHorizontal();
+                if (!IsPlayingTestAnimation)
                 {
-                    if (GUILayout.Button("+", GUILayout.Width(22)))
+                    if (isDirty)
                     {
-                        if (inspectorTarget.spriteSheets.Count < int.MaxValue)
-                        {
-                            if (inspectorTarget.spriteSheets.Count == 0)
-                                inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node());
-                            else
-                                inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node(inspectorTarget.spriteSheets[^1]));
+                        PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
 
-                            count = inspectorTarget.spriteSheets.Count;
-                            dataFolders.Add(true);
-                            defaultValues.Add(defaultValues.Count == 0);
-                        }
+                        EditorUtility.SetDirty(target);
+
+                        ResetDirty();
                     }
 
-                    if (GUILayout.Button("-", GUILayout.Width(22)))
-                    {
-                        if (inspectorTarget.spriteSheets.Count > 0)
-                        {
-                            int removeIndex = inspectorTarget.spriteSheets.Count - 1;
-                            count = removeIndex;
-                            dataFolders.RemoveAt(removeIndex);
-                            defaultValues.RemoveAt(removeIndex);
-                            inspectorTarget.spriteSheets.RemoveAt(removeIndex);
-                        }
-                    }
+                    serializedObject.ApplyModifiedProperties();
                 }
-                GUILayout.EndHorizontal();
-
-                EditorGUI.indentLevel = 0;
             }
-            GUILayout.EndVertical();
-
-            if (!IsPlayingTestAnimation)
+            catch (Exception ex)
             {
-                PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
-
-                EditorUtility.SetDirty(target);
-
-                serializedObject.ApplyModifiedProperties();
+                Debug.LogError(ex.Message);
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError(ex.Message);
-        }
     }
 
     private void DrawKey(int i)
     {
         SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
 
+        EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
         {
             data.key = EditorGUILayout.TextField($"Key", data.key);
         }
         GUILayout.EndHorizontal();
+        if (EditorGUI.EndChangeCheck())
+            SetReadyDirty();
     }
 
     private void DrawDefaultValue(int i)
     {
         SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
 
+        EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
         {
             bool isDefault = EditorGUILayout.Toggle($"Default Animation", defaultValues[i]);
@@ -260,12 +285,15 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
             data.isDefault = defaultValues[i];
         }
         GUILayout.EndHorizontal();
+        if (EditorGUI.EndChangeCheck())
+            SetReadyDirty();
     }
 
     private void DrawFrameDelay(int i)
     {
         SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
 
+        EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
         {
             data.isCustomDelay = EditorGUILayout.Toggle("Custom Delay 사용 유무", data.isCustomDelay);
@@ -328,6 +356,8 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                 data.frameDelay = frameDelay;
         }
         GUILayout.EndHorizontal();
+        if (EditorGUI.EndChangeCheck())
+            SetReadyDirty();
     }
 
     private void DrawMain(int i)
@@ -339,7 +369,12 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         if (!string.IsNullOrEmpty(guidToPath))
             data.sourceImage = AssetDatabase.LoadAssetAtPath<Sprite>(guidToPath);
 
-        data.sourceImage = (Sprite) EditorGUILayout.ObjectField("SourceImage", data.sourceImage, typeof(Sprite), false);
+        EditorGUI.BeginChangeCheck();
+        {
+            data.sourceImage = (Sprite) EditorGUILayout.ObjectField("SourceImage", data.sourceImage, typeof(Sprite), false);
+        }
+        if (EditorGUI.EndChangeCheck())
+            SetReadyDirty();
 
         if (data.sourceImage == null)
         {
@@ -369,6 +404,16 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
             if (GUILayout.Button("Play Animation Test", GUILayout.Width(150)))
                 PlayAnimation(i).Forget();
         }
+    }
+
+    private void SetReadyDirty()
+    {
+        isDirty = true;
+    }
+
+    private void ResetDirty()
+    {
+        isDirty = false;
     }
     #endregion Function
 }

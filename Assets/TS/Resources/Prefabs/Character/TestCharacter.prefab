@@ -103,6 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bdd8d26695c8e54a92df188efa57b25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpriteSheetAnimationAuthoring
+  state: 0
   spriteRenderer: {fileID: 8070793168041068064}
   spriteImage: {fileID: 0}
   size: {x: 4, y: 4}

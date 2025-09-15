@@ -15,22 +15,21 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        Entities
-            .WithoutBurst()
-            .ForEach((SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component) =>
-            {
-                if (!authoring.IsLoaded)
+        foreach (var(authoring, component) in
+        SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
+        RefRW<SpriteSheetAnimationComponent>>()){
+            if (!authoring.Value.IsLoaded)
                 {
-                    authoring.Initialize();
-                    authoring.LoadAnimations();
+                    authoring.Value.Initialize();
+                    authoring.Value.LoadAnimations();
                     return;
                 }
 
-                if (!CheckAnimationFrame(authoring, ref component))
+                if (!CheckAnimationFrame(authoring.Value, ref component.ValueRW))
                     return;
 
-                SetAnimation(authoring, ref component);
-            }).Run();
+                SetAnimation(authoring.Value, ref component.ValueRW);
+        }
     }
 
     private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)

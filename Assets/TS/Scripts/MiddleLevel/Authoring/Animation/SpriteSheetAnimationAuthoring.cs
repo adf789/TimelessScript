@@ -39,16 +39,13 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
 
     public bool IsLoaded => loadedSprites != null;
 
-    [SerializeField]
-    private SpriteRenderer spriteRenderer = null;
-    [SerializeField]
-    private Image spriteImage = null;
+    [SerializeField] private AnimationState state;
+    [SerializeField] private SpriteRenderer spriteRenderer = null;
+    [SerializeField] private Image spriteImage = null;
     [Header("이미지 크기")]
-    [SerializeField]
-    private Vector2 size;
+    [SerializeField] private Vector2 size;
 
     [Header("이미지 리스트")]
-    [SerializeField]
     public List<Node> spriteSheets = new List<Node>();
 
     private Dictionary<FixedString64Bytes, Sprite[]> loadedSprites = null;
@@ -62,7 +59,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             // authoring MonoBehaviour 인스턴스를 관리형 컴포넌트로 추가합니다.
             AddComponentObject(entity, authoring);
 
-            AddComponent(entity, new SpriteSheetAnimationComponent("Idle", true));
+            AddComponent(entity, new SpriteSheetAnimationComponent(authoring.state.ToString(), true));
         }
 
     }
