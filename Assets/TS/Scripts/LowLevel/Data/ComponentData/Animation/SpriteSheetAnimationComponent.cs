@@ -7,6 +7,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
 {
     public FixedString64Bytes StartKey;
     public FixedString64Bytes CurrentKey;
+    public int CurrentSpriteIndex;
     public int CurrentAnimationIndex;
     public int CurrentAnimationCount;
     public int PassingFrame;
@@ -17,6 +18,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public SpriteSheetAnimationComponent(FixedString64Bytes startKey, bool isLoop)
     {
         IsLoop = isLoop;
+        CurrentSpriteIndex = 0;
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;
         PassingFrame = 0;

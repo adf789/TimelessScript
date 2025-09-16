@@ -16,9 +16,9 @@ namespace Utility
         /// <summary>
         /// Collision
         /// </summary>
-        public static void GetSeparationVector(in ColliderBoundsComponent bounds1, in ColliderBoundsComponent bounds2, out float2 separation)
+        public static float2 GetSeparationVector(in ColliderBoundsComponent bounds1, in ColliderBoundsComponent bounds2)
         {
-            separation = float2.zero;
+            float2 separation = float2.zero;
 
             float overlapX = math.min(bounds1.max.x, bounds2.max.x) -
                             math.max(bounds1.min.x, bounds2.min.x);
@@ -35,6 +35,8 @@ namespace Utility
                 // Y축으로 분리
                 separation.y = bounds1.center.y < bounds2.center.y ? -overlapY : overlapY;
             }
+
+            return separation;
         }
 
         /// <summary>

@@ -14,6 +14,7 @@ public partial struct CollisionDetectionJob : IJob
     [ReadOnly] public NativeArray<LightweightColliderComponent> allColliders;
     [NativeDisableParallelForRestriction] public BufferLookup<CollisionBuffer> collisionBufferLookup;
     public ComponentLookup<CollisionInfoComponent> collisionInfoLookup;
+    [ReadOnly] public ComponentLookup<GroundComponent> GroundLookup;
     [ReadOnly] public bool useSpacialHashing;
     [ReadOnly] public float cellSize;
     
@@ -54,10 +55,10 @@ public partial struct CollisionDetectionJob : IJob
                 // 충돌 검사
                 if (Utility.Physics.BoundsIntersect(boundsA, boundsB))
                 {
-                    float2 separationVector = new float2(0,0);
-                    Utility.Physics.GetSeparationVector(boundsA, boundsB, out separationVector);
+                    float2 separationVector = Utility.Physics.GetSeparationVector(boundsA, boundsB);
                     bool isTriggerCollision = colliderA.isTrigger || colliderB.isTrigger;
-                    
+                    bool isGroundCollision = GroundLookup.HasComponent(entityA) || GroundLookup.HasComponent(entityB);
+
                     // entityA에 충돌 데이터 추가
                     if (collisionBufferLookup.HasBuffer(entityA))
                     {
@@ -66,7 +67,8 @@ public partial struct CollisionDetectionJob : IJob
                         {
                             collidedEntity = entityB,
                             separationVector = separationVector,
-                            isTrigger = isTriggerCollision
+                            isTrigger = isTriggerCollision,
+                            isGroundCollision = isGroundCollision
                         });
                     }
                     
@@ -78,7 +80,8 @@ public partial struct CollisionDetectionJob : IJob
                         {
                             collidedEntity = entityA,
                             separationVector = -separationVector,
-                            isTrigger = isTriggerCollision
+                            isTrigger = isTriggerCollision,
+                            isGroundCollision = isGroundCollision
                         });
                     }
                     

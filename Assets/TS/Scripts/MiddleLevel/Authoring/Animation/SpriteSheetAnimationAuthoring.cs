@@ -15,25 +15,26 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     public class Node
     {
 #if UNITY_EDITOR
-        public Sprite sourceImage;
+        public Sprite SourceImage;
 #endif
-        public string guid;
-        public string key;
-        public int frameDelay = 10;
-        public bool isCustomDelay;
-        public bool isDefault;
-        public int[] customFrameDelay;
+        public string Guid;
+        public string Key;
+        public int FrameDelay = 10;
+        public bool IsCustomDelay;
+        public bool IsDefault;
+        public int[] CustomFrameDelay;
+        public int SpriteCount;
 
         public Node() { }
 
         public Node(Node copyNode)
         {
 #if UNITY_EDITOR
-            sourceImage = copyNode.sourceImage;
+            SourceImage = copyNode.SourceImage;
 #endif
-            key = copyNode.key;
-            frameDelay = copyNode.frameDelay;
-            guid = copyNode.guid;
+            Key = copyNode.Key;
+            FrameDelay = copyNode.FrameDelay;
+            Guid = copyNode.Guid;
         }
     }
 
@@ -153,8 +154,8 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         if (spriteIndex >= spriteSheets.Count)
             return false;
 
-        key = spriteSheets[spriteIndex].key;
-        string guid = spriteSheets[spriteIndex].guid;
+        key = spriteSheets[spriteIndex].Key;
+        string guid = spriteSheets[spriteIndex].Guid;
 
         var spriteResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
         sprites = spriteResourcesPath.LoadAll<Sprite>(guid);
@@ -318,48 +319,43 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
 
         Node node = spriteSheets[index];
 
-        if (!node.isCustomDelay)
-            return node.frameDelay;
+        if (!node.IsCustomDelay)
+            return node.FrameDelay;
 
-        if (node.customFrameDelay == null || node.customFrameDelay.Length <= index)
-            return node.frameDelay;
+        if (node.CustomFrameDelay == null || node.CustomFrameDelay.Length <= index)
+            return node.FrameDelay;
 
-        return node.customFrameDelay[index];
+        return node.CustomFrameDelay[index];
     }
 
-    public FixedString64Bytes GetDefaultAnimationKey()
+    public Node GetDefaultSpriteNode(out int index)
     {
-        for (int index = 0; index < spriteSheets.Count; index++)
-        {
-            if (spriteSheets[index].isDefault)
-            {
-                return spriteSheets[index].key;
-            }
-        }
+        index = spriteSheets.FindIndex(ss => ss.IsDefault);
 
-        return string.Empty;
+        return spriteSheets[index];
     }
 
     /// <summary>
     /// 애니메이션 Key 값이 없으면 기본 값을 반환함
     /// </summary>
-    public bool TryGetSpriteSheetIndex(FixedString64Bytes key, out int spriteSheetIndex, out FixedString64Bytes defaultKey)
+    public bool TryGetSpriteNode(FixedString64Bytes key, out Node findNode, out int findIndex)
     {
-        defaultKey = string.Empty;
-        spriteSheetIndex = 0;
+        findNode = null;
+        findIndex = -1;
 
         for (int index = 0; index < spriteSheets.Count; index++)
         {
-            if (spriteSheets[index].key == key)
+            if (spriteSheets[index].Key == key)
             {
-                spriteSheetIndex = index;
+                findNode = spriteSheets[index];
+                findIndex = index;
                 return true;
             }
 
-            if (spriteSheets[index].isDefault)
+            if (spriteSheets[index].IsDefault)
             {
-                spriteSheetIndex = index;
-                defaultKey = spriteSheets[index].key;
+                findNode = spriteSheets[index];
+                findIndex = index;
             }
         }
 

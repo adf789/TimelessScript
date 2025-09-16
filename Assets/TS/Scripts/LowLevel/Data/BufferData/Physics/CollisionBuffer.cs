@@ -8,4 +8,5 @@ public struct CollisionBuffer : IBufferElementData
     public Entity collidedEntity;
     public float2 separationVector;
     public bool isTrigger;
+    public bool isGroundCollision; // 지면 충돌 여부
 }

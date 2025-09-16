@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEditor.SceneManagement;
 using System;
+using System.Linq;
 
 [CustomEditor(typeof(SpriteSheetAnimationAuthoring))]
 public class SpriteSheetAnimationAuthoringInspector : Editor
@@ -36,9 +37,9 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         for (int i = 0; i < inspectorTarget.spriteSheets.Count; ++i)
         {
             dataFolders.Add(true);
-            defaultValues.Add(inspectorTarget.spriteSheets[i].isDefault);
+            defaultValues.Add(inspectorTarget.spriteSheets[i].IsDefault);
 
-            isExistDefault |= inspectorTarget.spriteSheets[i].isDefault;
+            isExistDefault |= inspectorTarget.spriteSheets[i].IsDefault;
         }
 
         // 첫 번째 인덱스가 기본
@@ -81,7 +82,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         var spriteSheet = inspectorTarget.spriteSheets[index];
 
         inspectorTarget.Initialize();
-        string key = spriteSheet.key;
+        string key = spriteSheet.Key;
         int frame = 0;
         int animationIndex = 0;
 
@@ -95,7 +96,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
             else
                 frame++;
 
-            await UniTask.Delay(20, cancellationToken: TokenPool.Get(GetHashCode()));
+            await UniTask.Delay(40, cancellationToken: TokenPool.Get(GetHashCode()));
         }
     }
 
@@ -246,6 +247,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
             catch (Exception ex)
             {
                 Debug.LogError(ex.Message);
+                Debug.LogError(ex.StackTrace);
             }
     }
 
@@ -256,7 +258,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
         {
-            data.key = EditorGUILayout.TextField($"Key", data.key);
+            data.Key = EditorGUILayout.TextField($"Key", data.Key);
         }
         GUILayout.EndHorizontal();
         if (EditorGUI.EndChangeCheck())
@@ -282,7 +284,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                 }
             }
 
-            data.isDefault = defaultValues[i];
+            data.IsDefault = defaultValues[i];
         }
         GUILayout.EndHorizontal();
         if (EditorGUI.EndChangeCheck())
@@ -296,24 +298,24 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
         {
-            data.isCustomDelay = EditorGUILayout.Toggle("Custom Delay 사용 유무", data.isCustomDelay);
+            data.IsCustomDelay = EditorGUILayout.Toggle("Custom Delay 사용 유무", data.IsCustomDelay);
         }
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
         {
-            if (data.isCustomDelay)
+            if (data.IsCustomDelay)
             {
                 GUILayout.BeginVertical();
                 {
-                    int count = data.customFrameDelay == null ? 0 : data.customFrameDelay.Length;
+                    int count = data.CustomFrameDelay == null ? 0 : data.CustomFrameDelay.Length;
 
                     for (int index = 0; index < count; index++)
                     {
                         if (index == 0)
                             EditorGUILayout.PrefixLabel("Custom Delay");
 
-                        data.customFrameDelay[index] = EditorGUILayout.IntField(data.customFrameDelay[index]);
+                        data.CustomFrameDelay[index] = EditorGUILayout.IntField(data.CustomFrameDelay[index]);
                     }
 
                     GUILayout.BeginHorizontal();
@@ -322,10 +324,10 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                         {
                             int[] array = new int[count + 1];
 
-                            if (data.customFrameDelay != null)
-                                System.Array.Copy(data.customFrameDelay, array, count);
+                            if (data.CustomFrameDelay != null)
+                                System.Array.Copy(data.CustomFrameDelay, array, count);
 
-                            data.customFrameDelay = array;
+                            data.CustomFrameDelay = array;
                         }
 
 
@@ -334,8 +336,8 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                             if (count > 0)
                             {
                                 int[] array = new int[count - 1];
-                                System.Array.Copy(data.customFrameDelay, array, array.Length);
-                                data.customFrameDelay = array;
+                                System.Array.Copy(data.CustomFrameDelay, array, array.Length);
+                                data.CustomFrameDelay = array;
                             }
                         }
                     }
@@ -343,17 +345,17 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                 }
                 GUILayout.EndVertical();
             }
-            else if (data.customFrameDelay != null && data.customFrameDelay.Length > 0)
-                data.customFrameDelay = new int[0];
+            else if (data.CustomFrameDelay != null && data.CustomFrameDelay.Length > 0)
+                data.CustomFrameDelay = new int[0];
         }
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
         {
-            int frameDelay = EditorGUILayout.IntField("Frame Delay (기본 딜레이)", data.frameDelay);
+            int frameDelay = EditorGUILayout.IntField("Frame Delay (기본 딜레이)", data.FrameDelay);
 
             if (frameDelay >= 0)
-                data.frameDelay = frameDelay;
+                data.FrameDelay = frameDelay;
         }
         GUILayout.EndHorizontal();
         if (EditorGUI.EndChangeCheck())
@@ -364,32 +366,38 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
     {
         SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
 
-        string guidToPath = AssetDatabase.GUIDToAssetPath(data.guid);
+        string guidToPath = AssetDatabase.GUIDToAssetPath(data.Guid);
+        Sprite[] loadedSprites = null;
 
         if (!string.IsNullOrEmpty(guidToPath))
-            data.sourceImage = AssetDatabase.LoadAssetAtPath<Sprite>(guidToPath);
+            loadedSprites = AssetDatabase.LoadAllAssetsAtPath(guidToPath).OfType<Sprite>().ToArray();
+
+        if (loadedSprites != null && loadedSprites.Length > 0)
+            data.SourceImage = loadedSprites[0];
 
         EditorGUI.BeginChangeCheck();
         {
-            data.sourceImage = (Sprite) EditorGUILayout.ObjectField("SourceImage", data.sourceImage, typeof(Sprite), false);
+            data.SourceImage = (Sprite) EditorGUILayout.ObjectField("SourceImage", data.SourceImage, typeof(Sprite), false);
         }
         if (EditorGUI.EndChangeCheck())
             SetReadyDirty();
 
-        if (data.sourceImage == null)
+        if (data.SourceImage == null)
         {
-            data.guid = string.Empty;
+            data.Guid = string.Empty;
+            data.SpriteCount = 0;
             return;
         }
 
         // GUID 삽입
-        string assetPath = AssetDatabase.GetAssetPath(data.sourceImage);
-        data.guid = AssetDatabase.AssetPathToGUID(assetPath);
+        string assetPath = AssetDatabase.GetAssetPath(data.SourceImage);
+        data.Guid = AssetDatabase.AssetPathToGUID(assetPath);
+        data.SpriteCount = loadedSprites.Length;
 
         // 리소스 추가
         var spriteResoursPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
 
-        spriteResoursPath.AddResourceFromObject(data.sourceImage);
+        spriteResoursPath.AddResourceFromObject(data.SourceImage);
     }
 
     private void DrawPlayButton(int i)

@@ -49,6 +49,7 @@ public partial struct CollisionSystem : ISystem
             allColliders = colliderComponents,
             collisionBufferLookup = SystemAPI.GetBufferLookup<CollisionBuffer>(false),
             collisionInfoLookup = SystemAPI.GetComponentLookup<CollisionInfoComponent>(false),
+            GroundLookup = SystemAPI.GetComponentLookup<GroundComponent>(true),
             useSpacialHashing = collisionConfig.useSpacialHashing,
             cellSize = collisionConfig.cellSize
         };

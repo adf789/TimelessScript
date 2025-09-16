@@ -38,6 +38,12 @@ public partial struct PhysicsCollisionJob : IJobEntity
             if (math.abs(normal.y) > math.abs(normal.x))
             {
                 physics.velocity.y = -physics.velocity.y * 0.5f;
+
+                if (collision.isGroundCollision)
+                {
+                    // 지상 충돌 시 처리. 예: 마찰력, 반발 계수 조정
+                    physics.isGrounded = true;
+                }
             }
             else
             {
@@ -45,7 +51,7 @@ public partial struct PhysicsCollisionJob : IJobEntity
             }
         }
         
-        CheckGround(ref physics);
+        // CheckGround(ref physics);
     }
     
     [BurstCompile]

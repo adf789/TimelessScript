@@ -15,9 +15,10 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        foreach (var(authoring, component) in
+        foreach (var (authoring, component) in
         SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
-        RefRW<SpriteSheetAnimationComponent>>()){
+        RefRW<SpriteSheetAnimationComponent>>())
+        {
             if (!authoring.Value.IsLoaded)
             {
                 authoring.Value.Initialize();
@@ -31,7 +32,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
     private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
-        if (component.PassingFrame < authoring.GetFrameDelay(component.CurrentAnimationIndex))
+        if (component.PassingFrame < authoring.GetFrameDelay(component.CurrentSpriteIndex))
         {
             component.PassingFrame++;
             return false;
@@ -43,38 +44,39 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         }
     }
 
-/// <summary>
-/// 테스트용
-/// </summary>
-/// <param name="authoring"></param>
-/// <param name="component"></param>
-/// <param name="key"></param>
+    /// <summary>
+    /// 테스트용
+    /// </summary>
+    /// <param name="authoring"></param>
+    /// <param name="component"></param>
+    /// <param name="key"></param>
     public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         if (!component.StartKey.IsEmpty)
         {
-            if (authoring.TryGetSpriteSheetIndex(component.StartKey, out var index, out var defaultKey))
-            {
-                component.CurrentKey = component.StartKey;
-                component.CurrentAnimationCount = authoring.GetSpriteSheetCount(component.StartKey);
-            }
-            else
-            {
-                component.CurrentKey = defaultKey;
-                component.CurrentAnimationCount = authoring.GetSpriteSheetCount(defaultKey);
-            }
+            authoring.TryGetSpriteNode(component.StartKey, out var findNode, out int findIndex);
 
-            component.CurrentAnimationIndex = -1;
-            component.StartKey = string.Empty;
+            ApplyComponent(ref component, findNode, findIndex, component.IsLoop);
         }
         else if (!component.IsLoop && component.IsLastAnimation)
         {
-            component.CurrentAnimationIndex = -1;
-            component.CurrentKey = authoring.GetDefaultAnimationKey();
-            component.IsLoop = true;
-        }else if (!CheckAnimationFrame(authoring, ref component))
+            var defaultNode = authoring.GetDefaultSpriteNode(out int index);
+
+            ApplyComponent(ref component, defaultNode, index, true);
+        }
+        else if (!CheckAnimationFrame(authoring, ref component))
             return;
 
         authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
+    }
+
+    private void ApplyComponent(ref SpriteSheetAnimationComponent component, SpriteSheetAnimationAuthoring.Node node, int index, bool isLoop)
+    {
+        component.CurrentKey = node.Key;
+        component.CurrentAnimationCount = node.SpriteCount;
+        component.CurrentSpriteIndex = index;
+        component.CurrentAnimationIndex = -1;
+        component.StartKey = string.Empty;
+        component.IsLoop = true;
     }
 }
