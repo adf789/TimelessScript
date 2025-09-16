@@ -16,4 +16,9 @@ public class BehaviorAuthoring : MonoBehaviour
         }
 
     }
+
+    public void OnClick()
+    {
+        Debug.Log("Test");
+    }
 }

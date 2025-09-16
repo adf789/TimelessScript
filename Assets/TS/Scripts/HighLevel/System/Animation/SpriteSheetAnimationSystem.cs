@@ -77,6 +77,6 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         component.CurrentSpriteIndex = index;
         component.CurrentAnimationIndex = -1;
         component.StartKey = string.Empty;
-        component.IsLoop = true;
+        component.IsLoop = isLoop;
     }
 }
