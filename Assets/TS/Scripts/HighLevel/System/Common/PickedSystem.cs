@@ -59,8 +59,10 @@ public partial class PickedSystem : SystemBase
         // 3. 새로 선택된 엔티티에 태그를 추가합니다.
         if (nextPickedEntity != Entity.Null)
         {
-            ecb.AddComponent<IsPickedTag>(nextPickedEntity);
-            Debug.Log($"Picked: {nextPickedEntity}");
+            ecb.AddComponent(nextPickedEntity, new IsPickedTag
+            {
+                TouchPosition = _touchPosition.xy
+            });
         }
         
         _ecbSystem.AddJobHandleForProducer(Dependency);

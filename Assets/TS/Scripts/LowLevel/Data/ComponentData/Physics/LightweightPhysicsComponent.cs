@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 
 public struct LightweightPhysicsComponent : IComponentData
 {
+    public Entity entity;
     public float2 velocity;
     public float2 gravity;
     public float mass;

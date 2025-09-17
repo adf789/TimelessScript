@@ -20,6 +20,7 @@ public class PhysicsAuthoring : MonoBehaviour
             
             AddComponent(entity, new LightweightPhysicsComponent
             {
+                entity = entity,
                 velocity = new float2(authoring.velocity.x, authoring.velocity.y),
                 gravity = new float2(authoring.gravity.x, authoring.gravity.y),
                 mass = authoring.mass,
