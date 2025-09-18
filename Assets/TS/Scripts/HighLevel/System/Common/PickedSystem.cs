@@ -1,90 +1,79 @@
 // Assets/TS/Scripts/HighLevel/System/Common/PickedSystem.cs
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(CollisionSystem))]
 [BurstCompile]
 public partial class PickedSystem : SystemBase
 {
-    private Camera _camera;
-    private float3 _touchPosition;
-    private bool _isTouchDown;
-    private EntityCommandBufferSystem _ecbSystem;
-
     protected override void OnCreate()
     {
         RequireForUpdate<PickedComponent>();
-        _ecbSystem = World.GetOrCreateSystemManaged<BeginSimulationEntityCommandBufferSystem>();
+
+        // Ensure the singleton for holding the target exists.
+        if (!SystemAPI.HasSingleton<TargetHolderComponent>())
+        {
+            EntityManager.CreateEntity(typeof(TargetHolderComponent));
+        }
     }
 
     protected override void OnUpdate()
     {
-        CheckTouchDown();
-        UpdateTouchPosition();
-
-        if (!_isTouchDown)
-        {
+        if (!CheckTouchDown())
             return;
-        }
 
-        var ecb = _ecbSystem.CreateCommandBuffer();
+        float2 touchPosition = GetTouchPosition();
+
+        // Get the singleton for read-write access.
+        var targetHolder = SystemAPI.GetSingletonRW<TargetHolderComponent>();
+
+        // 1. Reset the target in the singleton.
+        targetHolder.ValueRW.Target = default;
+
         var currentlyPickedEntity = Entity.Null;
-        
-        // 1. 이전에 선택된 엔티티의 태그를 제거합니다.
-        foreach (var (tag, entity) in SystemAPI.Query<IsPickedTag>().WithEntityAccess())
-        {
-            ecb.RemoveComponent<IsPickedTag>(entity);
-        }
 
-        // 2. 클릭된 위치에 있는 엔티티 중 가장 우선순위가 높은 엔티티를 찾습니다.
+        // 2. Find the highest priority entity at the touch position.
         int maxOrder = int.MinValue;
-        Entity nextPickedEntity = Entity.Null;
-
         foreach (var (picked, bounds, entity) in SystemAPI.Query<RefRO<PickedComponent>, RefRO<ColliderBoundsComponent>>().WithEntityAccess())
         {
             var boundsValue = new Rect(bounds.ValueRO.min, bounds.ValueRO.max - bounds.ValueRO.min);
-            if (boundsValue.Contains(_touchPosition.xy))
+            if (boundsValue.Contains(touchPosition.xy))
             {
                 if (picked.ValueRO.Order > maxOrder)
                 {
                     maxOrder = picked.ValueRO.Order;
-                    nextPickedEntity = entity;
+                    currentlyPickedEntity = entity;
                 }
             }
         }
 
-        // 3. 새로 선택된 엔티티에 태그를 추가합니다.
-        if (nextPickedEntity != Entity.Null)
+        // 3. If an entity is picked, update the singleton with its physics component.
+        if (currentlyPickedEntity != Entity.Null)
         {
-            ecb.AddComponent(nextPickedEntity, new IsPickedTag
+            if (SystemAPI.HasComponent<TSObjectInfoComponent>(currentlyPickedEntity))
             {
-                TouchPosition = _touchPosition.xy
-            });
+                targetHolder.ValueRW.Target = SystemAPI.GetComponent<TSObjectInfoComponent>(currentlyPickedEntity);
+                targetHolder.ValueRW.TouchPosition = touchPosition;
+            }
         }
-        
-        _ecbSystem.AddJobHandleForProducer(Dependency);
     }
 
-    private void CheckTouchDown()
+    private bool CheckTouchDown()
     {
-        _isTouchDown = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
     }
 
-    private void UpdateTouchPosition()
+    private float2 GetTouchPosition()
     {
-        if (_camera == null)
-        {
-            _camera = Camera.main;
-            if (_camera == null) return;
-        }
+        if (Mouse.current == null) return float2.zero;
+        if (Camera.main == null) return float2.zero;
 
-        if (Mouse.current == null) return;
-        
         var screenPos = Mouse.current.position.ReadValue();
-        var worldPos = _camera.ScreenToWorldPoint(new float3(screenPos.x, screenPos.y, 0));
-        _touchPosition = new float3(worldPos.x, worldPos.y, 0);
+        var worldPos = Camera.main.ScreenToWorldPoint(new float3(screenPos.x, screenPos.y, 0));
+        return new float2(worldPos.x, worldPos.y);
     }
 }

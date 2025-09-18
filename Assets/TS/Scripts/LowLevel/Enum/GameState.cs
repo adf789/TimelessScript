@@ -10,3 +10,10 @@ public enum AnimationState
     Idle,
     Interact
 }
+
+public enum MoveState
+{
+    None,
+    Move,
+    Interact
+}
