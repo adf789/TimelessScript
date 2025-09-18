@@ -12,12 +12,14 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public int CurrentAnimationCount;
     public int PassingFrame;
     public bool IsLoop;
+    public bool IsFlip;
 
     public bool IsLastAnimation => CurrentAnimationIndex == CurrentAnimationCount - 1;
 
     public SpriteSheetAnimationComponent(FixedString64Bytes startKey, bool isLoop)
     {
         IsLoop = isLoop;
+        IsFlip = false;
         CurrentSpriteIndex = 0;
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;

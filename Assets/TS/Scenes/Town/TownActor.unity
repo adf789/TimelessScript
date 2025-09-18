@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 594003823}
   - component: {fileID: 594003821}
   - component: {fileID: 594003824}
+  - component: {fileID: 594003825}
   m_Layer: 0
   m_Name: Ground
   m_TagString: Ground
@@ -217,6 +218,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
   order: 1
+--- !u!114 &594003825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594003816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1083b78fe8e74b4da1b7623ea399fd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
+  type: 2
 --- !u!1 &617529931
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,35 +268,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4448617964647131482, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
   m_PrefabInstance: {fileID: 1912325869}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1717981387 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7497076683051236044, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  m_PrefabInstance: {fileID: 1912325869}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1717981388 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8896050616517539629, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  m_PrefabInstance: {fileID: 1912325869}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1717981387}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d0c226443970424fa5215bce8413c06, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::BehaviorAuthoring
---- !u!114 &1717981391
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1717981387}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d707e90e778988a40b0770fa063cee7a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
-  order: 0
 --- !u!1001 &1912325869
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -302,7 +287,7 @@ PrefabInstance:
     - target: {fileID: 1715992989030418147, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: onEventClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1717981388}
+      objectReference: {fileID: 0}
     - target: {fileID: 1715992989030418147, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: onEventClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
@@ -372,10 +357,7 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 3521715169015592492, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7497076683051236044, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1717981391}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
 --- !u!1 &2103076442
 GameObject:

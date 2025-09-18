@@ -54,9 +54,9 @@ public partial class PickedSystem : SystemBase
         // 3. If an entity is picked, update the singleton with its physics component.
         if (currentlyPickedEntity != Entity.Null)
         {
-            if (SystemAPI.HasComponent<TSObjectInfoComponent>(currentlyPickedEntity))
+            if (SystemAPI.HasComponent<TSObjectComponent>(currentlyPickedEntity))
             {
-                targetHolder.ValueRW.Target = SystemAPI.GetComponent<TSObjectInfoComponent>(currentlyPickedEntity);
+                targetHolder.ValueRW.Target = SystemAPI.GetComponent<TSObjectComponent>(currentlyPickedEntity);
                 targetHolder.ValueRW.TouchPosition = touchPosition;
             }
         }

@@ -52,6 +52,8 @@ public partial class SpriteSheetAnimationSystem : SystemBase
     /// <param name="key"></param>
     public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
+        authoring.SetFlip(component.IsFlip);
+
         if (!component.StartKey.IsEmpty)
         {
             authoring.TryGetSpriteNode(component.StartKey, out var findNode, out int findIndex);

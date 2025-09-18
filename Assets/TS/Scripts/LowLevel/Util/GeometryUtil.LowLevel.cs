@@ -1,4 +1,5 @@
 // Assets/TS/Scripts/LowLevel/Utils/GeometryUtils.cs
+using System;
 using Unity.Mathematics;
 
 namespace Utility
@@ -79,6 +80,39 @@ namespace Utility
 
             // 위의 모든 조건을 통과하면 선분과 사각형은 겹침
             return true;
+        }
+
+        /// <summary>
+        /// 현재 지점을 목표 지점으로 지정된 최대 거리만큼 이동시킵니다.
+        /// </summary>
+        /// <param name="current">현재 위치</param>
+        /// <param name="target">목표 위치</param>
+        /// <param name="maxDistanceDelta">한 번에 이동할 수 있는 최대 거리</param>
+        /// <returns>이동된 새로운 위치</returns>
+        public static float2 MoveTowards(float2 current, float2 target, float maxDistanceDelta)
+        {
+            // 현재 위치에서 목표 위치까지의 벡터를 계산합니다.
+            float2 toTarget = target - current;
+
+            // 벡터의 길이(거리)를 계산합니다.
+            float dist = math.length(toTarget);
+
+            // 거리가 0이거나 최대 이동 거리보다 작거나 같으면 목표 위치를 반환합니다.
+            if (dist <= maxDistanceDelta || dist == 0)
+            {
+                return target;
+            }
+
+            // 거리가 최대 이동 거리보다 크면,
+            // 방향 벡터를 정규화하고 최대 이동 거리를 곱한 후 현재 위치에 더하여 새로운 위치를 계산합니다.
+            return current + toTarget / dist * maxDistanceDelta;
+        }
+
+        public static bool CheckEqualsPosition(float2 current, float2 target)
+        {
+            float2 toTarget = target - current;
+
+            return Math.Abs(toTarget.x) <= float.Epsilon && Math.Abs(toTarget.y) <= float.Epsilon;
         }
     }
 }

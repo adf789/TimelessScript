@@ -4,6 +4,6 @@ using Unity.Mathematics;
 
 public struct TargetHolderComponent : IComponentData
 {
-    public TSObjectInfoComponent Target;
+    public TSObjectComponent Target;
     public float2 TouchPosition;
 }

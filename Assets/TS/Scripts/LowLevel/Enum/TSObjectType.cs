@@ -1,4 +1,4 @@
-public enum BehaviorType
+public enum TSObjectType
 {
     None,
     Actor,

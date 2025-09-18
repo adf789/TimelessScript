@@ -13,7 +13,7 @@ public partial struct ControlSystem : ISystem
     private Entity target;
 
     public void OnCreate(ref SystemState state)
-       => state.RequireForUpdate<TSObjectInfoComponent>();
+       => state.RequireForUpdate<TSObjectComponent>();
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -25,35 +25,37 @@ public partial struct ControlSystem : ISystem
 
         if (target == Entity.Null)
         {
-            if (targetHolder.Target.Behavior == BehaviorType.Actor)
+            if (targetHolder.Target.ObjectType == TSObjectType.Actor)
             {
-                target = targetHolder.Target.Target;
+                target = targetHolder.Target.Self;
 
                 Debug.Log($"Select {target}");
             }
         }
-        else if (target != targetHolder.Target.Target)
+        else if (target != targetHolder.Target.Self)
         {
-            var objectInfo = SystemAPI.GetComponentRW<TSObjectInfoComponent>(target);
+            var objectInfo = SystemAPI.GetComponentRW<TSObjectComponent>(target);
+            target = default;
 
-            switch (targetHolder.Target.Behavior)
+            switch (targetHolder.Target.ObjectType)
             {
-                case BehaviorType.Actor:
+                case TSObjectType.Actor:
                     {
-                        target = targetHolder.Target.Target;
+                        target = targetHolder.Target.Self;
                     }
                     break;
-                case BehaviorType.Ground:
+                case TSObjectType.Ground:
                     {
-                        objectInfo.ValueRW.State = MoveState.Move;
-
-                        var collider = SystemAPI.GetComponent<LightweightColliderComponent>(targetHolder.Target.Target);
+                        var collider = SystemAPI.GetComponent<LightweightColliderComponent>(targetHolder.Target.Self);
                         float2 position = collider.position + collider.offset;
                         float2 touchPosition = targetHolder.TouchPosition;
                         float halfHeight = collider.size.y * 0.5f;
 
                         position.x = touchPosition.x;
                         position.y += halfHeight;
+
+                        objectInfo.ValueRW.Behavior.Purpose = MoveState.Move;
+                        objectInfo.ValueRW.Behavior.MovePosition = position;
 
                         Debug.Log($"position: {position}, touchPosition: {touchPosition}");
                     }

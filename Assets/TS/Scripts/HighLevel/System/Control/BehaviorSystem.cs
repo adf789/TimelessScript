@@ -9,7 +9,7 @@ public partial struct BehaviorSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        var query = SystemAPI.QueryBuilder().WithAll<BehaviorComponent>().WithAll<LightweightPhysicsComponent>().Build();
+        var query = SystemAPI.QueryBuilder().WithAll<TSObjectComponent>().WithAll<LightweightPhysicsComponent>().Build();
 
         state.RequireAnyForUpdate(query);
     }
@@ -19,7 +19,9 @@ public partial struct BehaviorSystem : ISystem
     {
         var behaviorJob = new BehaviorJob()
         {
-            animationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false)
+            AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
+            Speed = 2f,
+            DeltaTime = SystemAPI.Time.DeltaTime
         };
 
         state.Dependency = behaviorJob.ScheduleParallel(state.Dependency);

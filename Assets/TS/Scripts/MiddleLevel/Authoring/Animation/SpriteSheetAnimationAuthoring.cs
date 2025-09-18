@@ -169,6 +169,20 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return true;
     }
 
+    public void SetFlip(bool isFlip)
+    {
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = isFlip;
+        }
+        else if (spriteImage != null)
+        {
+            var rotation = spriteImage.transform.rotation.eulerAngles;
+            rotation.x = isFlip ? 180f : 0;
+            spriteImage.transform.rotation = Quaternion.Euler(rotation);
+        }
+    }
+
     public void SetAnimationByIndex(FixedString64Bytes key, int animationIndex)
     {
         if (loadedSprites == null)
