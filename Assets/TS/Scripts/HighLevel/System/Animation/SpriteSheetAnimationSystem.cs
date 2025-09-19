@@ -23,7 +23,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
             {
                 authoring.Value.Initialize();
                 authoring.Value.LoadAnimations();
-                return;
+                continue;
             }
 
             SetAnimation(authoring.Value, ref component.ValueRW);
@@ -54,9 +54,9 @@ public partial class SpriteSheetAnimationSystem : SystemBase
     {
         authoring.SetFlip(component.IsFlip);
 
-        if (!component.StartKey.IsEmpty)
+        if (component.StartState != AnimationState.None)
         {
-            authoring.TryGetSpriteNode(component.StartKey, out var findNode, out int findIndex);
+            authoring.TryGetSpriteNode(component.StartState, out var findNode, out int findIndex);
 
             ApplyComponent(ref component, findNode, findIndex, component.IsLoop);
         }
@@ -69,16 +69,16 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         else if (!CheckAnimationFrame(authoring, ref component))
             return;
 
-        authoring.SetAnimationByIndex(component.CurrentKey, component.NextAnimationIndex());
+        authoring.SetAnimationByIndex(component.CurrentState, component.NextAnimationIndex());
     }
 
     private void ApplyComponent(ref SpriteSheetAnimationComponent component, SpriteSheetAnimationAuthoring.Node node, int index, bool isLoop)
     {
-        component.CurrentKey = node.Key;
+        component.CurrentState = node.State;
         component.CurrentAnimationCount = node.SpriteCount;
         component.CurrentSpriteIndex = index;
         component.CurrentAnimationIndex = -1;
-        component.StartKey = string.Empty;
+        component.StartState = AnimationState.None;
         component.IsLoop = isLoop;
     }
 }

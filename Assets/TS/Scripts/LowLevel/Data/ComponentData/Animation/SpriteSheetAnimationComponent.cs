@@ -5,8 +5,8 @@ using Unity.Mathematics;
 
 public struct SpriteSheetAnimationComponent : IComponentData
 {
-    public FixedString64Bytes StartKey;
-    public FixedString64Bytes CurrentKey;
+    public AnimationState StartState;
+    public AnimationState CurrentState;
     public int CurrentSpriteIndex;
     public int CurrentAnimationIndex;
     public int CurrentAnimationCount;
@@ -16,7 +16,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
 
     public bool IsLastAnimation => CurrentAnimationIndex == CurrentAnimationCount - 1;
 
-    public SpriteSheetAnimationComponent(FixedString64Bytes startKey, bool isLoop)
+    public SpriteSheetAnimationComponent(AnimationState startState, bool isLoop)
     {
         IsLoop = isLoop;
         IsFlip = false;
@@ -24,8 +24,8 @@ public struct SpriteSheetAnimationComponent : IComponentData
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;
         PassingFrame = 0;
-        StartKey = startKey;
-        CurrentKey = string.Empty;
+        StartState = startState;
+        CurrentState = AnimationState.Idle;
     }
 
     public int NextAnimationIndex()

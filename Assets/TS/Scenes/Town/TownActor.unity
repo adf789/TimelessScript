@@ -231,6 +231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
   type: 2
+  root: {fileID: 0}
 --- !u!1 &617529931
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,6 +344,10 @@ PrefabInstance:
     - target: {fileID: 4448617964647131482, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5506320645025999429, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
+      propertyPath: defaultState
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7497076683051236044, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: m_Name

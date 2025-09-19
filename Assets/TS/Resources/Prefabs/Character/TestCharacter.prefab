@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7790838629798168360}
   - component: {fileID: 8070793168041068064}
-  - component: {fileID: 767689376453983066}
+  - component: {fileID: 3188160931692393321}
   m_Layer: 0
   m_Name: Renderer
   m_TagString: Untagged
@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 8451177624645023579, guid: 31ab93839e3913a45856b81656ac273f, type: 3}
+  m_Sprite: {fileID: 2992711301080622466, guid: 93b8824ab061f0f4e9440b824f206ec3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -91,7 +91,7 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &767689376453983066
+--- !u!114 &3188160931692393321
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -103,14 +103,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bdd8d26695c8e54a92df188efa57b25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpriteSheetAnimationAuthoring
-  state: 0
+  defaultState: 1
   spriteRenderer: {fileID: 8070793168041068064}
   spriteImage: {fileID: 0}
   size: {x: 4, y: 4}
   spriteSheets:
   - SourceImage: {fileID: 7408791951343775973, guid: bbbaf36ec5c6401459b9e54454f8eff7, type: 3}
     Guid: bbbaf36ec5c6401459b9e54454f8eff7
-    Key: Idle
+    State: 1
     FrameDelay: 10
     IsCustomDelay: 0
     IsDefault: 1
@@ -118,7 +118,7 @@ MonoBehaviour:
     SpriteCount: 16
   - SourceImage: {fileID: 4199067622019808784, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
     Guid: 0779a9727e271024581dd1d3d4df70c7
-    Key: Interact
+    State: 2
     FrameDelay: 10
     IsCustomDelay: 0
     IsDefault: 0
@@ -126,7 +126,7 @@ MonoBehaviour:
     SpriteCount: 19
   - SourceImage: {fileID: -1524609319717364542, guid: 526dbe93ccaffcd419fb42dfdc6ff910, type: 3}
     Guid: 526dbe93ccaffcd419fb42dfdc6ff910
-    Key: Jump_Idle
+    State: 4
     FrameDelay: 10
     IsCustomDelay: 0
     IsDefault: 0
@@ -134,7 +134,7 @@ MonoBehaviour:
     SpriteCount: 16
   - SourceImage: {fileID: -8156856332418018191, guid: a4663883493a7be4cbdf2f9319637487, type: 3}
     Guid: a4663883493a7be4cbdf2f9319637487
-    Key: Jump_Land
+    State: 5
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 0
@@ -142,7 +142,7 @@ MonoBehaviour:
     SpriteCount: 10
   - SourceImage: {fileID: 3224967595496546753, guid: 93b8824ab061f0f4e9440b824f206ec3, type: 3}
     Guid: 93b8824ab061f0f4e9440b824f206ec3
-    Key: PickUp
+    State: 6
     FrameDelay: 10
     IsCustomDelay: 0
     IsDefault: 0
@@ -150,7 +150,7 @@ MonoBehaviour:
     SpriteCount: 19
   - SourceImage: {fileID: 8451177624645023579, guid: 31ab93839e3913a45856b81656ac273f, type: 3}
     Guid: 31ab93839e3913a45856b81656ac273f
-    Key: Walking
+    State: 3
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 0

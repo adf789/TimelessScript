@@ -24,7 +24,9 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
     private int count = 0;
     private int playingSpriteSheetIndex = -1;
 
-    private SerializedProperty state = null;
+    private SerializedProperty defaultState = null;
+    private SerializedProperty spriteRenderer = null;
+    private SerializedProperty spriteImage = null;
     #endregion Value
 
     #region Function
@@ -53,7 +55,9 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
     {
         inspectorTarget = (SpriteSheetAnimationAuthoring) target;
 
-        state = serializedObject.FindProperty("state");
+        defaultState = serializedObject.FindProperty("defaultState");
+        spriteRenderer = serializedObject.FindProperty("spriteRenderer");
+        spriteImage = serializedObject.FindProperty("spriteImage");
 
         ResetValues();
     }
@@ -63,12 +67,23 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         StopAnimation();
     }
 
-    private void UpdateAnimation(string key, int frame, ref int index)
+    private void UpdateAnimation(Sprite[] sprites, int frame, ref int index)
     {
         if (!IsPlayingTestAnimation)
             return;
 
-        inspectorTarget.OnUpdateAnimation(key, frame, ref index);
+        if (sprites == null)
+            return;
+
+        if (frame < inspectorTarget.GetFrameDelay(index))
+            return;
+
+        index++;
+
+        if (index >= sprites.Length)
+            index = 0;
+
+        inspectorTarget.SetSprite(sprites[index]);
     }
 
     private async UniTask PlayAnimation(int index)
@@ -81,22 +96,23 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         playingSpriteSheetIndex = index;
         var spriteSheet = inspectorTarget.spriteSheets[index];
 
-        inspectorTarget.Initialize();
-        string key = spriteSheet.Key;
+        var spriteResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
+        Sprite[] sprites = spriteResourcesPath.LoadAll<Sprite>(spriteSheet.Guid);
+        AnimationState state = spriteSheet.State;
         int frame = 0;
         int animationIndex = 0;
 
         while (true)
         {
             int prevIndex = animationIndex;
-            UpdateAnimation(key, frame, ref animationIndex);
+            UpdateAnimation(sprites, frame, ref animationIndex);
 
             if (prevIndex > animationIndex)
                 frame = 0;
             else
                 frame++;
 
-            await UniTask.Delay(40, cancellationToken: TokenPool.Get(GetHashCode()));
+            await UniTask.Delay(50, cancellationToken: TokenPool.Get(GetHashCode()));
         }
     }
 
@@ -111,7 +127,9 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
     {
         EditorGUI.BeginChangeCheck();
         {
-            EditorGUILayout.PropertyField(state);
+            EditorGUILayout.PropertyField(defaultState);
+            EditorGUILayout.PropertyField(spriteRenderer);
+            EditorGUILayout.PropertyField(spriteImage);
         }
         if(EditorGUI.EndChangeCheck())
             SetReadyDirty();
@@ -258,7 +276,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
         {
-            data.Key = EditorGUILayout.TextField($"Key", data.Key);
+            data.State = (AnimationState)EditorGUILayout.EnumPopup($"State", data.State);
         }
         GUILayout.EndHorizontal();
         if (EditorGUI.EndChangeCheck())

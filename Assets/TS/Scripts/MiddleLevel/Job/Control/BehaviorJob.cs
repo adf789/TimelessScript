@@ -42,9 +42,9 @@ public partial struct BehaviorJob : IJobEntity
 
         if (objectComponent.Behavior.Purpose == MoveState.Move)
         {
-            if (animComponent.ValueRW.CurrentKey != "Walking" && animComponent.ValueRW.StartKey != "Walking")
+            if (animComponent.ValueRW.CurrentState != AnimationState.Walking && animComponent.ValueRW.StartState != AnimationState.Walking)
             {
-                animComponent.ValueRW.StartKey = "Walking";
+                animComponent.ValueRW.StartState = AnimationState.Walking;
             }
 
             // 1. 현재 '루트(발)'의 위치를 계산합니다. (피벗 위치 + 오프셋)
@@ -75,23 +75,23 @@ public partial struct BehaviorJob : IJobEntity
 
             if (Utility.Geometry.CheckEqualsPosition(currentRootPosition, targetRootPosition))
             {
-                animComponent.ValueRW.StartKey = "Idle";
+                animComponent.ValueRW.StartState = AnimationState.Idle;
                 objectComponent.Behavior.Purpose = MoveState.None;
             }
         }
-        else if (isGrounded && animComponent.ValueRW.CurrentKey == "Jump_Idle")
+        else if (isGrounded && animComponent.ValueRW.CurrentState == AnimationState.Jump_Idle)
         {
-            if (animComponent.ValueRW.StartKey != "Jump_Land")
+            if (animComponent.ValueRW.StartState != AnimationState.Jump_Land)
             {
-                animComponent.ValueRW.StartKey = "Jump_Land";
+                animComponent.ValueRW.StartState = AnimationState.Jump_Land;
                 animComponent.ValueRW.IsLoop = false;
             }
         }
-        else if (!isGrounded && animComponent.ValueRW.CurrentKey != "Jump_Idle")
+        else if (!isGrounded && animComponent.ValueRW.CurrentState != AnimationState.Jump_Idle)
         {
-            if (animComponent.ValueRW.StartKey != "Jump_Idle")
+            if (animComponent.ValueRW.StartState != AnimationState.Jump_Idle)
             {
-                animComponent.ValueRW.StartKey = "Jump_Idle";
+                animComponent.ValueRW.StartState = AnimationState.Jump_Idle;
             }
         }
     }
