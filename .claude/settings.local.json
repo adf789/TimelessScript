@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(dotnet nuget locals:*)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": []
   }

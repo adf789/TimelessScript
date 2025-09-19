@@ -1,6 +1,7 @@
 // Assets/TS/Scripts/LowLevel/Utils/GeometryUtils.cs
 using System;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Utility
 {
@@ -113,6 +114,16 @@ namespace Utility
             float2 toTarget = target - current;
 
             return Math.Abs(toTarget.x) <= float.Epsilon && Math.Abs(toTarget.y) <= float.Epsilon;
+        }
+
+        public static float3 ConvertTo(Vector3 vector)
+        {
+            return new float3(vector.x, vector.y, vector.z);
+        }
+
+        public static float2 ConvertTo(Vector2 vector)
+        {
+            return new float2(vector.x, vector.y);
         }
     }
 }

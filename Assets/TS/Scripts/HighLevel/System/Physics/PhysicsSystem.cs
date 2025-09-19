@@ -1,5 +1,6 @@
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -23,7 +24,11 @@ public partial struct PhysicsSystem : ISystem
         state.Dependency = physicsJob.ScheduleParallel(state.Dependency);
         
         // 충돌 처리 Job
-        var collisionJob = new PhysicsCollisionJob();
+        var collisionJob = new PhysicsCollisionJob
+        {
+            TSObjectLookup = SystemAPI.GetComponentLookup<TSObjectComponent>(true),
+            ColliderLookup = SystemAPI.GetComponentLookup<LightweightColliderComponent>(true),
+        };
         state.Dependency = collisionJob.ScheduleParallel(state.Dependency);
         
         // 트리거 처리 Job

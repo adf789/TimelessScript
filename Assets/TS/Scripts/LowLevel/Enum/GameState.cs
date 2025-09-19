@@ -20,5 +20,7 @@ public enum MoveState
 {
     None,
     Move,
+    ClimbUp,
+    ClimbDown,
     Interact
 }

@@ -49,7 +49,7 @@ public partial struct ControlSystem : ISystem
 
                 target = selectTarget.Self;
 
-                Debug.Log($"Select {target}");
+                Debug.Log($"Select {selectTarget.Name}");
             }
             return;
         }
@@ -57,6 +57,8 @@ public partial struct ControlSystem : ISystem
         if (target == selectTarget.Self)
         {
             target = Entity.Null;
+
+            Debug.Log($"Unselect {selectTarget.Name}");
             return;
         }
         else
@@ -80,9 +82,23 @@ public partial struct ControlSystem : ISystem
                         position.x = touchPosition.x;
                         position.y += halfHeight;
 
-                        objectInfo.ValueRW.Behavior.Target = selectTarget.Self;
-                        objectInfo.ValueRW.Behavior.Purpose = MoveState.Move;
-                        objectInfo.ValueRW.Behavior.MovePosition = position;
+                        // Navigation 컴포넌트가 있으면 Navigation 시스템 사용
+                        if (SystemAPI.HasComponent<NavigationComponent>(target))
+                        {
+                            var navigation = SystemAPI.GetComponentRW<NavigationComponent>(target);
+                            navigation.ValueRW.IsActive = true;
+                            navigation.ValueRW.FinalTargetPosition = position;
+                            navigation.ValueRW.FinalTargetGround = selectTarget.Self;
+                            navigation.ValueRW.CurrentWaypointIndex = 0;
+                            navigation.ValueRW.State = NavigationState.PathFinding;
+                        }
+                        else
+                        {
+                            // 기존 방식 - 직접 이동
+                            objectInfo.ValueRW.Behavior.Target = selectTarget.Self;
+                            objectInfo.ValueRW.Behavior.Purpose = MoveState.Move;
+                            objectInfo.ValueRW.Behavior.MovePosition = position;
+                        }
 
                         Debug.Log($"position: {position}, touchPosition: {touchPosition}");
                     }

@@ -8,6 +8,9 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct PhysicsCollisionJob : IJobEntity
 {
+    [ReadOnly] public ComponentLookup<TSObjectComponent> TSObjectLookup;
+    [ReadOnly] public ComponentLookup<LightweightColliderComponent> ColliderLookup;
+
     public void Execute(
         ref LightweightPhysicsComponent physics,
         ref LocalTransform transform,
@@ -21,12 +24,25 @@ public partial struct PhysicsCollisionJob : IJobEntity
         if (collider.isTrigger)
             return;
 
+        // 현재 충돌 목록에서 사다리와 겹치고 있는지 확인
+        bool isInLadderArea = IsCollidingWithLadder(collisions);
+
         // 모든 충돌 처리
         for (int i = 0; i < collisions.Length; i++)
         {
             var collision = collisions[i];
             if (collision.isTrigger)
                 continue;
+
+            // 사다리 영역에서의 Ground 충돌 처리
+            if (isInLadderArea && collision.isGroundCollision)
+            {
+                // 사다리 영역에서는 Ground와의 충돌을 무시 (지면을 뚫고 지나갈 수 있음)
+                #if UNITY_EDITOR
+                UnityEngine.Debug.Log($"[PhysicsCollisionJob] 사다리 영역에서 Ground 충돌 무시");
+                #endif
+                continue;
+            }
 
             // 위치 보정
             float2 currentPos = transform.Position.xy;
@@ -53,7 +69,31 @@ public partial struct PhysicsCollisionJob : IJobEntity
         
         // CheckGround(ref physics);
     }
-    
+
+    [BurstCompile]
+    private bool IsCollidingWithLadder(DynamicBuffer<CollisionBuffer> collisions)
+    {
+        // 충돌 목록에서 사다리와의 충돌(Trigger)이 있는지 확인
+        for (int i = 0; i < collisions.Length; i++)
+        {
+            var collision = collisions[i];
+
+            // 트리거 충돌이고 사다리인지 확인
+            if (collision.isTrigger && TSObjectLookup.HasComponent(collision.collidedEntity))
+            {
+                var tsObject = TSObjectLookup[collision.collidedEntity];
+                if (tsObject.ObjectType == TSObjectType.Ladder)
+                {
+                    #if UNITY_EDITOR
+                    UnityEngine.Debug.Log($"[PhysicsCollisionJob] 사다리와 충돌 감지: {tsObject.Name}");
+                    #endif
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     [BurstCompile]
     private static void CheckGround(ref LightweightPhysicsComponent physics)
     {
