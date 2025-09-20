@@ -744,6 +744,10 @@ PrefabInstance:
       propertyPath: m_GravityScale
       value: 0.7
       objectReference: {fileID: 0}
+    - target: {fileID: 3188160931692393321, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
+      propertyPath: spriteSheets.Array.data[1].IsCustomDelay
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4448617964647131482, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.89

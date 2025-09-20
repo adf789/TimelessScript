@@ -11,13 +11,9 @@ public enum AnimationState
     Idle,
     Interact,
     Walking,
-    Jump_Idle,
-    Jump_Land,
-    PickUp,
-    Ladder_ClimbDownStart,
-    Ladder_ClimbDownIdle,
-    Ladder_ClimbUpStart,
-    Ladder_ClimbUpIdle,
+    Fall,
+    Ladder_ClimbDown,
+    Ladder_ClimbUp,
 }
 
 public enum MoveState

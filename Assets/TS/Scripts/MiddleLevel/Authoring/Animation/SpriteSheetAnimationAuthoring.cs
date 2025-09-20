@@ -25,6 +25,16 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         public int[] CustomFrameDelay;
         public int SpriteCount;
 
+        [Header("Start/End Animations")]
+        public string StartAnimationGuid;
+        public string EndAnimationGuid;
+        public int StartFrameDelay = 10;
+        public int EndFrameDelay = 10;
+        public bool IsStartCustomDelay;
+        public bool IsEndCustomDelay;
+        public int[] StartCustomFrameDelay;
+        public int[] EndCustomFrameDelay;
+
         public Node() { }
 
         public Node(Node copyNode)
@@ -35,6 +45,14 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             State = copyNode.State;
             FrameDelay = copyNode.FrameDelay;
             Guid = copyNode.Guid;
+            StartAnimationGuid = copyNode.StartAnimationGuid;
+            EndAnimationGuid = copyNode.EndAnimationGuid;
+            StartFrameDelay = copyNode.StartFrameDelay;
+            EndFrameDelay = copyNode.EndFrameDelay;
+            IsStartCustomDelay = copyNode.IsStartCustomDelay;
+            IsEndCustomDelay = copyNode.IsEndCustomDelay;
+            StartCustomFrameDelay = copyNode.StartCustomFrameDelay;
+            EndCustomFrameDelay = copyNode.EndCustomFrameDelay;
         }
     }
 
@@ -50,6 +68,8 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     public List<Node> spriteSheets = new List<Node>();
 
     private Dictionary<AnimationState, Sprite[]> loadedSprites = null;
+    private Dictionary<AnimationState, Sprite[]> loadedStartSprites = null;
+    private Dictionary<AnimationState, Sprite[]> loadedEndSprites = null;
 
     private class Baker : Baker<SpriteSheetAnimationAuthoring>
     {
@@ -100,11 +120,15 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     public void Reset()
     {
         loadedSprites = null;
+        loadedStartSprites = null;
+        loadedEndSprites = null;
     }
 
     private void OnDestroy()
     {
         loadedSprites = null;
+        loadedStartSprites = null;
+        loadedEndSprites = null;
     }
 
     public void OnUpdateAnimation(AnimationState state, int frame, ref int index)
@@ -136,14 +160,24 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             return;
 
         Dictionary<AnimationState, Sprite[]> loadSprites = new Dictionary<AnimationState, Sprite[]>();
+        Dictionary<AnimationState, Sprite[]> loadStartSprites = new Dictionary<AnimationState, Sprite[]>();
+        Dictionary<AnimationState, Sprite[]> loadEndSprites = new Dictionary<AnimationState, Sprite[]>();
 
         for (int i = 0; i < spriteSheets.Count; ++i)
         {
             if (TryLoadSprite(i, out var state, out var sprites))
                 loadSprites[state] = sprites;
+
+            if (TryLoadStartSprite(i, out var startState, out var startSprites))
+                loadStartSprites[startState] = startSprites;
+
+            if (TryLoadEndSprite(i, out var endState, out var endSprites))
+                loadEndSprites[endState] = endSprites;
         }
 
         loadedSprites = loadSprites;
+        loadedStartSprites = loadStartSprites;
+        loadedEndSprites = loadEndSprites;
     }
 
     private bool TryLoadSprite(int spriteIndex, out AnimationState state, out Sprite[] sprites)
@@ -172,6 +206,58 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return true;
     }
 
+    private bool TryLoadStartSprite(int spriteIndex, out AnimationState state, out Sprite[] sprites)
+    {
+        state = AnimationState.Idle;
+        sprites = null;
+
+        if (spriteIndex < 0 || spriteIndex >= spriteSheets.Count)
+            return false;
+
+        state = spriteSheets[spriteIndex].State;
+        string guid = spriteSheets[spriteIndex].StartAnimationGuid;
+
+        if (string.IsNullOrEmpty(guid))
+            return false;
+
+        var spriteResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
+        sprites = spriteResourcesPath.LoadAll<Sprite>(guid);
+
+        if (sprites == null || sprites.Length == 0)
+        {
+            Debug.LogError($"{guid} 에 Start Animation Sprite 가 없습니다.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryLoadEndSprite(int spriteIndex, out AnimationState state, out Sprite[] sprites)
+    {
+        state = AnimationState.Idle;
+        sprites = null;
+
+        if (spriteIndex < 0 || spriteIndex >= spriteSheets.Count)
+            return false;
+
+        state = spriteSheets[spriteIndex].State;
+        string guid = spriteSheets[spriteIndex].EndAnimationGuid;
+
+        if (string.IsNullOrEmpty(guid))
+            return false;
+
+        var spriteResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<Sprite>();
+        sprites = spriteResourcesPath.LoadAll<Sprite>(guid);
+
+        if (sprites == null || sprites.Length == 0)
+        {
+            Debug.LogError($"{guid} 에 End Animation Sprite 가 없습니다.");
+            return false;
+        }
+
+        return true;
+    }
+
     public void SetFlip(bool isFlip)
     {
         if (spriteRenderer != null)
@@ -192,6 +278,34 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             return;
 
         if (loadedSprites.TryGetValue(state, out var sprites))
+        {
+            if (sprites.Length <= animationIndex)
+                return;
+
+            SetSprite(sprites[animationIndex]);
+        }
+    }
+
+    public void SetStartAnimationByIndex(AnimationState state, int animationIndex)
+    {
+        if (loadedStartSprites == null)
+            return;
+
+        if (loadedStartSprites.TryGetValue(state, out var sprites))
+        {
+            if (sprites.Length <= animationIndex)
+                return;
+
+            SetSprite(sprites[animationIndex]);
+        }
+    }
+
+    public void SetEndAnimationByIndex(AnimationState state, int animationIndex)
+    {
+        if (loadedEndSprites == null)
+            return;
+
+        if (loadedEndSprites.TryGetValue(state, out var sprites))
         {
             if (sprites.Length <= animationIndex)
                 return;
@@ -326,6 +440,42 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return 0;
     }
 
+    public int GetStartAnimationCount(AnimationState state)
+    {
+        if (loadedStartSprites == null)
+            return 0;
+
+        if (loadedStartSprites.TryGetValue(state, out var sprites))
+        {
+            return sprites.Length;
+        }
+
+        return 0;
+    }
+
+    public int GetEndAnimationCount(AnimationState state)
+    {
+        if (loadedEndSprites == null)
+            return 0;
+
+        if (loadedEndSprites.TryGetValue(state, out var sprites))
+        {
+            return sprites.Length;
+        }
+
+        return 0;
+    }
+
+    public bool HasStartAnimation(AnimationState state)
+    {
+        return GetStartAnimationCount(state) > 0;
+    }
+
+    public bool HasEndAnimation(AnimationState state)
+    {
+        return GetEndAnimationCount(state) > 0;
+    }
+
     public int GetFrameDelay(AnimationState state, int animationIndex)
     {
         int index = GetIndex(state);
@@ -350,6 +500,58 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             return node.FrameDelay;
 
         return node.CustomFrameDelay[animationIndex];
+    }
+
+    public int GetStartFrameDelay(AnimationState state, int animationIndex)
+    {
+        int index = GetIndex(state);
+
+        if (index == -1)
+            return 0;
+
+        return GetStartFrameDelay(index, animationIndex);
+    }
+
+    public int GetStartFrameDelay(int spriteIndex, int animationIndex)
+    {
+        if (spriteSheets.Count <= spriteIndex || spriteIndex < 0)
+            return 0;
+
+        Node node = spriteSheets[spriteIndex];
+
+        if (!node.IsStartCustomDelay)
+            return node.StartFrameDelay;
+
+        if (node.StartCustomFrameDelay == null || node.StartCustomFrameDelay.Length <= animationIndex)
+            return node.StartFrameDelay;
+
+        return node.StartCustomFrameDelay[animationIndex];
+    }
+
+    public int GetEndFrameDelay(AnimationState state, int animationIndex)
+    {
+        int index = GetIndex(state);
+
+        if (index == -1)
+            return 0;
+
+        return GetEndFrameDelay(index, animationIndex);
+    }
+
+    public int GetEndFrameDelay(int spriteIndex, int animationIndex)
+    {
+        if (spriteSheets.Count <= spriteIndex || spriteIndex < 0)
+            return 0;
+
+        Node node = spriteSheets[spriteIndex];
+
+        if (!node.IsEndCustomDelay)
+            return node.EndFrameDelay;
+
+        if (node.EndCustomFrameDelay == null || node.EndCustomFrameDelay.Length <= animationIndex)
+            return node.EndFrameDelay;
+
+        return node.EndCustomFrameDelay[animationIndex];
     }
 
     private int GetIndex(AnimationState state)

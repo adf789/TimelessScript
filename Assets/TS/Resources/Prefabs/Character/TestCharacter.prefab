@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 1756361775
   m_SortingLayer: 2
   m_SortingOrder: 0
-  m_Sprite: {fileID: 6399904413585155045, guid: d55225e5399d6b04c8a36bdea21f1dc2, type: 3}
+  m_Sprite: {fileID: 8808107035895179942, guid: a4663883493a7be4cbdf2f9319637487, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -111,35 +111,51 @@ MonoBehaviour:
   - SourceImage: {fileID: 7408791951343775973, guid: bbbaf36ec5c6401459b9e54454f8eff7, type: 3}
     Guid: bbbaf36ec5c6401459b9e54454f8eff7
     State: 1
-    FrameDelay: 10
+    FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 1
     CustomFrameDelay: 
     SpriteCount: 16
+    StartAnimationGuid: 
+    EndAnimationGuid: 
+    StartFrameDelay: 10
+    EndFrameDelay: 10
+    IsStartCustomDelay: 0
+    IsEndCustomDelay: 0
+    StartCustomFrameDelay: 
+    EndCustomFrameDelay: 
   - SourceImage: {fileID: 4199067622019808784, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
     Guid: 0779a9727e271024581dd1d3d4df70c7
     State: 2
-    FrameDelay: 10
-    IsCustomDelay: 0
-    IsDefault: 0
-    CustomFrameDelay: 
-    SpriteCount: 19
-  - SourceImage: {fileID: -1524609319717364542, guid: 526dbe93ccaffcd419fb42dfdc6ff910, type: 3}
-    Guid: 526dbe93ccaffcd419fb42dfdc6ff910
-    State: 4
-    FrameDelay: 10
-    IsCustomDelay: 0
-    IsDefault: 0
-    CustomFrameDelay: 
-    SpriteCount: 16
-  - SourceImage: {fileID: -8156856332418018191, guid: a4663883493a7be4cbdf2f9319637487, type: 3}
-    Guid: a4663883493a7be4cbdf2f9319637487
-    State: 5
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 0
     CustomFrameDelay: 
-    SpriteCount: 10
+    SpriteCount: 19
+    StartAnimationGuid: 
+    EndAnimationGuid: 
+    StartFrameDelay: 10
+    EndFrameDelay: 10
+    IsStartCustomDelay: 0
+    IsEndCustomDelay: 0
+    StartCustomFrameDelay: 
+    EndCustomFrameDelay: 
+  - SourceImage: {fileID: -1524609319717364542, guid: 526dbe93ccaffcd419fb42dfdc6ff910, type: 3}
+    Guid: 526dbe93ccaffcd419fb42dfdc6ff910
+    State: 4
+    FrameDelay: 5
+    IsCustomDelay: 0
+    IsDefault: 0
+    CustomFrameDelay: 
+    SpriteCount: 16
+    StartAnimationGuid: 
+    EndAnimationGuid: a4663883493a7be4cbdf2f9319637487
+    StartFrameDelay: 10
+    EndFrameDelay: 5
+    IsStartCustomDelay: 0
+    IsEndCustomDelay: 0
+    StartCustomFrameDelay: 
+    EndCustomFrameDelay: 
   - SourceImage: {fileID: 8451177624645023579, guid: 31ab93839e3913a45856b81656ac273f, type: 3}
     Guid: 31ab93839e3913a45856b81656ac273f
     State: 3
@@ -148,38 +164,46 @@ MonoBehaviour:
     IsDefault: 0
     CustomFrameDelay: 
     SpriteCount: 16
-  - SourceImage: {fileID: 4913468134237053737, guid: d9120fd159f6371438fdac76af801994, type: 3}
-    Guid: d9120fd159f6371438fdac76af801994
-    State: 7
-    FrameDelay: 1
-    IsCustomDelay: 0
-    IsDefault: 0
-    CustomFrameDelay: 
-    SpriteCount: 8
+    StartAnimationGuid: 
+    EndAnimationGuid: 
+    StartFrameDelay: 10
+    EndFrameDelay: 10
+    IsStartCustomDelay: 0
+    IsEndCustomDelay: 0
+    StartCustomFrameDelay: 
+    EndCustomFrameDelay: 
   - SourceImage: {fileID: -4655462247205900390, guid: d55225e5399d6b04c8a36bdea21f1dc2, type: 3}
     Guid: d55225e5399d6b04c8a36bdea21f1dc2
-    State: 8
+    State: 5
     FrameDelay: 1
     IsCustomDelay: 0
     IsDefault: 0
     CustomFrameDelay: 
     SpriteCount: 36
-  - SourceImage: {fileID: -5594430094035053048, guid: 07b3914c579dd50499849bbe4e05c76b, type: 3}
-    Guid: 07b3914c579dd50499849bbe4e05c76b
-    State: 9
-    FrameDelay: 1
-    IsCustomDelay: 0
-    IsDefault: 0
-    CustomFrameDelay: 
-    SpriteCount: 27
+    StartAnimationGuid: d9120fd159f6371438fdac76af801994
+    EndAnimationGuid: 
+    StartFrameDelay: 1
+    EndFrameDelay: 10
+    IsStartCustomDelay: 0
+    IsEndCustomDelay: 0
+    StartCustomFrameDelay: 
+    EndCustomFrameDelay: 
   - SourceImage: {fileID: -8254216930367288035, guid: 099bafe355574c5419d20324e8b1526e, type: 3}
     Guid: 099bafe355574c5419d20324e8b1526e
-    State: 10
+    State: 6
     FrameDelay: 1
     IsCustomDelay: 0
     IsDefault: 0
     CustomFrameDelay: 
     SpriteCount: 36
+    StartAnimationGuid: 07b3914c579dd50499849bbe4e05c76b
+    EndAnimationGuid: 
+    StartFrameDelay: 1
+    EndFrameDelay: 10
+    IsStartCustomDelay: 0
+    IsEndCustomDelay: 0
+    StartCustomFrameDelay: 
+    EndCustomFrameDelay: 
 --- !u!1 &4422742858844270500
 GameObject:
   m_ObjectHideFlags: 0
