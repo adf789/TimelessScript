@@ -40,7 +40,7 @@ public partial struct BehaviorJob : IJobEntity
         if (!animComponent.IsValid)
             return;
 
-        Debug.Log($"[BehaviorJob] {objectComponent.Name} - Purpose: {objectComponent.Behavior.Purpose}, MovePosition: ({objectComponent.Behavior.MovePosition.x:F2}, {objectComponent.Behavior.MovePosition.y:F2})");
+        Debug.Log($"[BehaviorJob] {objectComponent.Name} - Purpose: {objectComponent.Behavior.Purpose}, MovePosition: ({objectComponent.Behavior.MovePosition.x:G2}, {objectComponent.Behavior.MovePosition.y:G2})");
 
         if (objectComponent.Behavior.Purpose == MoveState.Move)
         {
@@ -115,7 +115,7 @@ public partial struct BehaviorJob : IJobEntity
             // 현재 위치를 MovePosition에 업데이트
             objectComponent.Behavior.MovePosition = currentRootPosition;
 
-            Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}, 거리: {distance:F3}");
+            Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}, 거리: {distance:G3}");
         }
     }
 
@@ -127,7 +127,7 @@ public partial struct BehaviorJob : IJobEntity
 
         float2 targetRootPosition = objectComponent.Behavior.MovePosition;
 
-        Debug.Log($"사다리 이동: 현재({currentRootPosition.x:F2}, {currentRootPosition.y:F2}) → 목표({targetRootPosition.x:F2}, {targetRootPosition.y:F2})");
+        Debug.Log($"사다리 이동: 현재({currentRootPosition.x:G2}, {currentRootPosition.y:G2}) → 목표({targetRootPosition.x:G2}, {targetRootPosition.y:G2})");
 
         float maxDistanceDelta = Speed * DeltaTime; // 일반 이동 속도 사용
 
@@ -145,7 +145,7 @@ public partial struct BehaviorJob : IJobEntity
         currentRootPosition.y += objectComponent.RootOffset;
 
         float remainingDistance = math.distance(currentRootPosition, targetRootPosition);
-        Debug.Log($"[BehaviorJob] 사다리 이동 중: 남은 거리 = {remainingDistance:F3}");
+        Debug.Log($"[BehaviorJob] 사다리 이동 중: 남은 거리 = {remainingDistance:G3}");
 
         if (remainingDistance < 0.2f) // NavigationSystem과 동일한 임계값 사용
         {
@@ -158,7 +158,7 @@ public partial struct BehaviorJob : IJobEntity
             objectComponent.Behavior.Purpose = MoveState.None;
             objectComponent.Behavior.MovePosition = targetRootPosition;
 
-            Debug.Log($"[BehaviorJob] 사다리 이동 완료: {objectComponent.Name}, 거리: {remainingDistance:F3}");
+            Debug.Log($"[BehaviorJob] 사다리 이동 완료: {objectComponent.Name}, 거리: {remainingDistance:G3}");
         }
     }
 
