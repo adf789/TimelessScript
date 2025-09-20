@@ -22,9 +22,10 @@ public class ColliderAuthoring : MonoBehaviour
                 isTrigger = authoring.isTrigger,
                 position = float2.zero // 런타임에 업데이트
             });
-            
+
             AddComponent(entity, new ColliderBoundsComponent());
             AddComponent(entity, new CollisionInfoComponent());
+            AddComponent(entity, new SpatialHashKeyComponent()); // Spatial Hashing을 위한 컴포넌트 추가
             AddBuffer<CollisionBuffer>(entity);
         }
     }

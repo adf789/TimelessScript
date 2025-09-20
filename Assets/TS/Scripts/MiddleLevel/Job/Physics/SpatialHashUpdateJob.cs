@@ -12,7 +12,7 @@ public partial struct SpatialHashUpdateJob : IJobEntity
     [ReadOnly] public float cellSize;
     
     public void Execute(
-        ref SpatialHashKey hashKey,
+        ref SpatialHashKeyComponent hashKey,
         in ColliderComponent collider)
     {
         hashKey.cellPosition = new int2(

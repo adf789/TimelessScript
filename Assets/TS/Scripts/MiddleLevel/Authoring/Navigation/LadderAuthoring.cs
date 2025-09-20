@@ -67,6 +67,7 @@ public class LadderAuthoring : MonoBehaviour
                         position = float2.zero
                     });
 
+                    AddComponent(entity, new SpatialHashKeyComponent());
                     AddComponent(entity, new ColliderBoundsComponent());
                     AddComponent(entity, new CollisionInfoComponent());
                     AddBuffer<CollisionBuffer>(entity);
