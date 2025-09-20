@@ -309,6 +309,18 @@ MonoBehaviour:
   - guid: a4663883493a7be4cbdf2f9319637487
     assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Land.png
     displayName: Character_Jump_Land
+  - guid: d9120fd159f6371438fdac76af801994
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Ladder_ClimbDownStart.png
+    displayName: Character_Ladder_ClimbDownStart
+  - guid: d55225e5399d6b04c8a36bdea21f1dc2
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Ladder_ClimbDownIdle.png
+    displayName: Character_Ladder_ClimbDownIdle
+  - guid: 07b3914c579dd50499849bbe4e05c76b
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Ladder_ClimbUpStart.png
+    displayName: Character_Ladder_ClimbUpStart
+  - guid: 099bafe355574c5419d20324e8b1526e
+    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Ladder_ClimbUpIdle.png
+    displayName: Character_Ladder_ClimbUpIdle
 --- !u!114 &4731222830723883561
 MonoBehaviour:
   m_ObjectHideFlags: 0

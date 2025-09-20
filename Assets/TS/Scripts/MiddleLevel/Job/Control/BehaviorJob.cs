@@ -12,6 +12,7 @@ public partial struct BehaviorJob : IJobEntity
     [NativeDisableParallelForRestriction]
     public ComponentLookup<SpriteSheetAnimationComponent> AnimationComponentLookup;
     public float Speed;
+    public float ClimbSpeed;
     public float DeltaTime;
 
     public void Execute(Entity entity,
@@ -40,11 +41,13 @@ public partial struct BehaviorJob : IJobEntity
         if (!animComponent.IsValid)
             return;
 
-        Debug.Log($"[BehaviorJob] {objectComponent.Name} - Purpose: {objectComponent.Behavior.Purpose}, MovePosition: ({objectComponent.Behavior.MovePosition.x:G2}, {objectComponent.Behavior.MovePosition.y:G2})");
+        var purpose = objectComponent.Behavior.Purpose;
+        var currentState = animComponent.ValueRW.CurrentState;
+        var startState = animComponent.ValueRW.StartState;
 
-        if (objectComponent.Behavior.Purpose == MoveState.Move)
+        if (purpose == MoveState.Move)
         {
-            if (animComponent.ValueRW.CurrentState != AnimationState.Walking && animComponent.ValueRW.StartState != AnimationState.Walking)
+            if (currentState != AnimationState.Walking && startState != AnimationState.Walking)
             {
                 animComponent.ValueRW.StartState = AnimationState.Walking;
             }
@@ -52,27 +55,37 @@ public partial struct BehaviorJob : IJobEntity
             Debug.Log($"[BehaviorJob] 일반 이동 처리 중: {objectComponent.Name}");
             HandleMovement(ref transform, ref objectComponent, ref animComponent.ValueRW);
         }
-        else if (objectComponent.Behavior.Purpose == MoveState.ClimbUp || objectComponent.Behavior.Purpose == MoveState.ClimbDown)
+        else if (purpose == MoveState.ClimbUp || purpose == MoveState.ClimbDown)
         {
-            if (animComponent.ValueRW.CurrentState != AnimationState.Walking && animComponent.ValueRW.StartState != AnimationState.Walking)
+            if (purpose == MoveState.ClimbUp)
             {
-                animComponent.ValueRW.StartState = AnimationState.Walking; // 사다리 애니메이션이 없으면 걷기 애니메이션 사용
+                if (currentState != AnimationState.Ladder_ClimbUpIdle && startState != AnimationState.Ladder_ClimbUpIdle)
+                {
+                    animComponent.ValueRW.StartState = AnimationState.Ladder_ClimbUpIdle;
+                }
+            }
+            else
+            {
+                if (currentState != AnimationState.Ladder_ClimbDownIdle && startState != AnimationState.Ladder_ClimbDownIdle)
+                {
+                    animComponent.ValueRW.StartState = AnimationState.Ladder_ClimbDownIdle;
+                }
             }
 
             Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {objectComponent.Behavior.Purpose}");
             HandleClimbing(ref transform, ref objectComponent, ref animComponent.ValueRW);
         }
-        else if (isGrounded && animComponent.ValueRW.CurrentState == AnimationState.Jump_Idle)
+        else if (isGrounded && currentState == AnimationState.Jump_Idle)
         {
-            if (animComponent.ValueRW.StartState != AnimationState.Jump_Land)
+            if (startState != AnimationState.Jump_Land)
             {
                 animComponent.ValueRW.StartState = AnimationState.Jump_Land;
                 animComponent.ValueRW.IsLoop = false;
             }
         }
-        else if (!isGrounded && animComponent.ValueRW.CurrentState != AnimationState.Jump_Idle)
+        else if (!isGrounded && currentState != AnimationState.Jump_Idle)
         {
-            if (animComponent.ValueRW.StartState != AnimationState.Jump_Idle)
+            if (startState != AnimationState.Jump_Idle)
             {
                 animComponent.ValueRW.StartState = AnimationState.Jump_Idle;
             }
@@ -129,7 +142,7 @@ public partial struct BehaviorJob : IJobEntity
 
         Debug.Log($"사다리 이동: 현재({currentRootPosition.x:G2}, {currentRootPosition.y:G2}) → 목표({targetRootPosition.x:G2}, {targetRootPosition.y:G2})");
 
-        float maxDistanceDelta = Speed * DeltaTime; // 일반 이동 속도 사용
+        float maxDistanceDelta = ClimbSpeed * DeltaTime; // 일반 이동 속도 사용
 
         // 사다리 이동은 일반적인 MoveTowards 사용 (물리 무시)
         float2 newRootPosition = Utility.Geometry.MoveTowards(currentRootPosition, targetRootPosition, maxDistanceDelta);

@@ -112,7 +112,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         if (!IsLoaded)
             return;
 
-        if (frame < GetFrameDelay(index))
+        if (frame < GetFrameDelay(state, index))
             return;
 
         SetAnimationByIndex(state, NextAnimationIndex(state, ref index));
@@ -326,20 +326,37 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return 0;
     }
 
-    public int GetFrameDelay(int index)
+    public int GetFrameDelay(AnimationState state, int animationIndex)
     {
-        if (spriteSheets.Count <= index || index < 0)
+        int index = GetIndex(state);
+
+        if (index == -1)
             return 0;
 
-        Node node = spriteSheets[index];
+        return GetFrameDelay(index, animationIndex);
+    }
+
+    public int GetFrameDelay(int spriteIndex, int animationIndex)
+    {
+        if (spriteSheets.Count <= spriteIndex || spriteIndex < 0)
+            return 0;
+
+        Node node = spriteSheets[spriteIndex];
 
         if (!node.IsCustomDelay)
             return node.FrameDelay;
 
-        if (node.CustomFrameDelay == null || node.CustomFrameDelay.Length <= index)
+        if (node.CustomFrameDelay == null || node.CustomFrameDelay.Length <= animationIndex)
             return node.FrameDelay;
 
-        return node.CustomFrameDelay[index];
+        return node.CustomFrameDelay[animationIndex];
+    }
+
+    private int GetIndex(AnimationState state)
+    {
+        int index = spriteSheets.FindIndex(ss => ss.State == state);
+
+        return index;
     }
 
     public Node GetDefaultSpriteNode(out int index)

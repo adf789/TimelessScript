@@ -21,6 +21,7 @@ public partial struct BehaviorSystem : ISystem
         {
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
             Speed = 2f,
+            ClimbSpeed = 0.7f,
             DeltaTime = SystemAPI.Time.DeltaTime
         };
 

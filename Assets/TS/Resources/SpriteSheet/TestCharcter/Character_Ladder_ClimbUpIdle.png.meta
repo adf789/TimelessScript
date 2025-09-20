@@ -1,0 +1,1066 @@
+fileFormatVersion: 2
+guid: 099bafe355574c5419d20324e8b1526e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8254216930367288035
+    second: Character_Ladder_ClimbUpIdle_0
+  - first:
+      213: 686628718762223392
+    second: Character_Ladder_ClimbUpIdle_1
+  - first:
+      213: 8193783345417800745
+    second: Character_Ladder_ClimbUpIdle_2
+  - first:
+      213: 2440897890669746680
+    second: Character_Ladder_ClimbUpIdle_3
+  - first:
+      213: 4095905596313776037
+    second: Character_Ladder_ClimbUpIdle_4
+  - first:
+      213: 512799819406297529
+    second: Character_Ladder_ClimbUpIdle_5
+  - first:
+      213: 7594294944206290017
+    second: Character_Ladder_ClimbUpIdle_6
+  - first:
+      213: 4234056808273367649
+    second: Character_Ladder_ClimbUpIdle_7
+  - first:
+      213: -7207596780984273370
+    second: Character_Ladder_ClimbUpIdle_8
+  - first:
+      213: -8571711141355564368
+    second: Character_Ladder_ClimbUpIdle_9
+  - first:
+      213: -4778738018602489212
+    second: Character_Ladder_ClimbUpIdle_10
+  - first:
+      213: 1122980447801679002
+    second: Character_Ladder_ClimbUpIdle_11
+  - first:
+      213: -3956109883048770263
+    second: Character_Ladder_ClimbUpIdle_12
+  - first:
+      213: -7805499688803630708
+    second: Character_Ladder_ClimbUpIdle_13
+  - first:
+      213: -8119098060999441844
+    second: Character_Ladder_ClimbUpIdle_14
+  - first:
+      213: 8129263141587289614
+    second: Character_Ladder_ClimbUpIdle_15
+  - first:
+      213: 8555060455199938934
+    second: Character_Ladder_ClimbUpIdle_16
+  - first:
+      213: 3008196059518722477
+    second: Character_Ladder_ClimbUpIdle_17
+  - first:
+      213: -8667699155087922668
+    second: Character_Ladder_ClimbUpIdle_18
+  - first:
+      213: -2649607395405231449
+    second: Character_Ladder_ClimbUpIdle_19
+  - first:
+      213: 550800597581767914
+    second: Character_Ladder_ClimbUpIdle_20
+  - first:
+      213: 2665297126257614814
+    second: Character_Ladder_ClimbUpIdle_21
+  - first:
+      213: -2075873983823568229
+    second: Character_Ladder_ClimbUpIdle_22
+  - first:
+      213: 8339763673248859882
+    second: Character_Ladder_ClimbUpIdle_23
+  - first:
+      213: 4329944334707322525
+    second: Character_Ladder_ClimbUpIdle_24
+  - first:
+      213: -7181925803847505871
+    second: Character_Ladder_ClimbUpIdle_25
+  - first:
+      213: 7186872888035193527
+    second: Character_Ladder_ClimbUpIdle_26
+  - first:
+      213: -7063909800249861966
+    second: Character_Ladder_ClimbUpIdle_27
+  - first:
+      213: -4258913607743780462
+    second: Character_Ladder_ClimbUpIdle_28
+  - first:
+      213: -6526651396834771104
+    second: Character_Ladder_ClimbUpIdle_29
+  - first:
+      213: 3189200326271182788
+    second: Character_Ladder_ClimbUpIdle_30
+  - first:
+      213: 6533063871471189428
+    second: Character_Ladder_ClimbUpIdle_31
+  - first:
+      213: 8348753486821791433
+    second: Character_Ladder_ClimbUpIdle_32
+  - first:
+      213: -8907355175589892204
+    second: Character_Ladder_ClimbUpIdle_33
+  - first:
+      213: 1101683067452148229
+    second: Character_Ladder_ClimbUpIdle_34
+  - first:
+      213: -6048801488604646202
+    second: Character_Ladder_ClimbUpIdle_35
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 200
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1d417e3f61237d80800000000000000
+      internalID: -8254216930367288035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_1
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 200
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 027676a8e25678900800000000000000
+      internalID: 686628718762223392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_2
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 200
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92cc3264a8a26b170800000000000000
+      internalID: 8193783345417800745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_3
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 200
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f9de5af2bfcfd120800000000000000
+      internalID: 2440897890669746680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_4
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 200
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5af21d5507497d830800000000000000
+      internalID: 4095905596313776037
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_5
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 200
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b9c89408b4dd1700800000000000000
+      internalID: 512799819406297529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16cf5f4f30b546960800000000000000
+      internalID: 7594294944206290017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_7
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 160
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16255ffeb3462ca30800000000000000
+      internalID: 4234056808273367649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_8
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 160
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 626fe294ae879fb90800000000000000
+      internalID: -7207596780984273370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_9
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 160
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b25e3eb12a2b0980800000000000000
+      internalID: -8571711141355564368
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_10
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 160
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48a6b8647138eadb0800000000000000
+      internalID: -4778738018602489212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_11
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 160
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9c9de874c0a59f00800000000000000
+      internalID: 1122980447801679002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 120
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 925477095031919c0800000000000000
+      internalID: -3956109883048770263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_13
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 120
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c81007a636b4da390800000000000000
+      internalID: -7805499688803630708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_14
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 120
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c42c091945b235f80800000000000000
+      internalID: -8119098060999441844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_15
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 120
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e068cffa1c1f0d070800000000000000
+      internalID: 8129263141587289614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_16
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 120
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6791f28482ea9b670800000000000000
+      internalID: 8555060455199938934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_17
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 120
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da1e756c0624fb920800000000000000
+      internalID: 3008196059518722477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_18
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 80
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41ae709ba8526b780800000000000000
+      internalID: -8667699155087922668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_19
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 80
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7aa8f92bc14ba3bd0800000000000000
+      internalID: -2649607395405231449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_20
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 80
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae42fe8a936d4a700800000000000000
+      internalID: 550800597581767914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_21
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 80
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edf547f6d990df420800000000000000
+      internalID: 2665297126257614814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_22
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 80
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b92a8b33c930133e0800000000000000
+      internalID: -2075873983823568229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_23
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 80
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae684b6ffdaccb370800000000000000
+      internalID: 8339763673248859882
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_24
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 40
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9ee17f6e6d071c30800000000000000
+      internalID: 4329944334707322525
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_25
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 40
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 138257a688ca45c90800000000000000
+      internalID: -7181925803847505871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_26
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 40
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b2393160d6ecb360800000000000000
+      internalID: 7186872888035193527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_27
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 40
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b8d4be7673f7fd90800000000000000
+      internalID: -7063909800249861966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_28
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 40
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 299ca5173ac45e4c0800000000000000
+      internalID: -4258913607743780462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_29
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 40
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06f3bde522dac65a0800000000000000
+      internalID: -6526651396834771104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c724f4bcc0524c20800000000000000
+      internalID: 3189200326271182788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_31
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 0
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4bd7af93afa1aaa50800000000000000
+      internalID: 6533063871471189428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_32
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c6115b001bbcd370800000000000000
+      internalID: 8348753486821791433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_33
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 0
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49f2ab639a7b26480800000000000000
+      internalID: -8907355175589892204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_34
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50a4c82b9e6f94f00800000000000000
+      internalID: 1101683067452148229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Character_Ladder_ClimbUpIdle_35
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 0
+        width: 40
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c4bdd218175e0ca0800000000000000
+      internalID: -6048801488604646202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Character_Ladder_ClimbUpIdle_0: -8254216930367288035
+      Character_Ladder_ClimbUpIdle_1: 686628718762223392
+      Character_Ladder_ClimbUpIdle_10: -4778738018602489212
+      Character_Ladder_ClimbUpIdle_11: 1122980447801679002
+      Character_Ladder_ClimbUpIdle_12: -3956109883048770263
+      Character_Ladder_ClimbUpIdle_13: -7805499688803630708
+      Character_Ladder_ClimbUpIdle_14: -8119098060999441844
+      Character_Ladder_ClimbUpIdle_15: 8129263141587289614
+      Character_Ladder_ClimbUpIdle_16: 8555060455199938934
+      Character_Ladder_ClimbUpIdle_17: 3008196059518722477
+      Character_Ladder_ClimbUpIdle_18: -8667699155087922668
+      Character_Ladder_ClimbUpIdle_19: -2649607395405231449
+      Character_Ladder_ClimbUpIdle_2: 8193783345417800745
+      Character_Ladder_ClimbUpIdle_20: 550800597581767914
+      Character_Ladder_ClimbUpIdle_21: 2665297126257614814
+      Character_Ladder_ClimbUpIdle_22: -2075873983823568229
+      Character_Ladder_ClimbUpIdle_23: 8339763673248859882
+      Character_Ladder_ClimbUpIdle_24: 4329944334707322525
+      Character_Ladder_ClimbUpIdle_25: -7181925803847505871
+      Character_Ladder_ClimbUpIdle_26: 7186872888035193527
+      Character_Ladder_ClimbUpIdle_27: -7063909800249861966
+      Character_Ladder_ClimbUpIdle_28: -4258913607743780462
+      Character_Ladder_ClimbUpIdle_29: -6526651396834771104
+      Character_Ladder_ClimbUpIdle_3: 2440897890669746680
+      Character_Ladder_ClimbUpIdle_30: 3189200326271182788
+      Character_Ladder_ClimbUpIdle_31: 6533063871471189428
+      Character_Ladder_ClimbUpIdle_32: 8348753486821791433
+      Character_Ladder_ClimbUpIdle_33: -8907355175589892204
+      Character_Ladder_ClimbUpIdle_34: 1101683067452148229
+      Character_Ladder_ClimbUpIdle_35: -6048801488604646202
+      Character_Ladder_ClimbUpIdle_4: 4095905596313776037
+      Character_Ladder_ClimbUpIdle_5: 512799819406297529
+      Character_Ladder_ClimbUpIdle_6: 7594294944206290017
+      Character_Ladder_ClimbUpIdle_7: 4234056808273367649
+      Character_Ladder_ClimbUpIdle_8: -7207596780984273370
+      Character_Ladder_ClimbUpIdle_9: -8571711141355564368
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -67,16 +67,25 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         StopAnimation();
     }
 
-    private void UpdateAnimation(Sprite[] sprites, int frame, ref int index)
+    private void UpdateAnimation(int spriteIndex, Sprite[] sprites, ref int frame, ref int index)
     {
         if (!IsPlayingTestAnimation)
+        {
             return;
+        }
 
         if (sprites == null)
-            return;
+                return;
 
-        if (frame < inspectorTarget.GetFrameDelay(index))
+        if (frame < inspectorTarget.GetFrameDelay(spriteIndex, index))
+        {
+            frame++;
             return;
+        }
+        else
+        {
+            frame = 0;
+        }
 
         index++;
 
@@ -105,14 +114,9 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
         while (true)
         {
             int prevIndex = animationIndex;
-            UpdateAnimation(sprites, frame, ref animationIndex);
+            UpdateAnimation(index, sprites, ref frame, ref animationIndex);
 
-            if (prevIndex > animationIndex)
-                frame = 0;
-            else
-                frame++;
-
-            await UniTask.Delay(50, cancellationToken: TokenPool.Get(GetHashCode()));
+            await UniTask.Delay(13, cancellationToken: TokenPool.Get(GetHashCode()));
         }
     }
 

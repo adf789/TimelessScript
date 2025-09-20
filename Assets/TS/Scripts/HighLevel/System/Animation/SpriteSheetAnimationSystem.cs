@@ -32,7 +32,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
     private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
-        if (component.PassingFrame < authoring.GetFrameDelay(component.CurrentSpriteIndex))
+        if (component.PassingFrame < authoring.GetFrameDelay(component.CurrentSpriteIndex, component.CurrentAnimationIndex))
         {
             component.PassingFrame++;
             return false;
