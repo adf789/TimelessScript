@@ -10,7 +10,7 @@ public partial struct TriggerHandlingJob : IJobEntity
     public void Execute(
         ref PhysicsEventsComponent events,
         DynamicBuffer<TriggerBuffer> triggerBuffer,
-        in LightweightColliderComponent collider,
+        in ColliderComponent collider,
         [ReadOnly] DynamicBuffer<CollisionBuffer> collisions)
     {
         // 현재 트리거 상태 초기화

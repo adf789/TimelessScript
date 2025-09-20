@@ -9,7 +9,7 @@ public partial struct BehaviorSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        var query = SystemAPI.QueryBuilder().WithAll<TSObjectComponent>().WithAll<LightweightPhysicsComponent>().Build();
+        var query = SystemAPI.QueryBuilder().WithAll<TSObjectComponent>().WithAll<PhysicsComponent>().Build();
 
         state.RequireAnyForUpdate(query);
     }

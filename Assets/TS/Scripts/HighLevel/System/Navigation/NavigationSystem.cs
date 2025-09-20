@@ -30,13 +30,13 @@ public partial class NavigationSystem : SystemBase
         // 성능 최적화를 위한 쿼리 캐싱 (일반 필터링)
         _ladderQuery = GetEntityQuery(
             ComponentType.ReadOnly<TSObjectComponent>(),
-            ComponentType.ReadOnly<LightweightColliderComponent>(),
+            ComponentType.ReadOnly<ColliderComponent>(),
             ComponentType.ReadOnly<LocalTransform>()
         );
 
         _groundQuery = GetEntityQuery(
             ComponentType.ReadOnly<TSObjectComponent>(),
-            ComponentType.ReadOnly<LightweightColliderComponent>(),
+            ComponentType.ReadOnly<ColliderComponent>(),
             ComponentType.ReadOnly<LocalTransform>()
         );
     }
@@ -315,7 +315,7 @@ public partial class NavigationSystem : SystemBase
     [BurstCompile]
     private float2 CalculateLadderPosition(Entity ladder)
     {
-        var collider = SystemAPI.GetComponent<LightweightColliderComponent>(ladder);
+        var collider = SystemAPI.GetComponent<ColliderComponent>(ladder);
         var transform = SystemAPI.GetComponent<LocalTransform>(ladder);
         return transform.Position.xy + collider.offset;
     }
@@ -402,7 +402,7 @@ public partial class NavigationSystem : SystemBase
     [BurstCompile]
     private float CalculateGroundSurfaceHeight(Entity ground, float xPosition)
     {
-        var collider = SystemAPI.GetComponent<LightweightColliderComponent>(ground);
+        var collider = SystemAPI.GetComponent<ColliderComponent>(ground);
         var transform = SystemAPI.GetComponent<LocalTransform>(ground);
 
         // 지형 중심점 계산
@@ -425,7 +425,7 @@ public partial class NavigationSystem : SystemBase
         // 캐시된 쿼리 사용 후 런타임 필터링으로 성능 최적화
         var entities = _groundQuery.ToEntityArray(Allocator.Temp);
         var tsObjects = _groundQuery.ToComponentDataArray<TSObjectComponent>(Allocator.Temp);
-        var colliders = _groundQuery.ToComponentDataArray<LightweightColliderComponent>(Allocator.Temp);
+        var colliders = _groundQuery.ToComponentDataArray<ColliderComponent>(Allocator.Temp);
         var transforms = _groundQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
 
         Entity foundGround = Entity.Null;
@@ -455,7 +455,7 @@ public partial class NavigationSystem : SystemBase
     }
 
     [BurstCompile]
-    private bool IsPositionOnGround(float2 position, LightweightColliderComponent collider, LocalTransform transform)
+    private bool IsPositionOnGround(float2 position, ColliderComponent collider, LocalTransform transform)
     {
         float groundCenterX = transform.Position.x + collider.offset.x;
         float groundCenterY = transform.Position.y + collider.offset.y;

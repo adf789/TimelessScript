@@ -12,7 +12,7 @@ public partial struct CollisionSystem : ISystem
     
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<LightweightColliderComponent>();
+        state.RequireForUpdate<ColliderComponent>();
         
         // 기본 설정
         collisionConfig = new CollisionSystemComponent
@@ -34,12 +34,12 @@ public partial struct CollisionSystem : ISystem
         
         // 2. 모든 콜라이더 데이터 수집
         var colliderQuery = SystemAPI.QueryBuilder()
-            .WithAll<LightweightColliderComponent, ColliderBoundsComponent>()
+            .WithAll<ColliderComponent, ColliderBoundsComponent>()
             .Build();
         
         var colliderEntities = colliderQuery.ToEntityArray(Allocator.TempJob);
         var colliderBounds = colliderQuery.ToComponentDataArray<ColliderBoundsComponent>(Allocator.TempJob);
-        var colliderComponents = colliderQuery.ToComponentDataArray<LightweightColliderComponent>(Allocator.TempJob);
+        var colliderComponents = colliderQuery.ToComponentDataArray<ColliderComponent>(Allocator.TempJob);
         
         // 3. 충돌 검사 Job
         var collisionDetectionJob = new CollisionDetectionJob

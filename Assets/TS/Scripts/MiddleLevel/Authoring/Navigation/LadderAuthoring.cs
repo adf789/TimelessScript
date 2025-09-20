@@ -59,7 +59,7 @@ public class LadderAuthoring : MonoBehaviour
                 // Collider 관련 컴포넌트들 (ColliderAuthoring이 없는 경우)
                 if (!authoring.GetComponent<ColliderAuthoring>())
                 {
-                    AddComponent(entity, new LightweightColliderComponent
+                    AddComponent(entity, new ColliderComponent
                     {
                         size = new float2(1.0f, authoring.ladderHeight),
                         offset = float2.zero,

@@ -13,7 +13,7 @@ public partial struct SpatialHashUpdateJob : IJobEntity
     
     public void Execute(
         ref SpatialHashKey hashKey,
-        in LightweightColliderComponent collider)
+        in ColliderComponent collider)
     {
         hashKey.cellPosition = new int2(
             (int)math.floor(collider.position.x / cellSize),

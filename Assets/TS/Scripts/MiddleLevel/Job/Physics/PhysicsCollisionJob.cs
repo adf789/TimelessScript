@@ -9,13 +9,13 @@ using Unity.Transforms;
 public partial struct PhysicsCollisionJob : IJobEntity
 {
     [ReadOnly] public ComponentLookup<TSObjectComponent> TSObjectLookup;
-    [ReadOnly] public ComponentLookup<LightweightColliderComponent> ColliderLookup;
+    [ReadOnly] public ComponentLookup<ColliderComponent> ColliderLookup;
 
     public void Execute(
-        ref LightweightPhysicsComponent physics,
+        ref PhysicsComponent physics,
         ref LocalTransform transform,
         in CollisionInfoComponent collisionInfo,
-        in LightweightColliderComponent collider,
+        in ColliderComponent collider,
         [ReadOnly] DynamicBuffer<CollisionBuffer> collisions)
     {
         if (physics.isStatic)
@@ -95,7 +95,7 @@ public partial struct PhysicsCollisionJob : IJobEntity
     }
 
     [BurstCompile]
-    private static void CheckGround(ref LightweightPhysicsComponent physics)
+    private static void CheckGround(ref PhysicsComponent physics)
     {
         // 간단한 지면 감지 - 속도가 거의 0이고 아래쪽으로 움직이지 않으면 grounded
         bool isMovingDown = physics.velocity.y < -float.Epsilon;

@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-public struct LightweightColliderComponent : IComponentData
+public struct ColliderComponent : IComponentData
 {
     public float2 size;
     public float2 offset;

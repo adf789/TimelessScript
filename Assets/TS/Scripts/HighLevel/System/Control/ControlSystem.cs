@@ -32,9 +32,9 @@ public partial struct ControlSystem : ISystem
         {
             if (selectTarget.ObjectType == TSObjectType.Actor)
             {
-                if (SystemAPI.HasComponent<LightweightPhysicsComponent>(selectTarget.Self))
+                if (SystemAPI.HasComponent<PhysicsComponent>(selectTarget.Self))
                 {
-                    var physics = SystemAPI.GetComponentRO<LightweightPhysicsComponent>(selectTarget.Self);
+                    var physics = SystemAPI.GetComponentRO<PhysicsComponent>(selectTarget.Self);
 
                     if (!physics.ValueRO.isGrounded)
                         return;
@@ -75,7 +75,7 @@ public partial struct ControlSystem : ISystem
             {
                 case TSObjectType.Ground:
                     {
-                        var collider = SystemAPI.GetComponent<LightweightColliderComponent>(selectTarget.Self);
+                        var collider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
                         float2 position = collider.position + collider.offset;
                         float halfHeight = collider.size.y * 0.5f;
 

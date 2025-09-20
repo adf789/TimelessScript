@@ -18,7 +18,7 @@ public partial struct BehaviorJob : IJobEntity
     public void Execute(Entity entity,
     ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
-    ref LightweightPhysicsComponent physicsComponent,
+    ref PhysicsComponent physicsComponent,
     [ReadOnly] DynamicBuffer<Child> children)
     {
         bool isGrounded = physicsComponent.isGrounded;

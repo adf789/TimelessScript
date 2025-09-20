@@ -8,7 +8,7 @@ public partial struct PhysicsSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<LightweightPhysicsComponent>();
+        state.RequireForUpdate<PhysicsComponent>();
     }
 
     [BurstCompile]
@@ -27,7 +27,7 @@ public partial struct PhysicsSystem : ISystem
         var collisionJob = new PhysicsCollisionJob
         {
             TSObjectLookup = SystemAPI.GetComponentLookup<TSObjectComponent>(true),
-            ColliderLookup = SystemAPI.GetComponentLookup<LightweightColliderComponent>(true),
+            ColliderLookup = SystemAPI.GetComponentLookup<ColliderComponent>(true),
         };
         state.Dependency = collisionJob.ScheduleParallel(state.Dependency);
         

@@ -11,7 +11,7 @@ public partial struct CollisionDetectionJob : IJob
 {
     [ReadOnly] public NativeArray<Entity> allEntities;
     [ReadOnly] public NativeArray<ColliderBoundsComponent> allBounds;
-    [ReadOnly] public NativeArray<LightweightColliderComponent> allColliders;
+    [ReadOnly] public NativeArray<ColliderComponent> allColliders;
     [NativeDisableParallelForRestriction] public BufferLookup<CollisionBuffer> collisionBufferLookup;
     public ComponentLookup<CollisionInfoComponent> collisionInfoLookup;
     [ReadOnly] public ComponentLookup<GroundComponent> GroundLookup;

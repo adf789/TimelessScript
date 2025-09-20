@@ -42,7 +42,7 @@ namespace Utility
         /// <summary>
         /// Physics
         /// </summary>
-        public static void AddForce(ref LightweightPhysicsComponent physics, float2 force)
+        public static void AddForce(ref PhysicsComponent physics, float2 force)
         {
             physics.velocity += force / physics.mass;
         }
@@ -50,7 +50,7 @@ namespace Utility
         /// <summary>
         /// Physics
         /// </summary>
-        public static void SetVelocity(ref LightweightPhysicsComponent physics, float2 velocity)
+        public static void SetVelocity(ref PhysicsComponent physics, float2 velocity)
         {
             physics.velocity = velocity;
         }

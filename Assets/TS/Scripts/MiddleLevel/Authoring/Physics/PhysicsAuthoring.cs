@@ -18,7 +18,7 @@ public class PhysicsAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             
-            AddComponent(entity, new LightweightPhysicsComponent
+            AddComponent(entity, new PhysicsComponent
             {
                 entity = entity,
                 velocity = new float2(authoring.velocity.x, authoring.velocity.y),

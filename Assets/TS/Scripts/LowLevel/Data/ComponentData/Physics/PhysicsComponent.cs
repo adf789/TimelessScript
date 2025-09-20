@@ -2,7 +2,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using System.Runtime.InteropServices;
 
-public struct LightweightPhysicsComponent : IComponentData
+public struct PhysicsComponent : IComponentData
 {
     public Entity entity;
     public float2 velocity;

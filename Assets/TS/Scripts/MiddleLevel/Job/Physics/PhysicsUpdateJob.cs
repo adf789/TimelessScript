@@ -11,7 +11,7 @@ public partial struct PhysicsUpdateJob : IJobEntity
     [ReadOnly] public float deltaTime;
     
     public void Execute(
-        ref LightweightPhysicsComponent physics,
+        ref PhysicsComponent physics,
         ref LocalTransform transform)
     {
         if (physics.isStatic)

@@ -15,7 +15,7 @@ public class ColliderAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             
-            AddComponent(entity, new LightweightColliderComponent
+            AddComponent(entity, new ColliderComponent
             {
                 size = new float2(authoring.size.x, authoring.size.y),
                 offset = new float2(authoring.offset.x, authoring.offset.y),

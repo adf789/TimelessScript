@@ -8,7 +8,7 @@ using Unity.Transforms;
 public partial struct UpdateColliderBoundsJob : IJobEntity
 {
     public void Execute(
-        ref LightweightColliderComponent collider,
+        ref ColliderComponent collider,
         ref ColliderBoundsComponent bounds,
         in LocalTransform transform)
     {
