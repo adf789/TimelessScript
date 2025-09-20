@@ -63,39 +63,14 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         // 애니메이션 전환 요청 처리
         if (component.NextState != AnimationState.None)
         {
-            if (component.NextState != component.CurrentState)
+            if (component.NextState != component.CurrentState
+             && component.CurrentPhase == AnimationPhase.Loop)
                 ProcessAnimationTransition(authoring, ref component);
             else
                 component.NextState = AnimationState.None;
         }
 
         ProcessCurrentAnimation(authoring, ref component);
-    }
-
-    private void InitializeNewAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component, AnimationState targetState)
-    {
-        if (!authoring.TryGetSpriteNode(targetState, out var node, out int nodeIndex))
-        {
-            Debug.LogWarning($"Animation state {targetState} not found, using default");
-            node = authoring.GetDefaultSpriteNode(out nodeIndex);
-        }
-
-        component.CurrentState = targetState;
-        component.CurrentSpriteIndex = nodeIndex;
-        component.NextState = AnimationState.None;
-        component.ShouldTransitionToEnd = false;
-        component.SkipStartAnimation = false;
-        component.HasStartAnimation = authoring.HasStartAnimation(targetState);
-        component.HasEndAnimation = authoring.HasEndAnimation(targetState);
-
-        if (!component.HasStartAnimation)
-        {
-            SetupPhaseAnimation(AnimationPhase.Loop, authoring, ref component);
-        }
-        else
-        {
-            SetupPhaseAnimation(AnimationPhase.Start, authoring, ref component);
-        }
     }
 
     private void ProcessAnimationTransition(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
@@ -108,7 +83,8 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         }
         else
         {
-            // End 애니메이션이 없거나 이미 End Phase라면 바로 다음 애니메이션으로
+            // End 애니메이션이 없거나
+            // 이미 End Phase라면 바로 다음 애니메이션으로 상태 초기화
             StartNextAnimation(authoring, ref component);
         }
     }
@@ -162,11 +138,28 @@ public partial class SpriteSheetAnimationSystem : SystemBase
     /// </summary>
     private void StartNextAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
-        AnimationState nextState = component.NextState;
+        AnimationState targetState = component.NextState;
+        bool isStartSkip = component.SkipStartAnimation;
+
+        if (!authoring.TryGetSpriteNode(targetState, out var node, out int nodeIndex))
+            Debug.LogWarning($"Animation state {targetState} not found, using default");
+
+        component.CurrentState = targetState;
+        component.CurrentSpriteIndex = nodeIndex;
         component.NextState = AnimationState.None;
         component.ShouldTransitionToEnd = false;
+        component.SkipStartAnimation = false;
+        component.HasStartAnimation = authoring.HasStartAnimation(targetState);
+        component.HasEndAnimation = authoring.HasEndAnimation(targetState);
 
-        InitializeNewAnimation(authoring, ref component, nextState);
+        if (isStartSkip || !component.HasStartAnimation)
+        {
+            SetupPhaseAnimation(AnimationPhase.Loop, authoring, ref component);
+        }
+        else
+        {
+            SetupPhaseAnimation(AnimationPhase.Start, authoring, ref component);
+        }
     }
 
     private void SetupPhaseAnimation(AnimationPhase phase, SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)

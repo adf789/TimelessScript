@@ -46,7 +46,7 @@ public partial struct BehaviorJob : IJobEntity
 
         if (purpose == MoveState.Move)
         {
-            if (currentState != AnimationState.Walking && animComponent.ValueRW.NextState != AnimationState.Walking)
+            if (currentState != AnimationState.Walking)
             {
                 // 걷기 애니메이션으로 전환 (Start 애니메이션 사용)
                 animComponent.ValueRW.RequestTransition(AnimationState.Walking, false);
@@ -55,15 +55,20 @@ public partial struct BehaviorJob : IJobEntity
             Debug.Log($"[BehaviorJob] 일반 이동 처리 중: {objectComponent.Name}");
             HandleMovement(ref transform, ref objectComponent, ref animComponent.ValueRW);
         }
-        else if (purpose == MoveState.ClimbUp || purpose == MoveState.ClimbDown)
+        else if (purpose == MoveState.ClimbUp
+        || purpose == MoveState.ClimbDown)
         {
+            bool isSkip = false;
+
             if (purpose == MoveState.ClimbUp)
             {
-                animComponent.ValueRW.RequestTransition(AnimationState.Ladder_ClimbUp, false);
+                isSkip = currentState == AnimationState.Ladder_ClimbDown;
+                animComponent.ValueRW.RequestTransition(AnimationState.Ladder_ClimbUp, isSkip);
             }
             else
             {
-                animComponent.ValueRW.RequestTransition(AnimationState.Ladder_ClimbDown, false);
+                isSkip = currentState == AnimationState.Ladder_ClimbUp;
+                animComponent.ValueRW.RequestTransition(AnimationState.Ladder_ClimbDown, isSkip);
             }
 
             Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {objectComponent.Behavior.Purpose}");
