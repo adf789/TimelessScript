@@ -7,6 +7,7 @@ public class TSObjectAuthoring : MonoBehaviour
 {
     [SerializeField] private TSObjectType type;
     [SerializeField] private Transform root;
+    [SerializeField] private float radius;
 
     private class Baker : Baker<TSObjectAuthoring>
     {
@@ -26,10 +27,13 @@ public class TSObjectAuthoring : MonoBehaviour
                 Behavior = new TSObjectBehavior()
                 {
                     Target = Entity.Null,
+                    TargetType = TSObjectType.None,
+                    TargetPosition = float2.zero,
                     MovePosition = initialPosition,
-                    Purpose = MoveState.None
+                    MoveState = MoveState.None
                 },
                 RootOffset = authoring.GetRootOffset(),
+                Radius = authoring.radius,
             });
         }
     }
@@ -40,5 +44,13 @@ public class TSObjectAuthoring : MonoBehaviour
             return 0f;
 
         return root.localPosition.y;
+    }
+
+    void OnDrawGizmos()
+    {
+        Vector2 center = (Vector2)transform.position;
+        
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(center, radius);
     }
 }

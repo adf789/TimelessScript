@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 public enum AnimationPhase
 {
@@ -20,16 +21,19 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public int CurrentAnimationCount;
     public int PassingFrame;
     public bool IsFlip;
+    public bool IsTransitioning;
     public bool HasStartAnimation;
     public bool HasEndAnimation;
     public bool ShouldTransitionToEnd;
-    public bool SkipStartAnimation;
+    public bool ShouldTransitionToEndOneTime;
+    public AnimationTransitionType TransitionType;
 
     public bool IsLastAnimation => CurrentAnimationIndex == CurrentAnimationCount - 1;
 
-    public SpriteSheetAnimationComponent(AnimationState currentState, bool isLoop)
+    public SpriteSheetAnimationComponent(AnimationState currentState)
     {
         IsFlip = false;
+        IsTransitioning = false;
         CurrentSpriteIndex = 0;
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;
@@ -40,7 +44,8 @@ public struct SpriteSheetAnimationComponent : IComponentData
         HasStartAnimation = false;
         HasEndAnimation = false;
         ShouldTransitionToEnd = false;
-        SkipStartAnimation = false;
+        ShouldTransitionToEndOneTime = false;
+        TransitionType = AnimationTransitionType.None;
     }
 
     public int NextAnimationIndex()
@@ -49,7 +54,8 @@ public struct SpriteSheetAnimationComponent : IComponentData
 
         if (CurrentAnimationIndex >= CurrentAnimationCount)
         {
-            if (CurrentPhase == AnimationPhase.Loop)
+            if (CurrentPhase == AnimationPhase.Loop
+            && !ShouldTransitionToEndOneTime)
                 CurrentAnimationIndex = 0;
             else
                 CurrentAnimationIndex = CurrentAnimationCount - 1;
@@ -58,21 +64,37 @@ public struct SpriteSheetAnimationComponent : IComponentData
         return CurrentAnimationIndex;
     }
 
-    public void RequestTransition(AnimationState nextState, bool skipStart = false)
+    public void RequestTransition(AnimationState nextState, AnimationTransitionType transitionType = AnimationTransitionType.None)
     {
         if (CurrentState == nextState)
+        {
+            if (NextState != nextState)
+                NextState = AnimationState.None;
+
             return;
-            
+        }
+
+        Debug.Log($"Request Animation: {nextState.ToFixedString()}\n{StackTraceUtility.ExtractStackTrace()}");
+
         NextState = nextState;
-        SkipStartAnimation = skipStart;
+        TransitionType = transitionType;
+        ShouldTransitionToEndOneTime = TransitionType == AnimationTransitionType.None;
         ShouldTransitionToEnd = true;
+        IsTransitioning = false;
     }
 
     public bool ShouldEndCurrentAnimation()
     {
         if (CurrentPhase == AnimationPhase.Loop)
-            return ShouldTransitionToEnd;
+        {
+            if (!ShouldTransitionToEndOneTime)
+                return ShouldTransitionToEnd;
+            else
+                return IsLastAnimation;
+        }
         else
+        {
             return IsLastAnimation;
+        }
     }
 }

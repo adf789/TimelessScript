@@ -159,13 +159,11 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
             return;
         }
 
-        AnimationState state = spriteSheet.State;
         int frame = 0;
         int animationIndex = 0;
 
         while (true)
         {
-            int prevIndex = animationIndex;
             UpdateAnimation(index, sprites, ref frame, ref animationIndex, animationType);
 
             await UniTask.Delay(13, cancellationToken: TokenPool.Get(GetHashCode()));

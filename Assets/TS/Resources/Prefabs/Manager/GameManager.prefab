@@ -110,7 +110,6 @@ GameObject:
   m_Component:
   - component: {fileID: 830782464544235364}
   - component: {fileID: 3192870278367291419}
-  - component: {fileID: 1499335085182231380}
   m_Layer: 0
   m_Name: FlowManager
   m_TagString: Untagged
@@ -145,29 +144,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad985da99bcdab44aa951d16f187db72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1499335085182231380
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6569619806010914113}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4436d8099d8de254f839cd97ae8d4295, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  spriteRenderer: {fileID: 0}
-  spriteImage: {fileID: 0}
-  size: {x: 0, y: 0}
-  spriteSheets:
-  - sourceImage: {fileID: 21300000, guid: 0ffe7fe41b1a2de4492e77fe521897f4, type: 3}
-    guid: 
-    key: 
-    frameDelay: 10
-    isCustomDelay: 0
-    isDefault: 1
-    customFrameDelay: 
 --- !u!1001 &2853081750336065482
 PrefabInstance:
   m_ObjectHideFlags: 0

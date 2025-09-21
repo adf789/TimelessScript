@@ -5,6 +5,8 @@ using UnityEngine;
 public struct TSObjectBehavior
 {
     public Entity Target;
+    public TSObjectType TargetType;
+    public float2 TargetPosition;
     public float2 MovePosition;
-    public MoveState Purpose;
+    public MoveState MoveState;
 }

@@ -45,8 +45,11 @@ TagManager:
   - name: Ground
     uniqueID: 3001958629
     locked: 0
-  - name: Actor
+  - name: Gimmick
     uniqueID: 1756361775
+    locked: 0
+  - name: Actor
+    uniqueID: 73413443
     locked: 0
   m_RenderingLayers:
   - Default

@@ -4,5 +4,5 @@ public enum TSObjectType
     Actor,
     Ground,
     Ladder,
-    Object
+    Gimmick
 }

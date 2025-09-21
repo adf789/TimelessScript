@@ -113,18 +113,19 @@ public partial class NavigationSystem : SystemBase
     [BurstCompile]
     private void ExecuteWaypointMovement(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity)
     {
+        var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(entity);
+
         // 경로 완료 확인
         if (navigation.CurrentWaypointIndex >= waypoints.Length)
         {
             navigation.State = NavigationState.Completed;
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEngine.Debug.Log($"Navigation 완료: 모든 웨이포인트 도달");
-            #endif
+#endif
             return;
         }
 
         var currentWaypoint = waypoints[navigation.CurrentWaypointIndex];
-        var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(entity);
 
         #if UNITY_EDITOR
         UnityEngine.Debug.Log($"[NavigationSystem] 웨이포인트 처리 {navigation.CurrentWaypointIndex}/{waypoints.Length}: {currentWaypoint.MoveType} → ({currentWaypoint.Position.x:F2}, {currentWaypoint.Position.y:F2})");
@@ -161,7 +162,8 @@ public partial class NavigationSystem : SystemBase
     private void SetMovementCommand(ref TSObjectComponent tsObject, NavigationWaypoint waypoint)
     {
         tsObject.Behavior.Target = waypoint.TargetEntity;
-        tsObject.Behavior.Purpose = waypoint.MoveType;
+        tsObject.Behavior.Target = waypoint.TargetEntity;
+        tsObject.Behavior.MoveState = waypoint.MoveType;
         tsObject.Behavior.MovePosition = waypoint.Position;
 
         #if UNITY_EDITOR

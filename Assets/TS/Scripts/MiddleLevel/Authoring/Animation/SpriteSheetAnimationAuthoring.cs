@@ -82,7 +82,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             // authoring MonoBehaviour 인스턴스를 관리형 컴포넌트로 추가합니다.
             AddComponentObject(entity, authoring);
 
-            AddComponent(entity, new SpriteSheetAnimationComponent(authoring.defaultState, true));
+            AddComponent(entity, new SpriteSheetAnimationComponent(authoring.defaultState));
         }
 
     }

@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 1756361775
   m_SortingLayer: 2
   m_SortingOrder: 0
-  m_Sprite: {fileID: 8808107035895179942, guid: a4663883493a7be4cbdf2f9319637487, type: 3}
+  m_Sprite: {fileID: -1282151739499435843, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -133,9 +133,9 @@ MonoBehaviour:
     CustomFrameDelay: 
     SpriteCount: 19
     StartAnimationGuid: 
-    EndAnimationGuid: 
+    EndAnimationGuid: bbbaf36ec5c6401459b9e54454f8eff7
     StartFrameDelay: 10
-    EndFrameDelay: 10
+    EndFrameDelay: 5
     IsStartCustomDelay: 0
     IsEndCustomDelay: 0
     StartCustomFrameDelay: 
@@ -333,6 +333,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
   type: 1
   root: {fileID: 7488242015394640608}
+  radius: 0
 --- !u!114 &1172464439533719287
 MonoBehaviour:
   m_ObjectHideFlags: 0

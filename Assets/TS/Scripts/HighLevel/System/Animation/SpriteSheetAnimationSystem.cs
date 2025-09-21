@@ -61,13 +61,11 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         authoring.SetFlip(component.IsFlip);
 
         // 애니메이션 전환 요청 처리
-        if (component.NextState != AnimationState.None)
+        if (component.NextState != AnimationState.None
+        && component.NextState != component.CurrentState
+        && !component.IsTransitioning)
         {
-            if (component.NextState != component.CurrentState
-             && component.CurrentPhase == AnimationPhase.Loop)
-                ProcessAnimationTransition(authoring, ref component);
-            else
-                component.NextState = AnimationState.None;
+            ProcessAnimationTransition(authoring, ref component);
         }
 
         ProcessCurrentAnimation(authoring, ref component);
@@ -75,24 +73,27 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
     private void ProcessAnimationTransition(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
-        // 현재 애니메이션의 End Phase로 전환
-        if (!component.SkipStartAnimation
-        && component.HasEndAnimation)
+        component.IsTransitioning = true;
+        
+        switch (component.TransitionType)
         {
-            SetupPhaseAnimation(AnimationPhase.End, authoring, ref component);
-        }
-        else
-        {
-            // End 애니메이션이 없거나
-            // 이미 End Phase라면 바로 다음 애니메이션으로 상태 초기화
-            StartNextAnimation(authoring, ref component);
+            case AnimationTransitionType.None:
+                component.ShouldTransitionToEndOneTime = true;
+                break;
+
+            case AnimationTransitionType.SkipAllPhase:
+                StartNextAnimation(authoring, ref component);
+                break;
+
+            case AnimationTransitionType.SkipCurrentPhase:
+                SetupPhaseAnimation(AnimationPhase.End, authoring, ref component);
+                break;
         }
     }
 
     private void ProcessCurrentAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         int nextIndex = component.NextAnimationIndex();
-        bool isPhaseComplete = false;
 
         // 현재 Phase의 애니메이션이 끝났는지 확인
         switch (component.CurrentPhase)
@@ -101,7 +102,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
                 {
                     authoring.SetStartAnimationByIndex(component.CurrentState, nextIndex);
 
-                    if (component.ShouldEndCurrentAnimation())
+                    if (component.IsLastAnimation)
                         SetupPhaseAnimation(AnimationPhase.Loop, authoring, ref component);
                 }
                 break;
@@ -126,7 +127,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
                 {
                     authoring.SetEndAnimationByIndex(component.CurrentState, nextIndex);
 
-                    if (component.ShouldEndCurrentAnimation())
+                    if (component.IsLastAnimation)
                         StartNextAnimation(authoring, ref component);
                 }
                 break;
@@ -139,7 +140,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
     private void StartNextAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         AnimationState targetState = component.NextState;
-        bool isStartSkip = component.SkipStartAnimation;
+        bool isSkip = component.TransitionType == AnimationTransitionType.SkipAllPhase;
 
         if (!authoring.TryGetSpriteNode(targetState, out var node, out int nodeIndex))
             Debug.LogWarning($"Animation state {targetState} not found, using default");
@@ -148,11 +149,18 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         component.CurrentSpriteIndex = nodeIndex;
         component.NextState = AnimationState.None;
         component.ShouldTransitionToEnd = false;
-        component.SkipStartAnimation = false;
+        component.TransitionType = AnimationTransitionType.None;
         component.HasStartAnimation = authoring.HasStartAnimation(targetState);
         component.HasEndAnimation = authoring.HasEndAnimation(targetState);
+        component.IsTransitioning = false;
 
-        if (isStartSkip || !component.HasStartAnimation)
+        if (targetState == AnimationState.Interact)
+        {
+            component.ShouldTransitionToEndOneTime = true;
+            component.NextState = AnimationState.Idle;
+        }
+
+        if (isSkip || !component.HasStartAnimation)
         {
             SetupPhaseAnimation(AnimationPhase.Loop, authoring, ref component);
         }

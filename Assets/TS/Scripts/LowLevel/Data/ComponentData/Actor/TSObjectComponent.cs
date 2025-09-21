@@ -10,6 +10,7 @@ public struct TSObjectComponent : IComponentData
     public TSObjectType ObjectType;
     public TSObjectBehavior Behavior;
     public float RootOffset;
+    public float Radius;
 
     public bool IsNull => Self == Entity.Null;
 }

@@ -48,6 +48,7 @@ public partial struct PhysicsCollisionJob : IJobEntity
             float2 currentPos = transform.Position.xy;
             currentPos += collision.separationVector;
             transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
+            physics.isPrevGrounded = physics.isGrounded;
 
             // 속도 반응 (간단한 반발)
             float2 normal = math.normalize(collision.separationVector);
@@ -92,23 +93,5 @@ public partial struct PhysicsCollisionJob : IJobEntity
             }
         }
         return false;
-    }
-
-    [BurstCompile]
-    private static void CheckGround(ref PhysicsComponent physics)
-    {
-        // 간단한 지면 감지 - 속도가 거의 0이고 아래쪽으로 움직이지 않으면 grounded
-        bool isMovingDown = physics.velocity.y < -float.Epsilon;
-        bool hasLowVerticalVelocity = math.abs(physics.velocity.y) < 0.05f;
-        
-        if (hasLowVerticalVelocity && !isMovingDown)
-        {
-            physics.isGrounded = true;
-        }
-        else if (isMovingDown && math.abs(physics.velocity.y) > 0.2f)
-        {
-            physics.isGrounded = false;
-        }
-        // 중간 상태에서는 이전 값 유지
     }
 }

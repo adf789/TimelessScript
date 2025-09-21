@@ -3,7 +3,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateAfter(typeof(ControlSystem))]
+[UpdateAfter(typeof(NavigationSystem))]
 [BurstCompile]
 public partial struct BehaviorSystem : ISystem
 {
@@ -25,6 +25,8 @@ public partial struct BehaviorSystem : ISystem
             DeltaTime = SystemAPI.Time.DeltaTime
         };
 
-        state.Dependency = behaviorJob.ScheduleParallel(state.Dependency);
+        var behaviorJobHandle = behaviorJob.ScheduleParallel(state.Dependency);
+
+        behaviorJobHandle.Complete();
     }
 }
