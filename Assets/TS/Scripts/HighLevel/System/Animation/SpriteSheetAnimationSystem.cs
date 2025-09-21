@@ -154,7 +154,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         component.HasEndAnimation = authoring.HasEndAnimation(targetState);
         component.IsTransitioning = false;
 
-        if (targetState == AnimationState.Interact)
+        if (authoring.CheckPlayOnetime(nodeIndex))
         {
             component.ShouldTransitionToEndOneTime = true;
             component.NextState = AnimationState.Idle;

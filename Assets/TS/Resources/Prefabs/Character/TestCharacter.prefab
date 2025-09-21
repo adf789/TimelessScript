@@ -114,6 +114,7 @@ MonoBehaviour:
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 1
+    IsPlayOnetime: 0
     CustomFrameDelay: 
     SpriteCount: 16
     StartAnimationGuid: 
@@ -130,6 +131,7 @@ MonoBehaviour:
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 0
+    IsPlayOnetime: 1
     CustomFrameDelay: 
     SpriteCount: 19
     StartAnimationGuid: 
@@ -146,6 +148,7 @@ MonoBehaviour:
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 0
+    IsPlayOnetime: 0
     CustomFrameDelay: 
     SpriteCount: 16
     StartAnimationGuid: 
@@ -162,6 +165,7 @@ MonoBehaviour:
     FrameDelay: 5
     IsCustomDelay: 0
     IsDefault: 0
+    IsPlayOnetime: 0
     CustomFrameDelay: 
     SpriteCount: 16
     StartAnimationGuid: 
@@ -178,6 +182,7 @@ MonoBehaviour:
     FrameDelay: 1
     IsCustomDelay: 0
     IsDefault: 0
+    IsPlayOnetime: 0
     CustomFrameDelay: 
     SpriteCount: 36
     StartAnimationGuid: d9120fd159f6371438fdac76af801994
@@ -194,6 +199,7 @@ MonoBehaviour:
     FrameDelay: 1
     IsCustomDelay: 0
     IsDefault: 0
+    IsPlayOnetime: 0
     CustomFrameDelay: 
     SpriteCount: 36
     StartAnimationGuid: 07b3914c579dd50499849bbe4e05c76b

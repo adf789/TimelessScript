@@ -392,7 +392,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                                 {
                                     EditorGUI.BeginDisabledGroup(IsPlayingTestAnimation);
                                     DrawKey(i);
-                                    DrawDefaultValue(i);
+                                    DrawToggleValue(i);
                                     DrawMain(i);
                                     DrawFrameDelay(i);
                                     DrawStartEndAnimations(i);
@@ -481,30 +481,38 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
             SetReadyDirty();
     }
 
-    private void DrawDefaultValue(int i)
+    private void DrawToggleValue(int i)
     {
         SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUI.BeginChangeCheck();
-        GUILayout.BeginHorizontal();
         {
-            bool isDefault = EditorGUILayout.Toggle($"Default Animation", defaultValues[i]);
-
-            if (defaultValues[i] != isDefault)
+            GUILayout.BeginHorizontal();
             {
-                for (int j = 0; j < defaultValues.Count; j++)
+                bool isDefault = EditorGUILayout.Toggle($"Default Animation", defaultValues[i]);
+
+                if (defaultValues[i] != isDefault)
                 {
-                    int enableIndex = isDefault ? i : 0;
+                    for (int j = 0; j < defaultValues.Count; j++)
+                    {
+                        int enableIndex = isDefault ? i : 0;
 
-                    defaultValues[j] = j == enableIndex;
+                        defaultValues[j] = j == enableIndex;
+                    }
                 }
-            }
 
-            data.IsDefault = defaultValues[i];
+                data.IsDefault = defaultValues[i];
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            {
+                data.IsPlayOnetime = EditorGUILayout.Toggle($"Play Onetime", data.IsPlayOnetime);
+            }
+            GUILayout.EndHorizontal();
         }
-        GUILayout.EndHorizontal();
         if (EditorGUI.EndChangeCheck())
-            SetReadyDirty();
+                SetReadyDirty();
     }
 
     private void DrawFrameDelay(int i)

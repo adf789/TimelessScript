@@ -22,6 +22,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         public int FrameDelay = 10;
         public bool IsCustomDelay;
         public bool IsDefault;
+        public bool IsPlayOnetime;
         public int[] CustomFrameDelay;
         public int SpriteCount;
 
@@ -464,6 +465,14 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         }
 
         return 0;
+    }
+
+    public bool CheckPlayOnetime(int index)
+    {
+        if (spriteSheets.Count <= index || index < 0)
+            return false;
+
+        return spriteSheets[index].IsPlayOnetime;
     }
 
     public bool HasStartAnimation(AnimationState state)
