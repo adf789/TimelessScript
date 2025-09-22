@@ -22,10 +22,10 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public int PassingFrame;
     public bool IsFlip;
     public bool IsTransitioning;
+    public bool IsEndLoopOneTime;
     public bool HasStartAnimation;
     public bool HasEndAnimation;
     public bool ShouldTransitionToEnd;
-    public bool ShouldTransitionToEndOneTime;
     public AnimationTransitionType TransitionType;
 
     public bool IsLastAnimation => CurrentAnimationIndex == CurrentAnimationCount - 1;
@@ -44,7 +44,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
         HasStartAnimation = false;
         HasEndAnimation = false;
         ShouldTransitionToEnd = false;
-        ShouldTransitionToEndOneTime = false;
+        IsEndLoopOneTime = false;
         TransitionType = AnimationTransitionType.None;
     }
 
@@ -55,7 +55,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
         if (CurrentAnimationIndex >= CurrentAnimationCount)
         {
             if (CurrentPhase == AnimationPhase.Loop
-            && !ShouldTransitionToEndOneTime)
+            && !IsEndLoopOneTime)
                 CurrentAnimationIndex = 0;
             else
                 CurrentAnimationIndex = CurrentAnimationCount - 1;
@@ -66,19 +66,29 @@ public struct SpriteSheetAnimationComponent : IComponentData
 
     public void RequestTransition(AnimationState nextState, AnimationTransitionType transitionType = AnimationTransitionType.None)
     {
+        Debug.Log($"Request Animation: {nextState.ToFixedString()}\n{StackTraceUtility.ExtractStackTrace()}");
+
+        // 현재 애니메이션과 다음 변경하려는 애니메이션이 같은 경우
         if (CurrentState == nextState)
         {
+            // 이전에 변경하려는 애니메이션과 지금 변경하는 애니메이션이 다른 경우
+            // 애니메이션 변경 취소
             if (NextState != nextState)
+            {
                 NextState = AnimationState.None;
+                TransitionType = AnimationTransitionType.None;
+                ShouldTransitionToEnd = false;
+                IsEndLoopOneTime = false;
+            }
+
+            Debug.Log($"Request Animation Pass: {nextState.ToFixedString()}");
 
             return;
         }
 
-        Debug.Log($"Request Animation: {nextState.ToFixedString()}\n{StackTraceUtility.ExtractStackTrace()}");
-
         NextState = nextState;
         TransitionType = transitionType;
-        ShouldTransitionToEndOneTime = TransitionType == AnimationTransitionType.None;
+        IsEndLoopOneTime = TransitionType == AnimationTransitionType.None;
         ShouldTransitionToEnd = true;
         IsTransitioning = false;
     }
@@ -87,7 +97,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
     {
         if (CurrentPhase == AnimationPhase.Loop)
         {
-            if (!ShouldTransitionToEndOneTime)
+            if (!IsEndLoopOneTime)
                 return ShouldTransitionToEnd;
             else
                 return IsLastAnimation;

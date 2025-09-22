@@ -10,14 +10,6 @@ using UnityEngine;
 [BurstCompile]
 public partial class NavigationSystem : SystemBase
 {
-    #region Constants
-    private const float SAME_HEIGHT_THRESHOLD = 0.5f;
-    private const float MAX_HORIZONTAL_REACH = 10.0f;
-    private const float MAX_VERTICAL_REACH = 8.0f;
-    private const float WAYPOINT_ARRIVAL_DISTANCE = 0.2f;
-    private const float MINIMUM_MOVE_DISTANCE = 0.5f;
-    #endregion
-
     #region Cached Queries
     private EntityQuery _ladderQuery;
     private EntityQuery _groundQuery;
@@ -178,13 +170,13 @@ public partial class NavigationSystem : SystemBase
         float distance = math.distance(currentPosition, waypointPosition);
 
         #if UNITY_EDITOR
-        if (distance < WAYPOINT_ARRIVAL_DISTANCE + 0.1f) // 거의 도착한 경우에만 로그
+        if (distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE + 0.1f) // 거의 도착한 경우에만 로그
         {
-            UnityEngine.Debug.Log($"웨이포인트 도달 확인: 거리 = {distance:F3}, 임계값 = {WAYPOINT_ARRIVAL_DISTANCE}");
+            UnityEngine.Debug.Log($"웨이포인트 도달 확인: 거리 = {distance:F3}, 임계값 = {StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE}");
         }
         #endif
 
-        return distance < WAYPOINT_ARRIVAL_DISTANCE;
+        return distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE;
     }
 
     private void SetNavigationFailed(ref NavigationComponent navigation, string reason)
@@ -219,7 +211,7 @@ public partial class NavigationSystem : SystemBase
     [BurstCompile]
     private bool IsOnSameLevel(float startY, float targetY)
     {
-        return math.abs(startY - targetY) <= SAME_HEIGHT_THRESHOLD;
+        return math.abs(startY - targetY) <= StringDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD;
     }
 
     [BurstCompile]
@@ -329,8 +321,8 @@ public partial class NavigationSystem : SystemBase
         float distanceToLadder = math.abs(startPos.x - ladderPos.x);
         float distanceFromLadder = math.abs(ladderPos.x - targetPos.x);
 
-        return distanceToLadder <= MAX_HORIZONTAL_REACH &&
-               distanceFromLadder <= MAX_HORIZONTAL_REACH;
+        return distanceToLadder <= StringDefine.AUTO_MOVE_MAX_HORIZONTAL_REACH &&
+               distanceFromLadder <= StringDefine.AUTO_MOVE_MAX_HORIZONTAL_REACH;
     }
 
     [BurstCompile]
@@ -350,7 +342,7 @@ public partial class NavigationSystem : SystemBase
 
         // 1. 사다리 X 위치로 수평 이동 (필요한 경우)
         float horizontalDistance = math.abs(startPos.x - ladderPos.x);
-        if (horizontalDistance > MINIMUM_MOVE_DISTANCE)
+        if (horizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
         {
             var moveToLadderPos = new float2(ladderPos.x, startPos.y);
             AddWaypoint(waypoints, moveToLadderPos, ladderInfo.Entity, TSObjectType.Ground, MoveState.Move);
@@ -373,7 +365,7 @@ public partial class NavigationSystem : SystemBase
 
         // 3. 목표 지점으로 수평 이동 (필요한 경우)
         float finalHorizontalDistance = math.abs(ladderPos.x - targetPos.x);
-        if (finalHorizontalDistance > MINIMUM_MOVE_DISTANCE)
+        if (finalHorizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
         {
             AddWaypoint(waypoints, targetPos, targetGround, TSObjectType.Ground, MoveState.Move);
 
@@ -470,7 +462,7 @@ public partial class NavigationSystem : SystemBase
 
         // 수직 범위 확인 (표면에서 일정 범위 내)
         float surfaceY = groundCenterY + halfHeight;
-        bool withinVerticalRange = math.abs(position.y - surfaceY) <= SAME_HEIGHT_THRESHOLD * 2;
+        bool withinVerticalRange = math.abs(position.y - surfaceY) <= StringDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD * 2;
 
         return withinHorizontalRange && withinVerticalRange;
     }

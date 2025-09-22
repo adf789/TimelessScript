@@ -11,4 +11,5 @@ public enum MoveState
     Move,
     ClimbUp,
     ClimbDown,
+    Interact,
 }

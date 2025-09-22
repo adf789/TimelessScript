@@ -16,8 +16,7 @@ public partial struct BehaviorJob : IJobEntity
     public float DeltaTime;
     public bool IsPrevGrounded;
 
-    public void Execute(Entity entity,
-    ref LocalTransform transform,
+    public void Execute(ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref PhysicsComponent physicsComponent,
     in NavigationComponent navigationComponent,
@@ -90,9 +89,18 @@ public partial struct BehaviorJob : IJobEntity
             }
             else if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
             {
-                if (animComponent.ValueRW.CurrentState != AnimationState.Interact
-                && animComponent.ValueRW.NextState != AnimationState.Interact)
+                Debug.Log($"Move State: {objectComponent.Behavior.MoveState}");
+                Debug.Log($"Animation Current: {animComponent.ValueRW.CurrentState}, Next: {animComponent.ValueRW.NextState}");
+
+                if (objectComponent.Behavior.MoveState == MoveState.Interact)
+                {
+                    animComponent.ValueRW.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
+                    objectComponent.Behavior.MoveState = MoveState.None;
+                }
+                else
+                {
                     animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
+                }
             }
         }
     }
@@ -127,18 +135,21 @@ public partial struct BehaviorJob : IJobEntity
         currentRootPosition.y += objectComponent.RootOffset;
 
         float distance = math.distance(currentRootPosition, moveRootPosition);
-        if (distance < 0.2f) // NavigationSystem과 동일한 임계값 사용
+        if (distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE)
         {
+            // 이동 목적지 리셋
             if (objectComponent.Behavior.TargetType == TSObjectType.Gimmick)
             {
                 animComponent.IsFlip = targetRootPosition.x < currentRootPosition.x;
-                animComponent.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
-                animComponent.ShouldTransitionToEndOneTime = true;
+                objectComponent.Behavior.MoveState = MoveState.Interact;
+            }
+            else
+            {
+                if(objectComponent.Behavior.MoveState != MoveState.Interact)
+                    objectComponent.Behavior.MoveState = MoveState.None;
             }
 
-            objectComponent.Behavior.MoveState = MoveState.None;
             objectComponent.Behavior.TargetType = TSObjectType.None;
-            // 현재 위치를 MovePosition에 업데이트
             objectComponent.Behavior.MovePosition = currentRootPosition;
 
             Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}, 거리: {distance:G3}");
@@ -173,7 +184,7 @@ public partial struct BehaviorJob : IJobEntity
         float remainingDistance = math.distance(currentRootPosition, targetRootPosition);
         Debug.Log($"[BehaviorJob] 사다리 이동 중: 남은 거리 = {remainingDistance:G3}");
 
-        if (remainingDistance < 0.2f) // NavigationSystem과 동일한 임계값 사용
+        if (remainingDistance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE)
         {
             // 정확한 목표 위치로 스냅
             float2 exactTransformPos = targetRootPosition;

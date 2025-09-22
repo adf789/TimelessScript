@@ -78,7 +78,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         switch (component.TransitionType)
         {
             case AnimationTransitionType.None:
-                component.ShouldTransitionToEndOneTime = true;
+                component.IsEndLoopOneTime = true;
                 break;
 
             case AnimationTransitionType.SkipAllPhase:
@@ -139,6 +139,8 @@ public partial class SpriteSheetAnimationSystem : SystemBase
     /// </summary>
     private void StartNextAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
+        Debug.Log($"Start Next Animation Current: {component.CurrentState}, Next: {component.NextState}");
+
         AnimationState targetState = component.NextState;
         bool isSkip = component.TransitionType == AnimationTransitionType.SkipAllPhase;
 
@@ -156,7 +158,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
 
         if (authoring.CheckPlayOnetime(nodeIndex))
         {
-            component.ShouldTransitionToEndOneTime = true;
+            component.IsEndLoopOneTime = true;
             component.NextState = AnimationState.Idle;
         }
 
