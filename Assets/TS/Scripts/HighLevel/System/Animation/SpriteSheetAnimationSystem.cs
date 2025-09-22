@@ -5,15 +5,15 @@ using Unity.Entities;
 using UnityEngine;
 
 [UpdateInGroup(typeof(PresentationSystemGroup))]
-public partial class SpriteSheetAnimationSystem : SystemBase
+public partial struct SpriteSheetAnimationSystem : ISystem
 {
-    protected override void OnCreate()
+    public void OnCreate(ref SystemState state)
     {
         // 이 시스템은 SpriteSheetAnimationComponent가 있는 엔티티가 하나라도 있을 때만 업데이트됩니다.
-        RequireForUpdate<SpriteSheetAnimationComponent>();
+        state.RequireForUpdate<SpriteSheetAnimationComponent>();
     }
 
-    protected override void OnUpdate()
+    public void OnUpdate(ref SystemState state)
     {
         foreach (var (authoring, component) in
         SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
@@ -30,7 +30,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         }
     }
 
-    private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    private static bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         int frameDelay = component.CurrentPhase switch
         {
@@ -52,7 +52,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         }
     }
 
-    public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    public static void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         // 현재 애니메이션 진행
         if (!CheckAnimationFrame(authoring, ref component))
@@ -71,7 +71,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         ProcessCurrentAnimation(authoring, ref component);
     }
 
-    private void ProcessAnimationTransition(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    private static void ProcessAnimationTransition(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         component.IsTransitioning = true;
         
@@ -91,7 +91,7 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         }
     }
 
-    private void ProcessCurrentAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    private static void ProcessCurrentAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         int nextIndex = component.NextAnimationIndex();
 
@@ -137,9 +137,13 @@ public partial class SpriteSheetAnimationSystem : SystemBase
     /// <summary>
     /// 다음 애니메이션 상태로 설정함
     /// </summary>
-    private void StartNextAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    private static void StartNextAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         Debug.Log($"Start Next Animation Current: {component.CurrentState}, Next: {component.NextState}");
+
+        // 애니메이션 완료 이벤트 플래그 설정
+        component.AnimationCompleted = true;
+        component.CompletedAnimationState = component.CurrentState;
 
         AnimationState targetState = component.NextState;
         bool isSkip = component.TransitionType == AnimationTransitionType.SkipAllPhase;
@@ -157,22 +161,19 @@ public partial class SpriteSheetAnimationSystem : SystemBase
         component.IsTransitioning = false;
 
         if (authoring.CheckPlayOnetime(nodeIndex))
-        {
             component.IsEndLoopOneTime = true;
-            component.NextState = AnimationState.Idle;
-        }
 
         if (isSkip || !component.HasStartAnimation)
-        {
-            SetupPhaseAnimation(AnimationPhase.Loop, authoring, ref component);
-        }
-        else
-        {
-            SetupPhaseAnimation(AnimationPhase.Start, authoring, ref component);
-        }
+            {
+                SetupPhaseAnimation(AnimationPhase.Loop, authoring, ref component);
+            }
+            else
+            {
+                SetupPhaseAnimation(AnimationPhase.Start, authoring, ref component);
+            }
     }
 
-    private void SetupPhaseAnimation(AnimationPhase phase, SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    private static void SetupPhaseAnimation(AnimationPhase phase, SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
         component.CurrentPhase = phase;
         component.CurrentAnimationIndex = -1;

@@ -42,36 +42,21 @@ public partial struct BehaviorJob : IJobEntity
             return;
 
         var purpose = objectComponent.Behavior.MoveState;
-        var currentState = animComponent.ValueRW.CurrentState;
 
         if (purpose == MoveState.Move)
         {
-            if (currentState != AnimationState.Walking)
-            {
-                // 걷기 애니메이션으로 전환 (Start 애니메이션 사용)
-                animComponent.ValueRW.RequestTransition(AnimationState.Walking, AnimationTransitionType.SkipAllPhase);
-            }
+            OnStartMoving(ref animComponent.ValueRW);
 
             Debug.Log($"[BehaviorJob] 일반 이동 처리 중: {objectComponent.Name}");
-            HandleMovement(ref transform, ref objectComponent, ref animComponent.ValueRW);
+            HandleMovement(ref transform, ref objectComponent, in navigationComponent, ref animComponent.ValueRW);
+
+            if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
+                OnEndMoving(in transform, in navigationComponent, ref objectComponent, ref animComponent.ValueRW);
         }
         else if (purpose == MoveState.ClimbUp
         || purpose == MoveState.ClimbDown)
         {
-            if (purpose == MoveState.ClimbUp)
-            {
-                bool isSkip = currentState == AnimationState.Ladder_ClimbDown;
-
-                animComponent.ValueRW.RequestTransition(AnimationState.Ladder_ClimbUp,
-                isSkip ? AnimationTransitionType.SkipAllPhase : AnimationTransitionType.SkipCurrentPhase);
-            }
-            else
-            {
-                bool isSkip = currentState == AnimationState.Ladder_ClimbUp;
-
-                animComponent.ValueRW.RequestTransition(AnimationState.Ladder_ClimbDown,
-                isSkip ? AnimationTransitionType.SkipAllPhase : AnimationTransitionType.SkipCurrentPhase);
-            }
+            OnStartClimbing(in objectComponent, ref animComponent.ValueRW);
 
             Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {objectComponent.Behavior.MoveState}");
             HandleClimbing(ref transform, ref objectComponent, ref animComponent.ValueRW);
@@ -80,32 +65,24 @@ public partial struct BehaviorJob : IJobEntity
         {
             animComponent.ValueRW.RequestTransition(AnimationState.Fall, AnimationTransitionType.SkipAllPhase);
         }
-        // 땅에 착지했을 때 애니메이션 수정
         else
         {
+            // 땅에 착지했을 때 애니메이션 수정
             if (!physicsComponent.isPrevGrounded && physicsComponent.isGrounded)
             {
                 animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipCurrentPhase);
             }
-            else if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
+            else
             {
-                Debug.Log($"Move State: {objectComponent.Behavior.MoveState}");
-                Debug.Log($"Animation Current: {animComponent.ValueRW.CurrentState}, Next: {animComponent.ValueRW.NextState}");
 
-                if (objectComponent.Behavior.MoveState == MoveState.Interact)
-                {
-                    animComponent.ValueRW.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
-                    objectComponent.Behavior.MoveState = MoveState.None;
-                }
-                else
-                {
-                    animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
-                }
             }
         }
     }
 
-    private void HandleMovement(ref LocalTransform transform, ref TSObjectComponent objectComponent, ref SpriteSheetAnimationComponent animComponent)
+    private void HandleMovement(ref LocalTransform transform,
+    ref TSObjectComponent objectComponent,
+    in NavigationComponent navigation,
+    ref SpriteSheetAnimationComponent anim)
     {
         // 1. 현재 '루트(발)'의 위치를 계산합니다. (피벗 위치 + 오프셋)
         float2 currentRootPosition = transform.Position.xy;
@@ -113,9 +90,8 @@ public partial struct BehaviorJob : IJobEntity
 
         // 2. 목표 '루트' 위치를 가져옵니다.
         float2 moveRootPosition = objectComponent.Behavior.MovePosition;
-        float2 targetRootPosition = objectComponent.Behavior.TargetPosition;
 
-        animComponent.IsFlip = moveRootPosition.x < currentRootPosition.x;
+        anim.IsFlip = moveRootPosition.x < currentRootPosition.x;
 
         // 3. 한 프레임에 이동할 최대 거리를 계산합니다.
         float maxDistanceDelta = Speed * DeltaTime;
@@ -133,27 +109,6 @@ public partial struct BehaviorJob : IJobEntity
         // 도착지 위치 비교
         currentRootPosition = transform.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
-
-        float distance = math.distance(currentRootPosition, moveRootPosition);
-        if (distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE)
-        {
-            // 이동 목적지 리셋
-            if (objectComponent.Behavior.TargetType == TSObjectType.Gimmick)
-            {
-                animComponent.IsFlip = targetRootPosition.x < currentRootPosition.x;
-                objectComponent.Behavior.MoveState = MoveState.Interact;
-            }
-            else
-            {
-                if(objectComponent.Behavior.MoveState != MoveState.Interact)
-                    objectComponent.Behavior.MoveState = MoveState.None;
-            }
-
-            objectComponent.Behavior.TargetType = TSObjectType.None;
-            objectComponent.Behavior.MovePosition = currentRootPosition;
-
-            Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}, 거리: {distance:G3}");
-        }
     }
 
     private void HandleClimbing(ref LocalTransform transform, ref TSObjectComponent objectComponent, ref SpriteSheetAnimationComponent animComponent)
@@ -200,4 +155,61 @@ public partial struct BehaviorJob : IJobEntity
         }
     }
 
+    private void OnStartMoving(ref SpriteSheetAnimationComponent animComponent)
+    {
+        if (animComponent.CurrentState != AnimationState.Walking)
+        {
+            // 걷기 애니메이션으로 전환 (Start 애니메이션 사용)
+            animComponent.RequestTransition(AnimationState.Walking, AnimationTransitionType.SkipAllPhase);
+        }
+    }
+
+    private void OnStartClimbing(in TSObjectComponent @object, ref SpriteSheetAnimationComponent animComponent)
+    {
+        var purpose = @object.Behavior.MoveState;
+        var currentState = animComponent.CurrentState;
+
+        if (purpose == MoveState.ClimbUp)
+        {
+            bool isSkip = currentState == AnimationState.Ladder_ClimbDown;
+
+            animComponent.RequestTransition(AnimationState.Ladder_ClimbUp,
+            isSkip ? AnimationTransitionType.SkipAllPhase : AnimationTransitionType.SkipCurrentPhase);
+        }
+        else
+        {
+            bool isSkip = currentState == AnimationState.Ladder_ClimbUp;
+
+            animComponent.RequestTransition(AnimationState.Ladder_ClimbDown,
+            isSkip ? AnimationTransitionType.SkipAllPhase : AnimationTransitionType.SkipCurrentPhase);
+        }
+    }
+
+    private void OnEndMoving(in LocalTransform transform,
+    in NavigationComponent navigation,
+    ref TSObjectComponent objectComponent,
+    ref SpriteSheetAnimationComponent anim)
+    {
+        // 현재 오브젝트와 타겟의 위치를 가져옵니다.
+        float2 targetRootPosition = objectComponent.Behavior.TargetPosition;
+        float2 currentRootPosition = transform.Position.xy;
+        currentRootPosition.y += objectComponent.RootOffset;
+
+        // 이동 목적지 리셋
+        if (objectComponent.Behavior.TargetType == TSObjectType.Gimmick)
+        {
+            anim.IsFlip = targetRootPosition.x < currentRootPosition.x;
+            anim.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
+        }
+        else
+        {
+            anim.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
+        }
+
+        objectComponent.Behavior.TargetType = TSObjectType.None;
+        objectComponent.Behavior.MovePosition = currentRootPosition;
+        objectComponent.Behavior.MoveState = MoveState.None;
+
+        Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}");
+    }
 }

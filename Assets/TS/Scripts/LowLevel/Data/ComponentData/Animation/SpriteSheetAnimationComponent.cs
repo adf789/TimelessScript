@@ -27,6 +27,8 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public bool HasEndAnimation;
     public bool ShouldTransitionToEnd;
     public AnimationTransitionType TransitionType;
+    public bool AnimationCompleted;
+    public AnimationState CompletedAnimationState;
 
     public bool IsLastAnimation => CurrentAnimationIndex == CurrentAnimationCount - 1;
 
@@ -46,6 +48,8 @@ public struct SpriteSheetAnimationComponent : IComponentData
         ShouldTransitionToEnd = false;
         IsEndLoopOneTime = false;
         TransitionType = AnimationTransitionType.None;
+        AnimationCompleted = false;
+        CompletedAnimationState = AnimationState.None;
     }
 
     public int NextAnimationIndex()
@@ -66,7 +70,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
 
     public void RequestTransition(AnimationState nextState, AnimationTransitionType transitionType = AnimationTransitionType.None)
     {
-        Debug.Log($"Request Animation: {nextState.ToFixedString()}\n{StackTraceUtility.ExtractStackTrace()}");
+        Debug.Log($"Request Animation Current: {CurrentState.ToFixedString()}, Next: {nextState.ToFixedString()}\n{StackTraceUtility.ExtractStackTrace()}");
 
         // 현재 애니메이션과 다음 변경하려는 애니메이션이 같은 경우
         if (CurrentState == nextState)
@@ -81,7 +85,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
                 IsEndLoopOneTime = false;
             }
 
-            Debug.Log($"Request Animation Pass: {nextState.ToFixedString()}");
+            Debug.Log($"Request Animation Pass");
 
             return;
         }

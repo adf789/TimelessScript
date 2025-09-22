@@ -7,33 +7,32 @@ using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(ControlSystem))]
+[UpdateBefore(typeof(BehaviorSystem))]
 [BurstCompile]
-public partial class NavigationSystem : SystemBase
+public partial struct NavigationSystem : ISystem
 {
     #region Cached Queries
     private EntityQuery _ladderQuery;
     private EntityQuery _groundQuery;
     #endregion
 
-    protected override void OnCreate()
+    public void OnCreate(ref SystemState state)
     {
-        RequireForUpdate<NavigationComponent>();
+        state.RequireForUpdate<NavigationComponent>();
 
         // 성능 최적화를 위한 쿼리 캐싱 (일반 필터링)
-        _ladderQuery = GetEntityQuery(
-            ComponentType.ReadOnly<TSObjectComponent>(),
-            ComponentType.ReadOnly<ColliderComponent>(),
-            ComponentType.ReadOnly<LocalTransform>()
-        );
+        _ladderQuery = SystemAPI.QueryBuilder()
+        .WithAll<TSObjectComponent>()
+        .WithAll<ColliderComponent>()
+        .WithAll<LocalTransform>().Build();
 
-        _groundQuery = GetEntityQuery(
-            ComponentType.ReadOnly<TSObjectComponent>(),
-            ComponentType.ReadOnly<ColliderComponent>(),
-            ComponentType.ReadOnly<LocalTransform>()
-        );
+        _groundQuery = SystemAPI.QueryBuilder()
+        .WithAll<TSObjectComponent>()
+        .WithAll<ColliderComponent>()
+        .WithAll<LocalTransform>().Build();
     }
 
-    protected override void OnUpdate()
+    public void OnUpdate(ref SystemState state)
     {
         // 활성 상태 필터링으로 성능 최적화
         foreach (var (navigation, waypoints, entity) in
@@ -44,23 +43,22 @@ public partial class NavigationSystem : SystemBase
             if (!navigation.ValueRO.IsActive)
                 continue;
 
-            ProcessNavigationState(ref navigation.ValueRW, waypoints, entity);
+            ProcessNavigationState(ref navigation.ValueRW, waypoints, entity, ref state);
         }
     }
 
     #region Core Navigation Methods
 
-    [BurstCompile]
-    private void ProcessNavigationState(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity)
+    private void ProcessNavigationState(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity, ref SystemState state)
     {
         switch (navigation.State)
         {
             case NavigationState.PathFinding:
-                ExecutePathFinding(ref navigation, waypoints, entity);
+                ExecutePathFinding(ref navigation, waypoints, entity, ref state);
                 break;
 
             case NavigationState.MovingToWaypoint:
-                ExecuteWaypointMovement(ref navigation, waypoints, entity);
+                ExecuteWaypointMovement(ref navigation, waypoints, entity, ref state);
                 break;
 
             case NavigationState.Completed:
@@ -70,16 +68,15 @@ public partial class NavigationSystem : SystemBase
         }
     }
 
-    [BurstCompile]
-    private void ExecutePathFinding(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity)
+    private void ExecutePathFinding(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity, ref SystemState state)
     {
         // 현재 위치 계산 최적화
-        var currentPosition = CalculateCurrentPosition(entity);
+        var currentPosition = CalculateCurrentPosition(entity, ref state);
         var targetPosition = navigation.FinalTargetPosition;
         var targetGround = navigation.FinalTargetGround;
 
         // 유효성 검사
-        if (!SystemAPI.Exists(targetGround))
+        if (targetGround == Entity.Null)
         {
             SetNavigationFailed(ref navigation, "Target ground entity does not exist");
             return;
@@ -87,14 +84,14 @@ public partial class NavigationSystem : SystemBase
 
         // 경로 계산 및 생성
         waypoints.Clear();
-        if (GenerateNavigationPath(currentPosition, targetPosition, targetGround, waypoints))
+        if (GenerateNavigationPath(currentPosition, targetPosition, targetGround, waypoints, ref state))
         {
             navigation.CurrentWaypointIndex = 0;
             navigation.State = NavigationState.MovingToWaypoint;
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             Debug.Log($"Navigation path generated with {waypoints.Length} waypoints");
-            #endif
+#endif
         }
         else
         {
@@ -102,10 +99,9 @@ public partial class NavigationSystem : SystemBase
         }
     }
 
-    [BurstCompile]
-    private void ExecuteWaypointMovement(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity)
+    private void ExecuteWaypointMovement(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity, ref SystemState state)
     {
-        var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(entity);
+        var objectComponent = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
 
         // 경로 완료 확인
         if (navigation.CurrentWaypointIndex >= waypoints.Length)
@@ -119,19 +115,20 @@ public partial class NavigationSystem : SystemBase
 
         var currentWaypoint = waypoints[navigation.CurrentWaypointIndex];
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEngine.Debug.Log($"[NavigationSystem] 웨이포인트 처리 {navigation.CurrentWaypointIndex}/{waypoints.Length}: {currentWaypoint.MoveType} → ({currentWaypoint.Position.x:F2}, {currentWaypoint.Position.y:F2})");
-        #endif
+#endif
 
         // 이동 명령 설정
-        SetMovementCommand(ref objectComponent.ValueRW, currentWaypoint);
+        SetMovementCommand(ref objectComponent, currentWaypoint);
+        state.EntityManager.SetComponentData(entity, objectComponent);
 
         // 도달 확인
-        if (HasReachedWaypoint(entity, currentWaypoint.Position))
+        if (HasReachedWaypoint(entity, currentWaypoint.Position, ref state))
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEngine.Debug.Log($"웨이포인트 {navigation.CurrentWaypointIndex} 도달! 다음 웨이포인트로 이동");
-            #endif
+#endif
             navigation.CurrentWaypointIndex++;
         }
     }
@@ -140,11 +137,10 @@ public partial class NavigationSystem : SystemBase
 
     #region Utility Methods
 
-    [BurstCompile]
-    private float2 CalculateCurrentPosition(Entity entity)
+    private float2 CalculateCurrentPosition(Entity entity, ref SystemState state)
     {
-        var transform = SystemAPI.GetComponent<LocalTransform>(entity);
-        var tsObject = SystemAPI.GetComponent<TSObjectComponent>(entity);
+        var transform = state.EntityManager.GetComponentData<LocalTransform>(entity);
+        var tsObject = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
         var position = transform.Position.xy;
         position.y += tsObject.RootOffset;
         return position;
@@ -158,23 +154,22 @@ public partial class NavigationSystem : SystemBase
         tsObject.Behavior.MoveState = waypoint.MoveType;
         tsObject.Behavior.MovePosition = waypoint.Position;
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEngine.Debug.Log($"[NavigationSystem] 이동 명령 설정: {tsObject.Name} → Purpose: {waypoint.MoveType}, Position: ({waypoint.Position.x:F2}, {waypoint.Position.y:F2})");
-        #endif
+#endif
     }
 
-    [BurstCompile]
-    private bool HasReachedWaypoint(Entity entity, float2 waypointPosition)
+    private bool HasReachedWaypoint(Entity entity, float2 waypointPosition, ref SystemState state)
     {
-        var currentPosition = CalculateCurrentPosition(entity);
+        var currentPosition = CalculateCurrentPosition(entity, ref state);
         float distance = math.distance(currentPosition, waypointPosition);
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         if (distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE + 0.1f) // 거의 도착한 경우에만 로그
         {
             UnityEngine.Debug.Log($"웨이포인트 도달 확인: 거리 = {distance:F3}, 임계값 = {StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE}");
         }
-        #endif
+#endif
 
         return distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE;
     }
@@ -182,20 +177,19 @@ public partial class NavigationSystem : SystemBase
     private void SetNavigationFailed(ref NavigationComponent navigation, string reason)
     {
         navigation.State = NavigationState.Failed;
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         Debug.LogWarning($"Navigation failed: {reason}");
-        #endif
+#endif
     }
 
     #endregion
 
     #region Path Finding
 
-    [BurstCompile]
-    private bool GenerateNavigationPath(float2 startPos, float2 targetPos, Entity targetGround, DynamicBuffer<NavigationWaypoint> waypoints)
+    private bool GenerateNavigationPath(float2 startPos, float2 targetPos, Entity targetGround, DynamicBuffer<NavigationWaypoint> waypoints, ref SystemState state)
     {
         // 목표 지형의 정확한 표면 높이 계산
-        float targetSurfaceY = CalculateGroundSurfaceHeight(targetGround, targetPos.x);
+        float targetSurfaceY = CalculateGroundSurfaceHeight(targetGround, targetPos.x, ref state);
         var adjustedTargetPos = new float2(targetPos.x, targetSurfaceY);
 
         // 높이 차이 확인
@@ -205,7 +199,7 @@ public partial class NavigationSystem : SystemBase
         }
 
         // 복잡한 경로 (사다리 이용) 생성
-        return CreateLadderPath(startPos, adjustedTargetPos, targetGround, waypoints);
+        return CreateLadderPath(startPos, adjustedTargetPos, targetGround, waypoints, ref state);
     }
 
     [BurstCompile]
@@ -227,8 +221,7 @@ public partial class NavigationSystem : SystemBase
         return true;
     }
 
-    [BurstCompile]
-    private bool CreateLadderPath(float2 startPos, float2 targetPos, Entity targetGround, DynamicBuffer<NavigationWaypoint> waypoints)
+    private bool CreateLadderPath(float2 startPos, float2 targetPos, Entity targetGround, DynamicBuffer<NavigationWaypoint> waypoints, ref SystemState state)
     {
         // 캐시된 쿼리 사용 후 런타임 필터링으로 성능 최적화
         var entities = _ladderQuery.ToEntityArray(Allocator.Temp);
@@ -254,7 +247,7 @@ public partial class NavigationSystem : SystemBase
             return false;
         }
 
-        var bestLadderInfo = FindOptimalLadder(startPos, targetPos, ladders.AsArray());
+        var bestLadderInfo = FindOptimalLadder(startPos, targetPos, ladders.AsArray(), ref state);
         ladders.Dispose();
 
         if (bestLadderInfo.Entity == Entity.Null)
@@ -272,8 +265,7 @@ public partial class NavigationSystem : SystemBase
         public float Distance;
     }
 
-    [BurstCompile]
-    private LadderInfo FindOptimalLadder(float2 startPos, float2 targetPos, NativeArray<Entity> ladders)
+    private LadderInfo FindOptimalLadder(float2 startPos, float2 targetPos, NativeArray<Entity> ladders, ref SystemState state)
     {
         var bestLadder = new LadderInfo
         {
@@ -284,7 +276,7 @@ public partial class NavigationSystem : SystemBase
         for (int i = 0; i < ladders.Length; i++)
         {
             var ladder = ladders[i];
-            var ladderPosition = CalculateLadderPosition(ladder);
+            var ladderPosition = CalculateLadderPosition(ladder, ref state);
 
             // 도달 가능성 및 효율성 검사
             if (IsLadderUsable(startPos, targetPos, ladderPosition))
@@ -306,11 +298,10 @@ public partial class NavigationSystem : SystemBase
         return bestLadder;
     }
 
-    [BurstCompile]
-    private float2 CalculateLadderPosition(Entity ladder)
+    private float2 CalculateLadderPosition(Entity ladder, ref SystemState state)
     {
-        var collider = SystemAPI.GetComponent<ColliderComponent>(ladder);
-        var transform = SystemAPI.GetComponent<LocalTransform>(ladder);
+        var collider = state.EntityManager.GetComponentData<ColliderComponent>(ladder);
+        var transform = state.EntityManager.GetComponentData<LocalTransform>(ladder);
         return transform.Position.xy + collider.offset;
     }
 
@@ -336,9 +327,9 @@ public partial class NavigationSystem : SystemBase
     {
         var ladderPos = ladderInfo.Position;
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEngine.Debug.Log($"사다리 경로 생성: Start({startPos.x:F2}, {startPos.y:F2}) → Ladder({ladderPos.x:F2}, {ladderPos.y:F2}) → Target({targetPos.x:F2}, {targetPos.y:F2})");
-        #endif
+#endif
 
         // 1. 사다리 X 위치로 수평 이동 (필요한 경우)
         float horizontalDistance = math.abs(startPos.x - ladderPos.x);
@@ -347,9 +338,9 @@ public partial class NavigationSystem : SystemBase
             var moveToLadderPos = new float2(ladderPos.x, startPos.y);
             AddWaypoint(waypoints, moveToLadderPos, ladderInfo.Entity, TSObjectType.Ground, MoveState.Move);
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEngine.Debug.Log($"웨이포인트 1 - 사다리로 이동: ({moveToLadderPos.x:F2}, {moveToLadderPos.y:F2})");
-            #endif
+#endif
         }
 
         // 2. 사다리 이용 (수직 이동)
@@ -359,9 +350,9 @@ public partial class NavigationSystem : SystemBase
 
         AddWaypoint(waypoints, climbTargetPos, ladderInfo.Entity, TSObjectType.Ladder, climbType);
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEngine.Debug.Log($"웨이포인트 2 - 사다리 {(isClimbingUp ? "올라가기" : "내려가기")}: ({climbTargetPos.x:F2}, {climbTargetPos.y:F2})");
-        #endif
+#endif
 
         // 3. 목표 지점으로 수평 이동 (필요한 경우)
         float finalHorizontalDistance = math.abs(ladderPos.x - targetPos.x);
@@ -369,9 +360,9 @@ public partial class NavigationSystem : SystemBase
         {
             AddWaypoint(waypoints, targetPos, targetGround, TSObjectType.Ground, MoveState.Move);
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEngine.Debug.Log($"웨이포인트 3 - 최종 목표로 이동: ({targetPos.x:F2}, {targetPos.y:F2})");
-            #endif
+#endif
         }
 
         return true;
@@ -393,11 +384,10 @@ public partial class NavigationSystem : SystemBase
 
     #region Ground Surface Calculation
 
-    [BurstCompile]
-    private float CalculateGroundSurfaceHeight(Entity ground, float xPosition)
+    private float CalculateGroundSurfaceHeight(Entity ground, float xPosition, ref SystemState state)
     {
-        var collider = SystemAPI.GetComponent<ColliderComponent>(ground);
-        var transform = SystemAPI.GetComponent<LocalTransform>(ground);
+        var collider = state.EntityManager.GetComponentData<ColliderComponent>(ground);
+        var transform = state.EntityManager.GetComponentData<LocalTransform>(ground);
 
         // 지형 중심점 계산
         float groundCenterX = transform.Position.x + collider.offset.x;

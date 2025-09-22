@@ -15,8 +15,6 @@ public enum NavigationState
     None,
     PathFinding,
     MovingToWaypoint,
-    ClimbingLadder,
-    Dropping,
     Completed,
     Failed
 }
