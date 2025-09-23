@@ -167,3 +167,23 @@ When user wants to customize Claude Code behavior, they can use this trigger phr
 - **"앞으로도 적용되게 해줘"** - Make temporary changes permanent in CLAUDE.md
 
 This phrase will trigger automatic CLAUDE.md updates to preserve user preferences.
+
+### SuperClaude Command Suggestions
+When user makes requests, automatically suggest relevant SuperClaude commands with appropriate keywords and flags:
+
+**Command Mapping Examples:**
+- 코드 분석 요청 → `/analyze` + appropriate flags
+- 기능 구현 요청 → `/implement` + framework detection
+- 성능 개선 요청 → `/improve --perf` + performance persona
+- UI 컴포넌트 생성 → `/build` + Magic MCP integration
+- 버그 수정 요청 → `/troubleshoot` + analyzer persona
+- 문서화 요청 → `/document` + scribe persona
+- 시스템 설계 → `/design` + architect persona
+- 테스트 작성 → `/test` + QA persona + Playwright
+
+**Unity-Specific Mappings:**
+- ECS 시스템 작업 → `/implement --type system` + backend persona
+- MonoBehaviour 스크립트 → `/implement --type component` + Unity patterns
+- 에디터 도구 → `/implement --type editor` + EditorLevel assembly
+- 퍼포먼스 최적화 → `/improve --perf` + ECS/Jobs focus
+- 물리 시스템 → `/analyze --focus physics` + custom physics patterns

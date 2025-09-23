@@ -973,6 +973,10 @@ MonoBehaviour:
   isUsable: 1
   topConnectionPoint: {fileID: 603282649}
   bottomConnectionPoint: {fileID: 1258688508}
+  topConnectedGround: {fileID: 1345631948}
+  bottomConnectedGround: {fileID: 594003816}
+  autoFindConnectedGrounds: 1
+  connectionSearchRadius: 1
   autoSetupComponents: 1
 --- !u!4 &1427852656
 Transform:
@@ -1085,11 +1089,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4448617964647131482, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 5.75
+      value: 1.51
       objectReference: {fileID: 0}
     - target: {fileID: 4448617964647131482, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 7.71
+      value: -0.19
       objectReference: {fileID: 0}
     - target: {fileID: 4448617964647131482, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1277,6 +1281,10 @@ MonoBehaviour:
   isUsable: 1
   topConnectionPoint: {fileID: 1604568356}
   bottomConnectionPoint: {fileID: 59143863}
+  topConnectedGround: {fileID: 1030501039}
+  bottomConnectedGround: {fileID: 1345631948}
+  autoFindConnectedGrounds: 1
+  connectionSearchRadius: 2
   autoSetupComponents: 1
 --- !u!4 &2030460481
 Transform:

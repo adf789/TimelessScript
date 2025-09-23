@@ -4,18 +4,12 @@ using UnityEngine;
 
 public class LadderAuthoring : MonoBehaviour
 {
-    [Header("Ladder Settings")]
-    [Tooltip("사다리의 높이 (자동 계산되지만 수동 설정 가능)")]
-    public float ladderHeight = 3.0f;
+    [Header("Ground Connection")]
+    [Tooltip("상단 연결 지형")]
+    public GameObject topConnectedGround;
 
-    [Tooltip("사다리 이용 가능 여부")]
-    public bool isUsable = true;
-
-    [Tooltip("사다리 상단 연결 지점")]
-    public Transform topConnectionPoint;
-
-    [Tooltip("사다리 하단 연결 지점")]
-    public Transform bottomConnectionPoint;
+    [Tooltip("하단 연결 지형")]
+    public GameObject bottomConnectedGround;
 
     [Header("Auto Setup")]
     [Tooltip("자동으로 필요한 컴포넌트들을 추가할지 여부")]
@@ -30,14 +24,8 @@ public class LadderAuthoring : MonoBehaviour
             // 사다리 특화 컴포넌트 추가
             AddComponent(entity, new LadderComponent
             {
-                Height = authoring.ladderHeight,
-                IsUsable = authoring.isUsable,
-                TopPosition = authoring.topConnectionPoint ?
-                    new float2(authoring.topConnectionPoint.position.x, authoring.topConnectionPoint.position.y) :
-                    new float2(authoring.transform.position.x, authoring.transform.position.y + authoring.ladderHeight * 0.5f),
-                BottomPosition = authoring.bottomConnectionPoint ?
-                    new float2(authoring.bottomConnectionPoint.position.x, authoring.bottomConnectionPoint.position.y) :
-                    new float2(authoring.transform.position.x, authoring.transform.position.y - authoring.ladderHeight * 0.5f)
+                TopConnectedGround = authoring.topConnectedGround ? GetEntity(authoring.topConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null,
+                BottomConnectedGround = authoring.bottomConnectedGround ? GetEntity(authoring.bottomConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null
             });
 
             // 자동 설정이 활성화된 경우 필요한 컴포넌트들 추가
@@ -53,16 +41,16 @@ public class LadderAuthoring : MonoBehaviour
                     RootOffset = 0f
                 });
 
-                // PickedComponent - 클릭 가능하도록 설정
-                AddComponent(entity, new PickedComponent { Order = 1 });
-
                 // Collider 관련 컴포넌트들 (ColliderAuthoring이 없는 경우)
                 if (!authoring.GetComponent<ColliderAuthoring>())
                 {
+                    // ConnectedGround 위치를 기반으로 높이 계산
+                    float calculatedHeight = CalculateLadderHeight(authoring);
+
                     AddComponent(entity, new ColliderComponent
                     {
-                        size = new float2(1.0f, authoring.ladderHeight),
-                        offset = float2.zero,
+                        size = new float2(0.5f, calculatedHeight),
+                        offset = new float2(0f, .5f),
                         isTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
                         position = float2.zero
                     });
@@ -74,41 +62,107 @@ public class LadderAuthoring : MonoBehaviour
                 }
             }
         }
+
+        private float CalculateLadderHeight(LadderAuthoring authoring)
+        {
+            float defaultHeight = 3.0f; // 기본 높이
+
+            // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
+            if (authoring.topConnectedGround && authoring.bottomConnectedGround)
+            {
+                float topY = authoring.topConnectedGround.transform.position.y;
+                float bottomY = authoring.bottomConnectedGround.transform.position.y;
+                float groundDistance = math.abs(topY - bottomY);
+
+                // TopConnectedGround보다 1 높게 설정
+                return groundDistance + 1.0f;
+            }
+            // TopConnectedGround만 있는 경우
+            else if (authoring.topConnectedGround)
+            {
+                float topY = authoring.topConnectedGround.transform.position.y;
+                float ladderY = authoring.transform.position.y;
+                float distanceToTop = math.abs(topY - ladderY);
+
+                // TopConnectedGround보다 1 높게 설정
+                return distanceToTop + 1.0f;
+            }
+            // BottomConnectedGround만 있는 경우
+            else if (authoring.bottomConnectedGround)
+            {
+                float bottomY = authoring.bottomConnectedGround.transform.position.y;
+                float ladderY = authoring.transform.position.y;
+                float distanceToBottom = math.abs(ladderY - bottomY);
+
+                // 기본적으로 하단에서 위로 올라가는 높이 + 1
+                return distanceToBottom + 1.0f;
+            }
+
+            return defaultHeight;
+        }
     }
 
     void OnDrawGizmos()
     {
-        // 사다리 시각화
+        // 계산된 높이로 사다리 시각화
         Gizmos.color = Color.cyan;
-        Vector3 center = transform.position;
-        Vector3 size = new Vector3(0.5f, ladderHeight, 0.1f);
+        Vector3 center = transform.position + new Vector3(0f, .5f);
+
+        // 실제 계산된 높이 사용
+        float calculatedHeight = CalculateGizmoHeight();
+        Vector3 size = new Vector3(0.5f, calculatedHeight, 0.1f);
         Gizmos.DrawWireCube(center, size);
 
-        // 연결점 시각화
-        Gizmos.color = Color.red;
-        if (topConnectionPoint)
+        // 연결된 지형 시각화
+        Gizmos.color = Color.green;
+        if (topConnectedGround)
         {
-            Gizmos.DrawWireSphere(topConnectionPoint.position, 0.2f);
-            Gizmos.DrawLine(transform.position, topConnectionPoint.position);
+            Gizmos.DrawLine(transform.position, topConnectedGround.transform.position);
+            Gizmos.DrawWireSphere(topConnectedGround.transform.position, 0.3f);
         }
 
-        if (bottomConnectionPoint)
+        if (bottomConnectedGround)
         {
-            Gizmos.DrawWireSphere(bottomConnectionPoint.position, 0.2f);
-            Gizmos.DrawLine(transform.position, bottomConnectionPoint.position);
+            Gizmos.DrawLine(transform.position, bottomConnectedGround.transform.position);
+            Gizmos.DrawWireSphere(bottomConnectedGround.transform.position, 0.3f);
+        }
+    }
+
+    private float CalculateGizmoHeight()
+    {
+        float defaultHeight = 3.0f; // 기본 높이
+
+        // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
+        if (topConnectedGround && bottomConnectedGround)
+        {
+            float topY = topConnectedGround.transform.position.y;
+            float bottomY = bottomConnectedGround.transform.position.y;
+            float groundDistance = Mathf.Abs(topY - bottomY);
+
+            // TopConnectedGround보다 1 높게 설정
+            return groundDistance + 1.0f;
+        }
+        // TopConnectedGround만 있는 경우
+        else if (topConnectedGround)
+        {
+            float topY = topConnectedGround.transform.position.y;
+            float ladderY = transform.position.y;
+            float distanceToTop = Mathf.Abs(topY - ladderY);
+
+            // TopConnectedGround보다 1 높게 설정
+            return distanceToTop + 1.0f;
+        }
+        // BottomConnectedGround만 있는 경우
+        else if (bottomConnectedGround)
+        {
+            float bottomY = bottomConnectedGround.transform.position.y;
+            float ladderY = transform.position.y;
+            float distanceToBottom = Mathf.Abs(ladderY - bottomY);
+
+            // 기본적으로 하단에서 위로 올라가는 높이 + 1
+            return distanceToBottom + 1.0f;
         }
 
-        // 기본 연결점 표시 (Transform이 없는 경우)
-        if (!topConnectionPoint)
-        {
-            Vector3 topPos = transform.position + Vector3.up * (ladderHeight * 0.5f);
-            Gizmos.DrawWireSphere(topPos, 0.15f);
-        }
-
-        if (!bottomConnectionPoint)
-        {
-            Vector3 bottomPos = transform.position + Vector3.down * (ladderHeight * 0.5f);
-            Gizmos.DrawWireSphere(bottomPos, 0.15f);
-        }
+        return defaultHeight;
     }
 }
