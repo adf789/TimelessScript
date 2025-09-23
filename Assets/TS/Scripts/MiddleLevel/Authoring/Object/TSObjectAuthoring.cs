@@ -27,6 +27,7 @@ public class TSObjectAuthoring : MonoBehaviour
                 Behavior = new TSObjectBehavior()
                 {
                     Target = Entity.Null,
+                    TargetDataID = 0,
                     TargetType = TSObjectType.None,
                     TargetPosition = float2.zero,
                     MovePosition = initialPosition,

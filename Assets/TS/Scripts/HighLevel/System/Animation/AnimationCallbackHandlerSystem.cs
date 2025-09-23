@@ -29,7 +29,7 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         }
     }
 
-    private void HandleAnimationCompleted(Entity sourceEntity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
         switch (animComponent.CompletedAnimationState)
         {
@@ -37,67 +37,87 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
                 break;
             
             case AnimationState.Interact:
-                HandleInteractAnimationCompleted(sourceEntity, ref animComponent, ref state);
+                HandleInteractAnimationCompleted(entity, ref animComponent, ref state);
                 break;
 
             case AnimationState.Ladder_ClimbUp:
             case AnimationState.Ladder_ClimbDown:
-                HandleClimbAnimationCompleted(sourceEntity, ref animComponent, ref state);
+                HandleClimbAnimationCompleted(entity, ref animComponent, ref state);
                 break;
 
             case AnimationState.Fall:
-                HandleFallAnimationCompleted(sourceEntity, ref animComponent, ref state);
+                HandleFallAnimationCompleted(entity, ref animComponent, ref state);
                 break;
 
             case AnimationState.Walking:
-                HandleWalkAnimationCompleted(sourceEntity, ref animComponent, ref state);
+                HandleWalkAnimationCompleted(entity, ref animComponent, ref state);
                 break;
 
             default:
                 // 기본 처리 로직
-                Debug.Log($"Animation Completed: {animComponent.CompletedAnimationState} for Entity {sourceEntity.Index}");
+                Debug.Log($"Animation Completed: {animComponent.CompletedAnimationState} for Entity {state.EntityManager.GetName(entity)}");
                 break;
         }
     }
 
-    private void HandleInteractAnimationCompleted(Entity sourceEntity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleInteractAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Interact Animation Completed for Entity {sourceEntity.Index}");
+        Debug.Log($"Interact Animation Completed for Entity {entity.Index}");
 
         // 상호작용 애니메이션이 끝났을 때의 로직
         // 예: 상태 변경, 아이템 획득, 문 열기 등
 
         // TSObjectComponent에 접근해서 상태 변경
-        if (state.EntityManager.HasComponent<TSObjectComponent>(sourceEntity))
+        if (state.EntityManager.HasComponent<TSObjectComponent>(entity))
         {
-            var objectComponent = state.EntityManager.GetComponentData<TSObjectComponent>(sourceEntity);
+            var objectComponent = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
             // 상호작용 완료 후 처리
             objectComponent.Behavior.MoveState = MoveState.None;
-            state.EntityManager.SetComponentData(sourceEntity, objectComponent);
+            state.EntityManager.SetComponentData(entity, objectComponent);
+
+            // 관련 상호작용
+            if (state.EntityManager.HasComponent<InteractComponent>(entity))
+            {
+                var interactComponent = state.EntityManager.GetComponentData<InteractComponent>(entity);
+
+                if (SystemAPI.TryGetSingleton(out CollectorComponent collector))
+                {
+                    collector.InteractCollector.Add(interactComponent);
+                }
+                else
+                {
+                    SystemAPI.SetSingleton(new CollectorComponent()
+                    {
+                        InteractCollector = new NativeList<InteractComponent> { interactComponent }
+                    });
+                }
+
+                state.EntityManager.RemoveComponent<InteractComponent>(entity);
+            }
         }
 
         animComponent.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
     }
 
-    private void HandleClimbAnimationCompleted(Entity sourceEntity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleClimbAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Climb Animation Completed for Entity {sourceEntity.Index}");
+        Debug.Log($"Climb Animation Completed for Entity {entity.Index}");
 
         // 사다리 애니메이션이 끝났을 때의 로직
         // 예: 물리 상태 복원, 특정 효과 재생 등
     }
 
-    private void HandleFallAnimationCompleted(Entity sourceEntity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleFallAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Fall Animation Completed for Entity {sourceEntity.Index}");
+        Debug.Log($"Fall Animation Completed for Entity {entity.Index}");
 
         // 낙하 애니메이션이 끝났을 때의 로직
         // 예: 착지 효과, 데미지 계산 등
     }
 
-    private void HandleWalkAnimationCompleted(Entity sourceEntity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleWalkAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Walk Animation Completed for Entity {sourceEntity.Index}");
+        Debug.Log($"Walk Animation Completed for Entity {entity.Index}");
 
         // 낙하 애니메이션이 끝났을 때의 로직
         // 예: 착지 효과, 데미지 계산 등

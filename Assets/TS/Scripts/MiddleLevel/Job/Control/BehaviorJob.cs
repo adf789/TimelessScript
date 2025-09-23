@@ -11,12 +11,14 @@ public partial struct BehaviorJob : IJobEntity
 {
     [NativeDisableParallelForRestriction]
     public ComponentLookup<SpriteSheetAnimationComponent> AnimationComponentLookup;
+    public EntityCommandBuffer.ParallelWriter ecb;
     public float Speed;
     public float ClimbSpeed;
     public float DeltaTime;
     public bool IsPrevGrounded;
 
-    public void Execute(ref LocalTransform transform,
+    public void Execute([EntityIndexInQuery] int entityInQueryIndex,
+    ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref PhysicsComponent physicsComponent,
     in NavigationComponent navigationComponent,
@@ -51,7 +53,7 @@ public partial struct BehaviorJob : IJobEntity
             HandleMovement(ref transform, ref objectComponent, in navigationComponent, ref animComponent.ValueRW);
 
             if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
-                OnEndMoving(in transform, in navigationComponent, ref objectComponent, ref animComponent.ValueRW);
+                OnEndMoving(entityInQueryIndex, in transform, ref objectComponent, ref animComponent.ValueRW);
         }
         else if (purpose == MoveState.ClimbUp
         || purpose == MoveState.ClimbDown)
@@ -65,17 +67,10 @@ public partial struct BehaviorJob : IJobEntity
         {
             animComponent.ValueRW.RequestTransition(AnimationState.Fall, AnimationTransitionType.SkipAllPhase);
         }
-        else
+        else if (!physicsComponent.isPrevGrounded && physicsComponent.isGrounded)
         {
             // 땅에 착지했을 때 애니메이션 수정
-            if (!physicsComponent.isPrevGrounded && physicsComponent.isGrounded)
-            {
-                animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipCurrentPhase);
-            }
-            else
-            {
-
-            }
+            animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipCurrentPhase);
         }
     }
 
@@ -185,12 +180,13 @@ public partial struct BehaviorJob : IJobEntity
         }
     }
 
-    private void OnEndMoving(in LocalTransform transform,
-    in NavigationComponent navigation,
+    private void OnEndMoving(int entityInQueryIndex,
+    in LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref SpriteSheetAnimationComponent anim)
     {
         // 현재 오브젝트와 타겟의 위치를 가져옵니다.
+        var target = objectComponent.Behavior.Target;
         float2 targetRootPosition = objectComponent.Behavior.TargetPosition;
         float2 currentRootPosition = transform.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
@@ -200,6 +196,12 @@ public partial struct BehaviorJob : IJobEntity
         {
             anim.IsFlip = targetRootPosition.x < currentRootPosition.x;
             anim.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
+
+            ecb.AddComponent(entityInQueryIndex, target, new InteractComponent()
+            {
+                DataID = objectComponent.Behavior.TargetDataID,
+                DataType = TSObjectType.Gimmick,
+            });
         }
         else
         {

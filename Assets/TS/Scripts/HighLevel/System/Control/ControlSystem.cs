@@ -70,6 +70,7 @@ public partial struct ControlSystem : ISystem
         {
             // 타겟 설정
             var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(target);
+            objectComponent.ValueRW.Behavior.TargetDataID = selectTarget.DataID;
             objectComponent.ValueRW.Behavior.TargetType = selectTarget.ObjectType;
             objectComponent.ValueRW.Behavior.TargetPosition = new float2(rootPosition.x, rootPosition.y);
 

@@ -8,6 +8,7 @@ public struct TSObjectComponent : IComponentData
     public FixedString64Bytes Name;
     public Entity Self;
     public TSObjectType ObjectType;
+    public int DataID;
     public TSObjectBehavior Behavior;
     public float RootOffset;
     public float Radius;

@@ -17,9 +17,13 @@ public partial struct BehaviorSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+            .CreateCommandBuffer(state.WorldUnmanaged);
+
         var behaviorJob = new BehaviorJob()
         {
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
+            ecb = ecb.AsParallelWriter(),
             Speed = 3f,
             ClimbSpeed = 0.7f,
             DeltaTime = SystemAPI.Time.DeltaTime
