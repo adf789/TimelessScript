@@ -20,7 +20,7 @@ public partial struct BehaviorSystem : ISystem
         var behaviorJob = new BehaviorJob()
         {
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
-            Speed = 2f,
+            Speed = 3f,
             ClimbSpeed = 0.7f,
             DeltaTime = SystemAPI.Time.DeltaTime
         };
