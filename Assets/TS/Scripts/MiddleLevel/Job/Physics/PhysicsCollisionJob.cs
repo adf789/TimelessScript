@@ -85,9 +85,6 @@ public partial struct PhysicsCollisionJob : IJobEntity
                 var tsObject = TSObjectLookup[collision.collidedEntity];
                 if (tsObject.ObjectType == TSObjectType.Ladder)
                 {
-                    #if UNITY_EDITOR
-                    UnityEngine.Debug.Log($"[PhysicsCollisionJob] 사다리와 충돌 감지: {tsObject.Name}");
-                    #endif
                     return true;
                 }
             }

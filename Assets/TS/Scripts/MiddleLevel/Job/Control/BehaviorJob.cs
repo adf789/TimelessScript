@@ -1,6 +1,7 @@
 
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -11,14 +12,18 @@ public partial struct BehaviorJob : IJobEntity
 {
     [NativeDisableParallelForRestriction]
     public ComponentLookup<SpriteSheetAnimationComponent> AnimationComponentLookup;
-    public EntityCommandBuffer.ParallelWriter ecb;
+    
+    [NativeDisableParallelForRestriction]
+    [NativeDisableContainerSafetyRestriction]
+    public ComponentLookup<CollectorComponent> CollectorLookup;
+    public EntityCommandBuffer.ParallelWriter Ecb;
+    public Entity CollectorEntity;
     public float Speed;
     public float ClimbSpeed;
     public float DeltaTime;
     public bool IsPrevGrounded;
 
-    public void Execute([EntityIndexInQuery] int entityInQueryIndex,
-    ref LocalTransform transform,
+    public void Execute(ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref PhysicsComponent physicsComponent,
     in NavigationComponent navigationComponent,
@@ -53,7 +58,7 @@ public partial struct BehaviorJob : IJobEntity
             HandleMovement(ref transform, ref objectComponent, in navigationComponent, ref animComponent.ValueRW);
 
             if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
-                OnEndMoving(entityInQueryIndex, in transform, ref objectComponent, ref animComponent.ValueRW);
+                OnEndMoving(in transform, ref objectComponent, ref animComponent.ValueRW);
         }
         else if (purpose == MoveState.ClimbUp
         || purpose == MoveState.ClimbDown)
@@ -180,13 +185,11 @@ public partial struct BehaviorJob : IJobEntity
         }
     }
 
-    private void OnEndMoving(int entityInQueryIndex,
-    in LocalTransform transform,
+    private void OnEndMoving(in LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref SpriteSheetAnimationComponent anim)
     {
         // 현재 오브젝트와 타겟의 위치를 가져옵니다.
-        var target = objectComponent.Behavior.Target;
         float2 targetRootPosition = objectComponent.Behavior.TargetPosition;
         float2 currentRootPosition = transform.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
@@ -197,11 +200,19 @@ public partial struct BehaviorJob : IJobEntity
             anim.IsFlip = targetRootPosition.x < currentRootPosition.x;
             anim.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
 
-            ecb.AddComponent(entityInQueryIndex, target, new InteractComponent()
+            var interactComponent = new InteractComponent()
             {
                 DataID = objectComponent.Behavior.TargetDataID,
                 DataType = TSObjectType.Gimmick,
-            });
+            };
+
+            // ComponentLookup을 사용해서 Singleton에 접근
+            if (CollectorEntity != Entity.Null && CollectorLookup.HasComponent(CollectorEntity))
+            {
+                var collector = CollectorLookup[CollectorEntity];
+                collector.InteractCollector.Add(interactComponent);
+                CollectorLookup[CollectorEntity] = collector;
+            }
         }
         else
         {

@@ -35,7 +35,7 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         {
             case AnimationState.Idle:
                 break;
-            
+
             case AnimationState.Interact:
                 HandleInteractAnimationCompleted(entity, ref animComponent, ref state);
                 break;
@@ -67,34 +67,48 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         // 상호작용 애니메이션이 끝났을 때의 로직
         // 예: 상태 변경, 아이템 획득, 문 열기 등
 
-        // TSObjectComponent에 접근해서 상태 변경
-        if (state.EntityManager.HasComponent<TSObjectComponent>(entity))
-        {
-            var objectComponent = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
-            // 상호작용 완료 후 처리
-            objectComponent.Behavior.MoveState = MoveState.None;
-            state.EntityManager.SetComponentData(entity, objectComponent);
+        // objectComponent를 처음 찾는 경우
+        // ObjectTargetComponent targetComponent;
+        // if (!state.EntityManager.HasComponent<ObjectTargetComponent>(entity))
+        // {
+        //     // objectComponent 탐색 후 캐싱
+        //     var targetEntity = Utility.Entities.FindComponentInParents<TSObjectComponent>(entity, state.EntityManager);
+        //     var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+        //     var buffer = ecb.CreateCommandBuffer(state.WorldUnmanaged);
+        //     targetComponent = new ObjectTargetComponent()
+        //     {
+        //         target = targetEntity,
+        //     };
 
-            // 관련 상호작용
-            if (state.EntityManager.HasComponent<InteractComponent>(entity))
-            {
-                var interactComponent = state.EntityManager.GetComponentData<InteractComponent>(entity);
+        //     buffer.AddComponent(entity, targetComponent);
+        // }
+        // else
+        // {
+        //     // ObjectComponent를 가져옴
+        //     targetComponent = state.EntityManager.GetComponentData<ObjectTargetComponent>(entity);
+        // }
 
-                if (SystemAPI.TryGetSingleton(out CollectorComponent collector))
-                {
-                    collector.InteractCollector.Add(interactComponent);
-                }
-                else
-                {
-                    SystemAPI.SetSingleton(new CollectorComponent()
-                    {
-                        InteractCollector = new NativeList<InteractComponent> { interactComponent }
-                    });
-                }
+        // if (targetComponent.target != Entity.Null)
+        // {
+        //     var objectEntity = targetComponent.target;
+        //     var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(objectEntity);
+        //     // 상호작용 완료 후 처리
+        //     objectComponent.ValueRW.Behavior.MoveState = MoveState.None;
 
-                state.EntityManager.RemoveComponent<InteractComponent>(entity);
-            }
-        }
+        //     // 관련 상호작용
+        //     if (state.EntityManager.HasComponent<InteractComponent>(objectEntity))
+        //     {
+        //         var interactComponent = state.EntityManager.GetComponentData<InteractComponent>(objectEntity);
+
+        //         var collector = SystemAPI.GetSingletonRW<CollectorComponent>();
+        //         collector.ValueRW.InteractCollector.Add(interactComponent);
+
+        //         var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+        //         var buffer = ecb.CreateCommandBuffer(state.WorldUnmanaged);
+
+        //         buffer.RemoveComponent<InteractComponent>(objectEntity);
+        //     }
+        // }
 
         animComponent.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
     }
