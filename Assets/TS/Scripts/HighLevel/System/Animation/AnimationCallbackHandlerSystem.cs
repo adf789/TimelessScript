@@ -64,52 +64,6 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
     {
         Debug.Log($"Interact Animation Completed for Entity {entity.Index}");
 
-        // 상호작용 애니메이션이 끝났을 때의 로직
-        // 예: 상태 변경, 아이템 획득, 문 열기 등
-
-        // objectComponent를 처음 찾는 경우
-        // ObjectTargetComponent targetComponent;
-        // if (!state.EntityManager.HasComponent<ObjectTargetComponent>(entity))
-        // {
-        //     // objectComponent 탐색 후 캐싱
-        //     var targetEntity = Utility.Entities.FindComponentInParents<TSObjectComponent>(entity, state.EntityManager);
-        //     var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
-        //     var buffer = ecb.CreateCommandBuffer(state.WorldUnmanaged);
-        //     targetComponent = new ObjectTargetComponent()
-        //     {
-        //         target = targetEntity,
-        //     };
-
-        //     buffer.AddComponent(entity, targetComponent);
-        // }
-        // else
-        // {
-        //     // ObjectComponent를 가져옴
-        //     targetComponent = state.EntityManager.GetComponentData<ObjectTargetComponent>(entity);
-        // }
-
-        // if (targetComponent.target != Entity.Null)
-        // {
-        //     var objectEntity = targetComponent.target;
-        //     var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(objectEntity);
-        //     // 상호작용 완료 후 처리
-        //     objectComponent.ValueRW.Behavior.MoveState = MoveState.None;
-
-        //     // 관련 상호작용
-        //     if (state.EntityManager.HasComponent<InteractComponent>(objectEntity))
-        //     {
-        //         var interactComponent = state.EntityManager.GetComponentData<InteractComponent>(objectEntity);
-
-        //         var collector = SystemAPI.GetSingletonRW<CollectorComponent>();
-        //         collector.ValueRW.InteractCollector.Add(interactComponent);
-
-        //         var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
-        //         var buffer = ecb.CreateCommandBuffer(state.WorldUnmanaged);
-
-        //         buffer.RemoveComponent<InteractComponent>(objectEntity);
-        //     }
-        // }
-
         animComponent.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
     }
 
