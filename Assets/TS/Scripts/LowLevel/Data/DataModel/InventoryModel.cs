@@ -9,21 +9,47 @@ public class InventoryModel
 
     public void Add(uint itemID, long count)
     {
-        var item = GetItem(itemID);
-        ItemType type = ItemType.None;
+        var existingItem = GetItem(itemID);
 
-        // 타입 가져오는 코드 필요
-
-        if (item.IsNull)
+        if (existingItem.IsNull)
         {
-            item = new Item()
+            var newItem = new Item()
             {
                 ID = itemID,
-                Type = type
+                Type = ItemType.None, // 타입 추가 필요
+                Count = count,
             };
+            items[itemID] = newItem;
+        }
+        else
+        {
+            var updatedItem = existingItem.AddCount(count);
+
+            items[itemID] = updatedItem;
+        }
+    }
+
+    public bool RemoveItem(uint itemID, long count)
+    {
+        if (!items.TryGetValue(itemID, out var item))
+            return false;
+
+        if (item.Count < count)
+            return false;
+
+        var updatedItem = item;
+        updatedItem.Count -= count;
+
+        if (updatedItem.Count <= 0)
+        {
+            items.Remove(itemID);
+        }
+        else
+        {
+            items[itemID] = updatedItem;
         }
 
-        items[itemID] = item;
+        return true;
     }
 
     public Item GetItem(uint itemID)
@@ -34,5 +60,32 @@ public class InventoryModel
         }
 
         return default;
+    }
+
+    public bool HasItem(uint itemID, long count = 1)
+    {
+        var item = GetItem(itemID);
+        return !item.IsNull && item.Count >= count;
+    }
+
+    public List<Item> GetAllItems()
+    {
+        return new List<Item>(items.Values);
+    }
+
+    public IEnumerable<Item> GetItemsByType(ItemType itemType)
+    {
+        foreach (var item in items.Values)
+        {
+            if (item.Type == itemType)
+            {
+                yield return item;
+            }
+        }
+    }
+
+    public void Clear()
+    {
+        items.Clear();
     }
 }

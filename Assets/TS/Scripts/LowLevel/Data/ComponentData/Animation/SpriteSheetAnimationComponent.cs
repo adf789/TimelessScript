@@ -4,13 +4,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-public enum AnimationPhase
-{
-    Start,
-    Loop,
-    End
-}
-
 public struct SpriteSheetAnimationComponent : IComponentData
 {
     public AnimationState CurrentState;
@@ -70,7 +63,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
 
     public void RequestTransition(AnimationState nextState, AnimationTransitionType transitionType = AnimationTransitionType.None)
     {
-        Debug.Log($"Request Animation Current: {CurrentState.ToFixedString()}, Next: {nextState.ToFixedString()}\n{StackTraceUtility.ExtractStackTrace()}");
+        Debug.Log($"Request Animation Current: {CurrentState.ToFixedString()}, Next: {nextState.ToFixedString()}");
 
         // 현재 애니메이션과 다음 변경하려는 애니메이션이 같은 경우
         if (CurrentState == nextState)

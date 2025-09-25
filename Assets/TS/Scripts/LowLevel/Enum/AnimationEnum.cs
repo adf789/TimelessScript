@@ -21,6 +21,13 @@ public enum AnimationTransitionType
     SkipCurrentPhase    // 현재 상태만 패스
 }
 
+public enum AnimationPhase
+{
+    Start,
+    Loop,
+    End
+}
+
 public static partial class ToString
 {
     public static FixedString64Bytes ToFixedString(this AnimationState state)
