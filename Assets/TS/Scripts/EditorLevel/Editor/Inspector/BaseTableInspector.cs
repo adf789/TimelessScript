@@ -694,7 +694,7 @@ public class BaseTableInspector : Editor
             return;
         }
 
-        newItem.name = $"{dataType.Name}_{nextId}";
+        newItem.name = $"{dataType.Name.Replace("TableData", "")}_{nextId}";
         SetItemID(newItem, nextId);
 
         // 기본값 설정 (name 필드가 있으면 설정)

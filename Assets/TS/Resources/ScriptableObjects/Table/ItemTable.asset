@@ -1,24 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-9142893913083107972
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 42b2edc81915eb54eac06e792676c335, type: 3}
-  m_Name: Item_1
-  m_EditorClassIdentifier: LowLevel::ItemTableData
-  itemName: TestItem
-  itemType: 1
-  icon: 
-  description: 
-  isStackable: 1
-  maxStackSize: 999
-  baseValue: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31,5 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd4b70577a154347ae15d23a9ba9afe, type: 3}
   m_Name: ItemTable
   m_EditorClassIdentifier: LowLevel::ItemTable
+  idBandwidth: 100000
+  idRangeSize: 100000
   datas:
-  - {fileID: -9142893913083107972}
+  - {fileID: 6308023264313517064}
+--- !u!114 &6308023264313517064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42b2edc81915eb54eac06e792676c335, type: 3}
+  m_Name: Item_100001
+  m_EditorClassIdentifier: LowLevel::ItemTableData
+  id: 100001
+  itemName: New ItemTableData
+  itemType: 0
+  icon: 
+  description: 
+  isStackable: 1
+  maxStackSize: 999
+  baseValue: 0

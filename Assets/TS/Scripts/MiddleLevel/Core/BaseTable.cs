@@ -4,10 +4,9 @@ using UnityEngine;
 public abstract class BaseTable<T> : BaseTable where T : BaseTableData
 {
     [Header("ID Range Settings")]
-    [Tooltip("ID 대역폭 기준값 (예: 1000000 = 아이템, 2000000 = 퀘스트)")]
-    [SerializeField] protected uint idBandwidth = 1000000;
+    [SerializeField] protected uint idBandwidth = 100000;
 
-    [Tooltip("이 대역폭에서 사용할 ID 개수 (예: 100000개)")]
+    [Tooltip("이 대역폭에서 사용할 ID 개수")]
     [SerializeField] protected uint idRangeSize = 100000;
 
     [Space]
@@ -110,23 +109,6 @@ public abstract class BaseTable<T> : BaseTable where T : BaseTableData
         // 대역폭 + 범위 크기로 실제 끝 ID 계산
         return idBandwidth + idRangeSize;
     }
-
-#if UNITY_EDITOR
-    [ContextMenu("Add Data")]
-    public virtual void AddData()
-    {
-        var newResourcesPath = CreateInstance<T>();
-        newResourcesPath.name = "Added Data";
-
-        // Save as sub-asset
-        UnityEditor.AssetDatabase.AddObjectToAsset(newResourcesPath, this);
-
-        UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.AssetDatabase.SaveAssets();
-
-        Debug.Log($"Add Data Completed!");
-    }
-#endif
 }
 
 public abstract class BaseTable : ScriptableObject
