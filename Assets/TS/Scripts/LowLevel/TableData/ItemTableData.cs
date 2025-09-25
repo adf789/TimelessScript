@@ -4,8 +4,8 @@ using UnityEngine;
 public class ItemTableData : BaseTableData
 {
     [Header("Basic Info")]
-    public string itemName;
-    public ItemType itemType;
+    [SerializeField] public string itemName;
+    [SerializeField] public ItemType itemType;
 
     [Header("Display")]
     public string icon;

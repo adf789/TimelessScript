@@ -15,7 +15,7 @@ public partial struct CollisionDetectionJob : IJob
     [ReadOnly] public NativeArray<SpatialHashKeyComponent> allHashKeys;
     [NativeDisableParallelForRestriction] public BufferLookup<CollisionBuffer> collisionBufferLookup;
     public ComponentLookup<CollisionInfoComponent> collisionInfoLookup;
-    [ReadOnly] public ComponentLookup<GroundComponent> GroundLookup;
+    [ReadOnly] public ComponentLookup<TSGroundComponent> GroundLookup;
     [ReadOnly] public bool useSpacialHashing;
     [ReadOnly] public float cellSize;
     

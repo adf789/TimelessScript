@@ -253,8 +253,8 @@ GameObject:
   - component: {fileID: 4019544190974294588}
   - component: {fileID: 1210792406335689658}
   - component: {fileID: 4772863480542143071}
-  - component: {fileID: 8932513790811925801}
   - component: {fileID: 1172464439533719287}
+  - component: {fileID: 3268465435861632508}
   m_Layer: 0
   m_Name: TestCharacter
   m_TagString: Untagged
@@ -325,21 +325,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
   order: 0
---- !u!114 &8932513790811925801
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7497076683051236044}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1083b78fe8e74b4da1b7623ea399fd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
-  type: 1
-  root: {fileID: 7488242015394640608}
-  radius: 0
 --- !u!114 &1172464439533719287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -353,3 +338,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::NavigationAuthoring
   EnableNavigation: 1
+--- !u!114 &3268465435861632508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7497076683051236044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d30f4accc8ffcbb4c97fe98c1b2523f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.MiddleLevel::TSActorAuthoring
+  root: {fileID: 7488242015394640608}

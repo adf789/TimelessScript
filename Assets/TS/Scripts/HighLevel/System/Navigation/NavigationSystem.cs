@@ -102,6 +102,7 @@ public partial struct NavigationSystem : ISystem
     private void ExecuteWaypointMovement(ref NavigationComponent navigation, DynamicBuffer<NavigationWaypoint> waypoints, Entity entity, ref SystemState state)
     {
         var objectComponent = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
+        var actorComponent = state.EntityManager.GetComponentData<TSActorComponent>(entity);
 
         // 경로 완료 확인
         if (navigation.CurrentWaypointIndex >= waypoints.Length)
@@ -120,8 +121,8 @@ public partial struct NavigationSystem : ISystem
 #endif
 
         // 이동 명령 설정
-        SetMovementCommand(ref objectComponent, currentWaypoint);
-        state.EntityManager.SetComponentData(entity, objectComponent);
+        SetMovementCommand(in objectComponent, ref actorComponent, currentWaypoint);
+        state.EntityManager.SetComponentData(entity, actorComponent);
 
         // 도달 확인
         if (HasReachedWaypoint(entity, currentWaypoint.Position, ref state))
@@ -147,14 +148,16 @@ public partial struct NavigationSystem : ISystem
     }
 
     [BurstCompile]
-    private void SetMovementCommand(ref TSObjectComponent tsObject, NavigationWaypoint waypoint)
+    private void SetMovementCommand(in TSObjectComponent objectComponent,
+    ref TSActorComponent actorComponent,
+    NavigationWaypoint waypoint)
     {
-        tsObject.Behavior.Target = waypoint.TargetEntity;
-        tsObject.Behavior.MoveState = waypoint.MoveType;
-        tsObject.Behavior.MovePosition = waypoint.Position;
+        actorComponent.Behavior.Target = waypoint.TargetEntity;
+        actorComponent.Behavior.MoveState = waypoint.MoveType;
+        actorComponent.Behavior.MovePosition = waypoint.Position;
 
 #if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[NavigationSystem] 이동 명령 설정: {tsObject.Name} → Purpose: {waypoint.MoveType}, Position: ({waypoint.Position.x:F2}, {waypoint.Position.y:F2})");
+        UnityEngine.Debug.Log($"[NavigationSystem] 이동 명령 설정: {objectComponent.Name} → Purpose: {waypoint.MoveType}, Position: ({waypoint.Position.x:F2}, {waypoint.Position.y:F2})");
 #endif
     }
 
@@ -365,9 +368,9 @@ public partial struct NavigationSystem : ISystem
         for (int i = 0; i < ladders.Length; i++)
         {
             var ladder = ladders[i];
-            if (!state.EntityManager.HasComponent<LadderComponent>(ladder)) continue;
+            if (!state.EntityManager.HasComponent<TSLadderComponent>(ladder)) continue;
 
-            var ladderComponent = state.EntityManager.GetComponentData<LadderComponent>(ladder);
+            var ladderComponent = state.EntityManager.GetComponentData<TSLadderComponent>(ladder);
             var transform = state.EntityManager.GetComponentData<LocalTransform>(ladder);
 
             var ladderInfo = new LadderInfo
@@ -912,9 +915,9 @@ public partial struct NavigationSystem : ISystem
             // 사다리를 사용하는 경우
             if (node.LadderUsed != Entity.Null)
             {
-                if (state.EntityManager.HasComponent<LadderComponent>(node.LadderUsed))
+                if (state.EntityManager.HasComponent<TSLadderComponent>(node.LadderUsed))
                 {
-                    var ladderComponent = state.EntityManager.GetComponentData<LadderComponent>(node.LadderUsed);
+                    var ladderComponent = state.EntityManager.GetComponentData<TSLadderComponent>(node.LadderUsed);
                     var ladderTransform = state.EntityManager.GetComponentData<LocalTransform>(node.LadderUsed);
 
                     // 이전 노드 정보 가져오기

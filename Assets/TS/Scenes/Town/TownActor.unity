@@ -457,7 +457,6 @@ GameObject:
   - component: {fileID: 594003823}
   - component: {fileID: 594003821}
   - component: {fileID: 594003824}
-  - component: {fileID: 594003825}
   - component: {fileID: 594003826}
   m_Layer: 0
   m_Name: Ground
@@ -494,6 +493,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
+  root: {fileID: 0}
   bounciness: 0.3
   friction: 0.8
   isOneWayPlatform: 0
@@ -544,21 +544,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
   order: 1
---- !u!114 &594003825
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 594003816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1083b78fe8e74b4da1b7623ea399fd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
-  type: 2
-  root: {fileID: 0}
-  radius: 0
 --- !u!114 &594003826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -576,7 +561,6 @@ MonoBehaviour:
   spawnCooldown: 2
   minSpawnDistance: 1
   autoSpawn: 1
-  areaSize: {x: 10, y: 10}
 --- !u!1 &603282648
 GameObject:
   m_ObjectHideFlags: 0
@@ -670,7 +654,6 @@ GameObject:
   - component: {fileID: 1030501043}
   - component: {fileID: 1030501042}
   - component: {fileID: 1030501041}
-  - component: {fileID: 1030501040}
   m_Layer: 0
   m_Name: Ground3
   m_TagString: Ground
@@ -678,21 +661,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1030501040
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1030501039}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1083b78fe8e74b4da1b7623ea399fd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
-  type: 2
-  root: {fileID: 0}
-  radius: 0
 --- !u!114 &1030501041
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -718,6 +686,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
+  root: {fileID: 0}
   bounciness: 0.3
   friction: 0.8
   isOneWayPlatform: 0
@@ -836,7 +805,6 @@ GameObject:
   - component: {fileID: 1345631952}
   - component: {fileID: 1345631951}
   - component: {fileID: 1345631950}
-  - component: {fileID: 1345631949}
   m_Layer: 0
   m_Name: Ground2
   m_TagString: Ground
@@ -844,21 +812,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1345631949
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1345631948}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1083b78fe8e74b4da1b7623ea399fd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
-  type: 2
-  root: {fileID: 0}
-  radius: 0
 --- !u!114 &1345631950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -884,6 +837,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
+  root: {fileID: 0}
   bounciness: 0.3
   friction: 0.8
   isOneWayPlatform: 0
@@ -966,9 +920,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::LadderAuthoring
+  root: {fileID: 0}
   topConnectedGround: {fileID: 1345631948}
   bottomConnectedGround: {fileID: 594003816}
-  autoSetupComponents: 1
 --- !u!4 &1427852656
 Transform:
   m_ObjectHideFlags: 0
@@ -1220,9 +1174,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::LadderAuthoring
+  root: {fileID: 0}
   topConnectedGround: {fileID: 1030501039}
   bottomConnectedGround: {fileID: 1345631948}
-  autoSetupComponents: 1
 --- !u!4 &2030460481
 Transform:
   m_ObjectHideFlags: 0

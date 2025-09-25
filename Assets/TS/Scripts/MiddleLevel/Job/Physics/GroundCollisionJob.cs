@@ -7,7 +7,7 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct GroundCollisionJob : IJobEntity
 {
-    public void Execute(ref GroundCollisionComponent collisionData, in GroundComponent ground)
+    public void Execute(ref GroundCollisionComponent collisionData, in TSGroundComponent ground)
     {
         if (!collisionData.hasCollision)
             return;
@@ -35,7 +35,7 @@ public partial struct GroundCollisionJob : IJobEntity
     }
     
     [BurstCompile]
-    private float2 HandleNormalGround(float2 velocity, float2 normal, GroundComponent ground)
+    private float2 HandleNormalGround(float2 velocity, float2 normal, TSGroundComponent ground)
     {
         // 수직 성분: 반발
         float normalDot = math.dot(velocity, normal);

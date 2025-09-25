@@ -2,8 +2,10 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class LadderAuthoring : MonoBehaviour
+public class TSLadderAuthoring : TSObjectAuthoring
 {
+    public override TSObjectType Type => TSObjectType.Ladder;
+
     [Header("Ground Connection")]
     [Tooltip("상단 연결 지형")]
     public GameObject topConnectedGround;
@@ -11,59 +13,49 @@ public class LadderAuthoring : MonoBehaviour
     [Tooltip("하단 연결 지형")]
     public GameObject bottomConnectedGround;
 
-    [Header("Auto Setup")]
-    [Tooltip("자동으로 필요한 컴포넌트들을 추가할지 여부")]
-    public bool autoSetupComponents = true;
-
-    private class Baker : Baker<LadderAuthoring>
+    private class Baker : Baker<TSLadderAuthoring>
     {
-        public override void Bake(LadderAuthoring authoring)
+        public override void Bake(TSLadderAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+            AddComponent(entity, new TSObjectComponent()
+            {
+                Name = authoring.name,
+                Self = entity,
+                ObjectType = authoring.Type,
+                RootOffset = 0f,
+            });
+
             // 사다리 특화 컴포넌트 추가
-            AddComponent(entity, new LadderComponent
+            AddComponent(entity, new TSLadderComponent
             {
                 TopConnectedGround = authoring.topConnectedGround ? GetEntity(authoring.topConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null,
                 BottomConnectedGround = authoring.bottomConnectedGround ? GetEntity(authoring.bottomConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null
             });
 
-            // 자동 설정이 활성화된 경우 필요한 컴포넌트들 추가
-            if (authoring.autoSetupComponents)
+            // Collider 관련 컴포넌트들 (ColliderAuthoring이 없는 경우)
+            if (!authoring.GetComponent<ColliderAuthoring>())
             {
-                // TSObjectComponent - Ladder 타입으로 설정
-                AddComponent(entity, new TSObjectComponent
+                // ConnectedGround 위치를 기반으로 높이 계산
+                float calculatedHeight = CalculateLadderHeight(authoring);
+
+                AddComponent(entity, new ColliderComponent
                 {
-                    Name = authoring.name,
-                    Self = entity,
-                    ObjectType = TSObjectType.Ladder,
-                    Behavior = new TSObjectBehavior(),
-                    RootOffset = 0f
+                    size = new float2(0.5f, calculatedHeight),
+                    offset = new float2(0f, .5f),
+                    isTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
+                    position = float2.zero
                 });
 
-                // Collider 관련 컴포넌트들 (ColliderAuthoring이 없는 경우)
-                if (!authoring.GetComponent<ColliderAuthoring>())
-                {
-                    // ConnectedGround 위치를 기반으로 높이 계산
-                    float calculatedHeight = CalculateLadderHeight(authoring);
-
-                    AddComponent(entity, new ColliderComponent
-                    {
-                        size = new float2(0.5f, calculatedHeight),
-                        offset = new float2(0f, .5f),
-                        isTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
-                        position = float2.zero
-                    });
-
-                    AddComponent(entity, new SpatialHashKeyComponent());
-                    AddComponent(entity, new ColliderBoundsComponent());
-                    AddComponent(entity, new CollisionInfoComponent());
-                    AddBuffer<CollisionBuffer>(entity);
-                }
+                AddComponent(entity, new SpatialHashKeyComponent());
+                AddComponent(entity, new ColliderBoundsComponent());
+                AddComponent(entity, new CollisionInfoComponent());
+                AddBuffer<CollisionBuffer>(entity);
             }
         }
 
-        private float CalculateLadderHeight(LadderAuthoring authoring)
+        private float CalculateLadderHeight(TSLadderAuthoring authoring)
         {
             float defaultHeight = 3.0f; // 기본 높이
 

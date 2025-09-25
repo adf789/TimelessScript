@@ -16,7 +16,7 @@ public partial struct SpawnJob : IJobEntity
     public void Execute(
         [EntityIndexInQuery] int entityInQueryIndex,
         ref SpawnConfigComponent spawnConfig,
-        in GroundComponent ground,
+        in TSGroundComponent ground,
         in ColliderComponent collider)
     {
         // 스폰 쿨다운 체크
@@ -52,14 +52,12 @@ public partial struct SpawnJob : IJobEntity
 
     private void FindValidSpawnPosition(
         int entityIndex,
-        in GroundComponent ground,
+        in TSGroundComponent ground,
         in ColliderComponent collider,
         out float2 spawnPosition)
     {
         spawnPosition = float2.zero;
         float halfSize = collider.size.x * 0.5f;
-        const float minDistance = 0.5f;
-        const int maxAttempts = 20;
 
         uint seed = (uint) (currentTime * IntDefine.TIME_MILLISECONDS_ONE) +
                        (uint) (collider.position.x * 10) +

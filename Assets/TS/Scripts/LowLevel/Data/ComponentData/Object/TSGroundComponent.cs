@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-public struct GroundComponent : IComponentData
+public struct TSGroundComponent : IComponentData
 {
     public float bounciness;
     public float friction;

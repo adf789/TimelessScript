@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3397996780441163628}
   - component: {fileID: 6515036797142997821}
   - component: {fileID: 534198486437448583}
-  - component: {fileID: 7294785341909086327}
+  - component: {fileID: 7602456729251230026}
   m_Layer: 0
   m_Name: Gimmick1
   m_TagString: Ground
@@ -83,7 +83,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
   order: 1
---- !u!114 &7294785341909086327
+--- !u!114 &7602456729251230026
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,12 +92,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 853595635999183450}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1083b78fe8e74b4da1b7623ea399fd8, type: 3}
+  m_Script: {fileID: 11500000, guid: f91e6c2c2bbb07f4f913091d01f8e62c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::TSObjectAuthoring
-  type: 4
+  m_EditorClassIdentifier: Game.MiddleLevel::TSGimmickAuthoring
   root: {fileID: 3971888583458909171}
-  radius: 2.56
+  radius: 2.32
 --- !u!1 &3513460485882666974
 GameObject:
   m_ObjectHideFlags: 0

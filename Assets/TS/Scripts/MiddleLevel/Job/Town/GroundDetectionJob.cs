@@ -9,7 +9,7 @@ using Unity.Transforms;
 public struct GroundDetectionJob : IJob
 {
     [ReadOnly] public NativeArray<Entity> groundEntities;
-    [ReadOnly] public ComponentLookup<GroundComponent> groundLookup;
+    [ReadOnly] public ComponentLookup<TSGroundComponent> groundLookup;
     [ReadOnly] public ComponentLookup<ColliderComponent> colliderLookup;
     [ReadOnly] public ComponentLookup<LocalTransform> transformLookup;
 

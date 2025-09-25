@@ -15,7 +15,7 @@ public partial struct ControlSystem : ISystem
     private Entity target;
 
     public void OnCreate(ref SystemState state)
-       => state.RequireForUpdate<TSObjectComponent>();
+       => state.RequireForUpdate<TSActorComponent>();
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -69,7 +69,7 @@ public partial struct ControlSystem : ISystem
         else
         {
             // 타겟 설정
-            var objectComponent = SystemAPI.GetComponentRW<TSObjectComponent>(target);
+            var objectComponent = SystemAPI.GetComponentRW<TSActorComponent>(target);
             objectComponent.ValueRW.Behavior.TargetDataID = selectTarget.DataID;
             objectComponent.ValueRW.Behavior.TargetType = selectTarget.ObjectType;
             objectComponent.ValueRW.Behavior.TargetPosition = new float2(rootPosition.x, rootPosition.y);
@@ -110,8 +110,9 @@ public partial struct ControlSystem : ISystem
                     {
                         // Gimmick의 위치와 반지름 정보 가져오기
                         var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
+                        var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(selectTarget.Self);
                         var gimmickPosition = gimmickCollider.position + gimmickCollider.offset;
-                        float gimmickRadius = selectTarget.Radius;
+                        float gimmickRadius = gimmick.Radius;
 
                         // 원형의 중심 아래에 접하는 지형 찾기
                         var groundResult = FindGroundBelowCircle(ref state, gimmickPosition, gimmickRadius);
@@ -165,7 +166,7 @@ public partial struct ControlSystem : ISystem
         float searchRange = circleRadius * 2f; // 원의 지름만큼 아래까지 검색
 
         foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<GroundComponent>>().WithEntityAccess())
+                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
         {
             float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
             float2 groundSize = collider.ValueRO.size;
@@ -349,7 +350,7 @@ public partial struct ControlSystem : ISystem
 
         // Ground 컴포넌트를 가진 모든 엔티티를 검색
         foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<GroundComponent>>().WithEntityAccess())
+                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
         {
             // 해당 지형이 검색 영역 내에 있는지 확인
             int2 groundCell = new int2(
@@ -390,7 +391,7 @@ public partial struct ControlSystem : ISystem
         float shortestDistance = float.MaxValue;
 
         foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<GroundComponent>>().WithEntityAccess())
+                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
         {
             float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
             float distance = math.distance(groundCenter, touchPosition);
@@ -415,7 +416,7 @@ public partial struct ControlSystem : ISystem
         float bestScore = float.MaxValue;
 
         foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<GroundComponent>>().WithEntityAccess())
+                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
         {
             float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
             float2 diff = groundCenter - touchPosition;

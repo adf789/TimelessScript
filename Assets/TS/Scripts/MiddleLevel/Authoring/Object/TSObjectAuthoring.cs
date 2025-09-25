@@ -5,39 +5,9 @@ using Unity.Mathematics;
 
 public class TSObjectAuthoring : MonoBehaviour
 {
-    [SerializeField] private TSObjectType type;
-    [SerializeField] private Transform root;
-    [SerializeField] private float radius;
+    public virtual TSObjectType Type => TSObjectType.None;
 
-    private class Baker : Baker<TSObjectAuthoring>
-    {
-        public override void Bake(TSObjectAuthoring authoring)
-        {
-            var entity = GetEntity(TransformUsageFlags.None);
-
-            // 초기 위치 계산 (Transform + RootOffset)
-            var initialPosition = new float2(authoring.transform.position.x, authoring.transform.position.y);
-            initialPosition.y += authoring.GetRootOffset();
-
-            AddComponent(entity, new TSObjectComponent()
-            {
-                Name = authoring.name,
-                Self = entity,
-                ObjectType = authoring.type,
-                Behavior = new TSObjectBehavior()
-                {
-                    Target = Entity.Null,
-                    TargetDataID = 0,
-                    TargetType = TSObjectType.None,
-                    TargetPosition = float2.zero,
-                    MovePosition = initialPosition,
-                    MoveState = MoveState.None
-                },
-                RootOffset = authoring.GetRootOffset(),
-                Radius = authoring.radius,
-            });
-        }
-    }
+    [SerializeField] protected Transform root;
 
     public float GetRootOffset()
     {
@@ -47,11 +17,12 @@ public class TSObjectAuthoring : MonoBehaviour
         return root.localPosition.y;
     }
 
-    void OnDrawGizmos()
+    public float2 GetRootPosition()
     {
-        Vector2 center = (Vector2)transform.position;
-        
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(center, radius);
+        var initialPosition = new float2(transform.position.x, transform.position.y);
+
+        initialPosition.y += GetRootOffset();
+
+        return initialPosition;
     }
 }

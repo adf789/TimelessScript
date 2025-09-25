@@ -4,17 +4,19 @@ using Unity.Entities;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(NavigationSystem))]
-[BurstCompile]
+// [BurstCompile]
 public partial struct BehaviorSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        var query = SystemAPI.QueryBuilder().WithAll<TSObjectComponent>().WithAll<PhysicsComponent>().Build();
+        var query = SystemAPI.QueryBuilder()
+        .WithAll<TSObjectComponent, TSActorComponent, PhysicsComponent, NavigationComponent>()
+        .Build();
 
         state.RequireAnyForUpdate(query);
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         // Singleton Entity 먼저 찾기
