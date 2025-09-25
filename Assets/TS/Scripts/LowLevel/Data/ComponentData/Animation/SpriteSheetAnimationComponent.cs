@@ -8,6 +8,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
 {
     public AnimationState CurrentState;
     public AnimationState NextState;
+    public AnimationPhase PrevPhase;
     public AnimationPhase CurrentPhase;
     public int CurrentSpriteIndex;
     public int CurrentAnimationIndex;
@@ -20,6 +21,8 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public bool HasEndAnimation;
     public bool ShouldTransitionToEnd;
     public AnimationTransitionType TransitionType;
+    public bool AnimationStarted;
+    public AnimationState StartedAnimationState;
     public bool AnimationCompleted;
     public AnimationState CompletedAnimationState;
 
@@ -35,12 +38,15 @@ public struct SpriteSheetAnimationComponent : IComponentData
         PassingFrame = 0;
         CurrentState = currentState;
         NextState = AnimationState.None;
+        PrevPhase = AnimationPhase.Start;
         CurrentPhase = AnimationPhase.Loop;
         HasStartAnimation = false;
         HasEndAnimation = false;
         ShouldTransitionToEnd = false;
         IsEndLoopOneTime = false;
         TransitionType = AnimationTransitionType.None;
+        AnimationStarted = false;
+        StartedAnimationState = AnimationState.None;
         AnimationCompleted = false;
         CompletedAnimationState = AnimationState.None;
     }

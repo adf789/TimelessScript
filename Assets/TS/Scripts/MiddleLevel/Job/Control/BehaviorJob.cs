@@ -12,7 +12,10 @@ public partial struct BehaviorJob : IJobEntity
 {
     [NativeDisableParallelForRestriction]
     public ComponentLookup<SpriteSheetAnimationComponent> AnimationComponentLookup;
-    
+
+    [NativeDisableParallelForRestriction]
+    public ComponentLookup<ObjectTargetComponent> ObjectTargetComponentLookup;
+
     [NativeDisableParallelForRestriction]
     [NativeDisableContainerSafetyRestriction]
     public ComponentLookup<CollectorComponent> CollectorLookup;
@@ -23,7 +26,9 @@ public partial struct BehaviorJob : IJobEntity
     public float DeltaTime;
     public bool IsPrevGrounded;
 
-    public void Execute(ref LocalTransform transform,
+    public void Execute([EntityIndexInQuery] int entityInQueryIndex,
+        Entity entity,
+        ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref TSActorComponent actorComponent,
     ref PhysicsComponent physicsComponent,
@@ -32,18 +37,30 @@ public partial struct BehaviorJob : IJobEntity
     {
         RefRW<SpriteSheetAnimationComponent> animComponent = default;
 
-        // 2. 자식 목록을 순회하여 원하는 컴포넌트를 가진 자식을 찾습니다.
-        foreach (var child in children)
+        if (objectComponent.AnimationEntity == Entity.Null)
         {
-            var childEntity = child.Value;
-
-            // 3. 자식 엔티티가 SpriteSheetAnimationComponent와 Authoring을 모두 가지고 있는지 확인합니다.
-            if (AnimationComponentLookup.HasComponent(child.Value))
+            // 자식 목록을 순회하여 원하는 컴포넌트를 가진 자식을 찾습니다.
+            foreach (var child in children)
             {
-                // 4. 자식의 컴포넌트들을 가져옵니다.
-                animComponent = AnimationComponentLookup.GetRefRW(child.Value);
-                break;
+                var childEntity = child.Value;
+
+                // 자식 엔티티가 SpriteSheetAnimationComponent와 Authoring을 모두 가지고 있는지 확인합니다.
+                if (AnimationComponentLookup.HasComponent(childEntity))
+                {
+                    // 자식의 컴포넌트들을 가져옵니다.
+                    objectComponent.AnimationEntity = childEntity;
+                    animComponent = AnimationComponentLookup.GetRefRW(childEntity);
+
+                    // 엔티티 타겟을 캐싱함
+                    var objectTargetComponent = ObjectTargetComponentLookup.GetRefRW(childEntity);
+                    objectTargetComponent.ValueRW.Target = entity;
+                    break;
+                }
             }
+        }
+        else
+        {
+            animComponent = AnimationComponentLookup.GetRefRW(objectComponent.AnimationEntity);
         }
 
         if (!animComponent.IsValid)
@@ -59,7 +76,7 @@ public partial struct BehaviorJob : IJobEntity
             HandleMovement(ref transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
 
             if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
-                OnEndMoving(in transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+                OnEndMoving(entityInQueryIndex, in entity, in transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
         }
         else if (purpose == MoveState.ClimbUp
         || purpose == MoveState.ClimbDown)
@@ -190,7 +207,9 @@ public partial struct BehaviorJob : IJobEntity
         }
     }
 
-    private void OnEndMoving(in LocalTransform transform,
+    private void OnEndMoving(int entityInQueryIndex,
+        in Entity entity,
+        in LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref TSActorComponent actorComponent,
     ref SpriteSheetAnimationComponent anim)
@@ -212,13 +231,7 @@ public partial struct BehaviorJob : IJobEntity
                 DataType = TSObjectType.Gimmick,
             };
 
-            // ComponentLookup을 사용해서 Singleton에 접근
-            if (CollectorEntity != Entity.Null && CollectorLookup.HasComponent(CollectorEntity))
-            {
-                var collector = CollectorLookup[CollectorEntity];
-                collector.InteractCollector.Add(interactComponent);
-                CollectorLookup[CollectorEntity] = collector;
-            }
+            Ecb.AddComponent(entityInQueryIndex, entity, interactComponent);
         }
         else
         {

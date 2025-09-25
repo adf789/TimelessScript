@@ -84,6 +84,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             AddComponentObject(entity, authoring);
 
             AddComponent(entity, new SpriteSheetAnimationComponent(authoring.defaultState));
+            AddComponent(entity, new ObjectTargetComponent());
         }
 
     }

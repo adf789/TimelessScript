@@ -128,10 +128,10 @@ MonoBehaviour:
   - SourceImage: {fileID: 4199067622019808784, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
     Guid: 0779a9727e271024581dd1d3d4df70c7
     State: 2
-    FrameDelay: 5
+    FrameDelay: 2
     IsCustomDelay: 0
     IsDefault: 0
-    IsPlayOnetime: 1
+    IsPlayOnetime: 0
     CustomFrameDelay: 
     SpriteCount: 19
     StartAnimationGuid: 
@@ -145,7 +145,7 @@ MonoBehaviour:
   - SourceImage: {fileID: -1524609319717364542, guid: 526dbe93ccaffcd419fb42dfdc6ff910, type: 3}
     Guid: 526dbe93ccaffcd419fb42dfdc6ff910
     State: 4
-    FrameDelay: 5
+    FrameDelay: 2
     IsCustomDelay: 0
     IsDefault: 0
     IsPlayOnetime: 0
@@ -162,7 +162,7 @@ MonoBehaviour:
   - SourceImage: {fileID: 8451177624645023579, guid: 31ab93839e3913a45856b81656ac273f, type: 3}
     Guid: 31ab93839e3913a45856b81656ac273f
     State: 3
-    FrameDelay: 5
+    FrameDelay: 2
     IsCustomDelay: 0
     IsDefault: 0
     IsPlayOnetime: 0
@@ -351,3 +351,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSActorAuthoring
   root: {fileID: 7488242015394640608}
+  lifeTime: 10
