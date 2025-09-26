@@ -14,12 +14,7 @@ public abstract class BaseTable<T> : BaseTable where T : BaseTableData
 
     private Dictionary<uint, T> dataDic;
 
-    public virtual void Load()
-    {
-        Initialize();
-    }
-
-    public void Initialize()
+    public override void Initialize()
     {
         dataDic = new Dictionary<uint, T>();
 
@@ -55,35 +50,6 @@ public abstract class BaseTable<T> : BaseTable where T : BaseTableData
         return datas != null ? datas.Count : 0;
     }
 
-    public uint GetNextAutoID()
-    {
-        var usedIDs = new HashSet<uint>();
-
-        foreach (var data in datas)
-        {
-            if (data != null)
-                usedIDs.Add(data.ID);
-        }
-
-        uint actualStart = GetActualRangeStart();
-        uint actualEnd = GetActualRangeEnd();
-
-        uint nextId = actualStart + 1;
-
-        while (nextId < actualEnd && usedIDs.Contains(nextId))
-        {
-            nextId++;
-        }
-
-        if (nextId >= actualEnd)
-        {
-            Debug.LogError($"ID range exhausted for {GetType().Name}! Range: {actualStart + 1}~{actualEnd - 1}");
-            return 0;
-        }
-
-        return nextId;
-    }
-
     public bool IsInIDRange(uint id)
     {
         uint actualStart = GetActualRangeStart();
@@ -113,5 +79,5 @@ public abstract class BaseTable<T> : BaseTable where T : BaseTableData
 
 public abstract class BaseTable : ScriptableObject
 {
-    
+    public abstract void Initialize();
 }

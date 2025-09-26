@@ -20,7 +20,7 @@ public class FlowManager : BaseManager<FlowManager>
         string flowName = $"{state}Flow";
 
         var objectResourcesPath = ResourcesTypeRegistry.Get().GetResourcesPath<ScriptableObject>();
-        var flowObject = await objectResourcesPath.LoadByName<ScriptableObject>(flowName);
+        var flowObject = await objectResourcesPath.LoadByNameAsync<ScriptableObject>(flowName);
 
         return flowObject != null ? flowObject as BaseFlow : null;
     }

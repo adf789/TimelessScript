@@ -206,7 +206,31 @@ MonoBehaviour:
     resourcesPath: {fileID: -7861702888844971944}
     typeColor: {r: 0.52000004, g: 0.36, b: 0.64, a: 1}
     isActive: 1
+  - typeName: BaseTable, Game.MiddleLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    displayName: Table
+    resourcesPath: {fileID: 592521724022874513}
+    typeColor: {r: 0.45000002, g: 0.62, b: 0.81, a: 1}
+    isActive: 1
   defaultResourcesPath: {fileID: 0}
+--- !u!114 &592521724022874513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a00e198dcee93468f62cf92b528bbe, type: 3}
+  m_Name: ResourcesPath_BaseTable
+  m_EditorClassIdentifier: Game.MiddleLevel::ResourcesPath
+  resourceEntries:
+  - guid: c206f0923be367947b59d5bf4e4f720e
+    assetPath: Assets/TS/Resources/ScriptableObjects/Table/GimmickTable.asset
+    displayName: GimmickTable
+  - guid: 877c4ef3d18170841a806edddc6e0f74
+    assetPath: Assets/TS/Resources/ScriptableObjects/Table/ItemTable.asset
+    displayName: ItemTable
 --- !u!114 &1097762494046782183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -297,12 +321,6 @@ MonoBehaviour:
   - guid: 31ab93839e3913a45856b81656ac273f
     assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Walking.png
     displayName: Character_Walking
-  - guid: e3f123cd664ad0d4f9e443f862e33e06
-    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Idle.png
-    displayName: Character_Jump_Idle
-  - guid: c0043a80cb2b2c34d9f075a7713931b5
-    assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Land.png
-    displayName: Character_Jump_Land
   - guid: 526dbe93ccaffcd419fb42dfdc6ff910
     assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Jump_Idle.png
     displayName: Character_Jump_Idle

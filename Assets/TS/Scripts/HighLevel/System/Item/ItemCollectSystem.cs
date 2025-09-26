@@ -24,10 +24,24 @@ public partial class ItemCollectSystem : SystemBase
         if (!collector.ValueRW.InteractCollector.IsCreated)
             return;
 
+        var gimmickTable = TableSubManager.Instance.Get<GimmickTable>();
+
         for (int i = 0; i < collector.ValueRW.InteractCollector.Length; i++)
-            {
-                Debug.Log($"Get Interaction: ({collector.ValueRW.InteractCollector[i].DataID},{collector.ValueRW.InteractCollector[i].DataType.ToString()})");
-            }
+        {
+            uint gimmick = collector.ValueRW.InteractCollector[i].DataID;
+            var gimmickData = gimmickTable.Get(gimmick);
+
+            if (gimmickData == null)
+                continue;
+
+            long count = gimmickData.AcquireCount;
+            var itemData = TableSubManager.Instance.Get<ItemTable>().Get(gimmickData.AcquireItem);
+
+            if (itemData == null)
+                continue;
+                
+            Debug.Log($"Acquire Item: {itemData.Name}, Count: {count}");
+        }
 
         if(!collector.ValueRW.InteractCollector.IsEmpty)
             collector.ValueRW.InteractCollector.Clear();

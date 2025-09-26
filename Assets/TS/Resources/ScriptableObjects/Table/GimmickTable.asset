@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: LowLevel::GimmickTableData
   id: 200001
   name: Gimmick1
+  acquireItem: 100001
+  acquireCount: 10
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

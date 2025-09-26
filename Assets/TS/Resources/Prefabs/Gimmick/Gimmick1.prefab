@@ -96,6 +96,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSGimmickAuthoring
   root: {fileID: 3971888583458909171}
+  gimmickID: 200001
   radius: 2.32
 --- !u!1 &3513460485882666974
 GameObject:

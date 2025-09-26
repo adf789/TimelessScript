@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
+using System;
 
 public class ResourceManageEditorWindow : EditorWindow
 {
@@ -18,6 +19,7 @@ public class ResourceManageEditorWindow : EditorWindow
     private bool showAdvanced = false;
     private bool showManagerSelection = true;
     private bool showRegistryPanel = true;
+    private bool showAddNewType = false;
 
     // Window state
     private List<ResourcesPath> availableManagers;
@@ -26,6 +28,32 @@ public class ResourceManageEditorWindow : EditorWindow
     private string[] registryNames;
     private int selectedManagerIndex = 0;
     private int selectedRegistryIndex = 0;
+
+    // Add new type state
+    private System.Type selectedType;
+    private int selectedTypeIndex = 0;
+    private string customDisplayName = "";
+
+    // Common Unity types for dropdown
+    private readonly System.Type[] commonUnityTypes = {
+        typeof(GameObject),
+        typeof(Texture2D),
+        typeof(Texture),
+        typeof(Sprite),
+        typeof(Material),
+        typeof(Mesh),
+        typeof(AudioClip),
+        typeof(AnimationClip),
+        typeof(RuntimeAnimatorController),
+        typeof(ScriptableObject),
+        typeof(TextAsset),
+        typeof(Shader),
+        typeof(Font),
+        typeof(Avatar),
+        typeof(BaseTable),
+    };
+
+    private string[] typeNames;
 
     // UI Settings
     private const float WINDOW_MIN_WIDTH = 800f;
@@ -72,6 +100,9 @@ public class ResourceManageEditorWindow : EditorWindow
     private void OnEnable()
     {
         RefreshAssetLists();
+
+        // Initialize type names for dropdown
+        typeNames = commonUnityTypes.Select(t => t.Name).ToArray();
 
         // Subscribe to selection changes
         Selection.selectionChanged += OnSelectionChanged;
@@ -359,6 +390,70 @@ public class ResourceManageEditorWindow : EditorWindow
 
         EditorGUILayout.Space(5);
 
+        // Add new type mapping
+        showAddNewType = EditorGUILayout.Foldout(showAddNewType, "Add New Type Mapping");
+        if (showAddNewType)
+        {
+            EditorGUILayout.BeginVertical("box");
+
+            // Type selection
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Type:", GUILayout.Width(80));
+            selectedTypeIndex = EditorGUILayout.Popup(selectedTypeIndex, typeNames);
+            selectedType = commonUnityTypes[selectedTypeIndex];
+            EditorGUILayout.EndHorizontal();
+
+            // Custom display name
+            customDisplayName = EditorGUILayout.TextField("Display Name (Optional)", customDisplayName);
+
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUI.BeginDisabledGroup(selectedType == null);
+            if (GUILayout.Button("Create & Add Mapping"))
+            {
+                if (selectedType != null && selectedRegistry != null)
+                {
+                    // Check if mapping already exists
+                    if (selectedRegistry.GetAllMappings().Any(m => m.GetSystemType() == selectedType))
+                    {
+                        EditorUtility.DisplayDialog("Type Already Exists",
+                            $"A mapping for {selectedType.Name} already exists.", "OK");
+                    }
+                    else
+                    {
+                        var newPath = selectedRegistry.CreateResourcesPathForType(selectedType, true);
+
+                        // Apply custom display name if provided
+                        if (!string.IsNullOrEmpty(customDisplayName))
+                        {
+                            var mapping = selectedRegistry.GetAllMappings().FirstOrDefault(m => m.GetSystemType() == selectedType);
+                            if (mapping != null)
+                            {
+                                mapping.SetDisplayName(customDisplayName);
+                                EditorUtility.SetDirty(selectedRegistry);
+                            }
+                        }
+
+                        customDisplayName = "";
+                        EditorGUIUtility.PingObject(newPath);
+
+                        // Auto-select the new ResourcesPath
+                        SetSelectedManager(newPath);
+
+                        // Close the add section and switch to ResourcesPath view
+                        showAddNewType = false;
+                        currentViewMode = ViewMode.Combined;
+                    }
+                }
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+        }
+
+        EditorGUILayout.Space(5);
+
         // Registry actions
         if (GUILayout.Button("Open Registry Inspector"))
         {
@@ -394,6 +489,69 @@ public class ResourceManageEditorWindow : EditorWindow
             EditorUtility.DisplayDialog("Registry Statistics", selectedRegistry.GetStatistics(), "OK");
         }
         EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space(5);
+
+        // Add new type mapping section
+        showAddNewType = EditorGUILayout.Foldout(showAddNewType, "Add New Type Mapping");
+        if (showAddNewType)
+        {
+            EditorGUILayout.BeginVertical("box");
+
+            // Type selection
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Type:", GUILayout.Width(80));
+            selectedTypeIndex = EditorGUILayout.Popup(selectedTypeIndex, typeNames);
+            selectedType = commonUnityTypes[selectedTypeIndex];
+            EditorGUILayout.EndHorizontal();
+
+            // Custom display name
+            customDisplayName = EditorGUILayout.TextField("Display Name (Optional)", customDisplayName);
+
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUI.BeginDisabledGroup(selectedType == null);
+            if (GUILayout.Button("Create & Add Mapping"))
+            {
+                if (selectedType != null && selectedRegistry != null)
+                {
+                    // Check if mapping already exists
+                    if (selectedRegistry.GetAllMappings().Any(m => m.GetSystemType() == selectedType))
+                    {
+                        EditorUtility.DisplayDialog("Type Already Exists",
+                            $"A mapping for {selectedType.Name} already exists.", "OK");
+                    }
+                    else
+                    {
+                        var newPath = selectedRegistry.CreateResourcesPathForType(selectedType, true);
+
+                        // Apply custom display name if provided
+                        if (!string.IsNullOrEmpty(customDisplayName))
+                        {
+                            var mapping = selectedRegistry.GetAllMappings().FirstOrDefault(m => m.GetSystemType() == selectedType);
+                            if (mapping != null)
+                            {
+                                mapping.SetDisplayName(customDisplayName);
+                                EditorUtility.SetDirty(selectedRegistry);
+                            }
+                        }
+
+                        customDisplayName = "";
+                        EditorGUIUtility.PingObject(newPath);
+
+                        // Close the add section since we added the mapping
+                        showAddNewType = false;
+
+                        // Update the mappings list
+                        mappings = selectedRegistry.GetAllMappings();
+                    }
+                }
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+        }
 
         EditorGUILayout.Space(10);
 

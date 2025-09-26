@@ -29,7 +29,8 @@ public class ResourcesTypeRegistryEditor : Editor
         typeof(TextAsset),
         typeof(Shader),
         typeof(Font),
-        typeof(Avatar)
+        typeof(Avatar),
+        typeof(BaseTable),
     };
 
     private string[] typeNames;
@@ -132,19 +133,47 @@ public class ResourcesTypeRegistryEditor : Editor
                 {
                     customDisplayName = "";
                     EditorUtility.SetDirty(registry);
+                    showAddNewType = false; // Close section after successful addition
                 }
             }
             EditorGUI.EndDisabledGroup();
 
-            if (GUILayout.Button("Create New ResourcesPath"))
+            EditorGUI.BeginDisabledGroup(selectedType == null);
+            if (GUILayout.Button("Create & Add Mapping"))
             {
                 if (selectedType != null)
                 {
-                    var newPath = registry.CreateResourcesPathForType(selectedType);
-                    selectedResourcesPath = newPath;
-                    EditorGUIUtility.PingObject(newPath);
+                    // Check if mapping already exists
+                    if (registry.GetAllMappings().Any(m => m.GetSystemType() == selectedType))
+                    {
+                        EditorUtility.DisplayDialog("Type Already Exists",
+                            $"A mapping for {selectedType.Name} already exists.", "OK");
+                    }
+                    else
+                    {
+                        var newPath = registry.CreateResourcesPathForType(selectedType, true);
+                        selectedResourcesPath = newPath;
+
+                        // Apply custom display name if provided
+                        if (!string.IsNullOrEmpty(customDisplayName))
+                        {
+                            var mapping = registry.GetAllMappings().FirstOrDefault(m => m.GetSystemType() == selectedType);
+                            if (mapping != null)
+                            {
+                                mapping.SetDisplayName(customDisplayName);
+                                EditorUtility.SetDirty(registry);
+                            }
+                        }
+
+                        customDisplayName = "";
+                        EditorGUIUtility.PingObject(newPath);
+
+                        // Close the add section since we added the mapping
+                        showAddNewType = false;
+                    }
                 }
             }
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.EndHorizontal();
 

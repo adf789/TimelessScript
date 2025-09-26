@@ -208,7 +208,7 @@ public class ResourcesPath : ScriptableObject
     /// <summary>
     /// Load asset by Name
     /// </summary>
-    public async UniTask<T> LoadByName<T>(string name) where T : UnityEngine.Object
+    public async UniTask<T> LoadByNameAsync<T>(string name) where T : UnityEngine.Object
     {
         var resourcesEntry = resourceEntries.Find(entry => entry.DisplayName == name);
 
@@ -217,6 +217,24 @@ public class ResourcesPath : ScriptableObject
 
         var request = Resources.LoadAsync<T>(ConvertToResourcesPath(resourcesEntry.AssetPath));
         var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode())) as T;
+
+        if (loadedAsset == null)
+            Debug.LogError($"Not found asset by path: {resourcesEntry.AssetPath}");
+
+        return loadedAsset;
+    }
+
+     /// <summary>
+    /// Load asset by Name
+    /// </summary>
+    public T LoadByName<T>(string name) where T : UnityEngine.Object
+    {
+        var resourcesEntry = resourceEntries.Find(entry => entry.DisplayName == name);
+
+        if (resourcesEntry == null)
+            return null;
+
+        var loadedAsset = Resources.Load<T>(ConvertToResourcesPath(resourcesEntry.AssetPath));
 
         if (loadedAsset == null)
             Debug.LogError($"Not found asset by path: {resourcesEntry.AssetPath}");

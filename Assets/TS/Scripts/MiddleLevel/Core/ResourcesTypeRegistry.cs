@@ -396,16 +396,30 @@ public class ResourcesTypeRegistry : ScriptableObject
     }
 
     /// <summary>
-    /// Create ResourcesPath for a type
+    /// Create ResourcesPath for a type as sub-asset and add type mapping
     /// </summary>
-    public ResourcesPath CreateResourcesPathForType(Type type)
+    public ResourcesPath CreateResourcesPathForType(Type type, bool addTypeMapping = true)
     {
-        string assetPath = AssetDatabase.GetAssetPath(this);
-        string directory = System.IO.Path.GetDirectoryName(assetPath);
-        string newAssetPath = $"{directory}/ResourcesPath_{type.Name}.asset";
-
+        string resourcesPathName = $"ResourcesPath_{type.Name}";
         var newResourcesPath = CreateInstance<ResourcesPath>();
-        AssetDatabase.CreateAsset(newResourcesPath, newAssetPath);
+        newResourcesPath.name = resourcesPathName;
+
+        // Save as sub-asset to this ScriptableObject
+        AssetDatabase.AddObjectToAsset(newResourcesPath, this);
+
+        // Automatically add type mapping if requested
+        if (addTypeMapping)
+        {
+            // Check if mapping doesn't already exist
+            if (!typeMappings.Any(m => m.GetSystemType() == type))
+            {
+                var mapping = new TypeMapping(type, newResourcesPath);
+                typeMappings.Add(mapping);
+                RefreshCache();
+            }
+        }
+
+        EditorUtility.SetDirty(this);
         AssetDatabase.SaveAssets();
 
         return newResourcesPath;
