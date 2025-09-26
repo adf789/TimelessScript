@@ -1,7 +1,6 @@
 
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -15,12 +14,7 @@ public partial struct BehaviorJob : IJobEntity
 
     [NativeDisableParallelForRestriction]
     public ComponentLookup<ObjectTargetComponent> ObjectTargetComponentLookup;
-
-    [NativeDisableParallelForRestriction]
-    [NativeDisableContainerSafetyRestriction]
-    public ComponentLookup<CollectorComponent> CollectorLookup;
     public EntityCommandBuffer.ParallelWriter Ecb;
-    public Entity CollectorEntity;
     public float Speed;
     public float ClimbSpeed;
     public float DeltaTime;
@@ -66,7 +60,7 @@ public partial struct BehaviorJob : IJobEntity
         if (!animComponent.IsValid)
             return;
 
-        var purpose = actorComponent.Behavior.MoveState;
+        var purpose = actorComponent.Move.MoveState;
 
         if (purpose == MoveState.Move)
         {
@@ -83,7 +77,7 @@ public partial struct BehaviorJob : IJobEntity
         {
             OnStartClimbing(in actorComponent, ref animComponent.ValueRW);
 
-            Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {actorComponent.Behavior.MoveState}");
+            Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {actorComponent.Move.MoveState}");
             HandleClimbing(ref transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
         }
         else if (!physicsComponent.isGrounded)
@@ -107,7 +101,7 @@ public partial struct BehaviorJob : IJobEntity
         currentRootPosition.y += objectComponent.RootOffset;
 
         // 2. 목표 '루트' 위치를 가져옵니다.
-        float2 moveRootPosition = actorComponent.Behavior.MovePosition;
+        float2 moveRootPosition = actorComponent.Move.MovePosition;
 
         anim.IsFlip = moveRootPosition.x < currentRootPosition.x;
 
@@ -138,7 +132,7 @@ public partial struct BehaviorJob : IJobEntity
         float2 currentRootPosition = transform.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
 
-        float2 targetRootPosition = actorComponent.Behavior.MovePosition;
+        float2 targetRootPosition = actorComponent.Move.MovePosition;
 
         Debug.Log($"사다리 이동: 현재({currentRootPosition.x:G2}, {currentRootPosition.y:G2}) → 목표({targetRootPosition.x:G2}, {targetRootPosition.y:G2})");
 
@@ -169,8 +163,8 @@ public partial struct BehaviorJob : IJobEntity
 
             // 사다리 이동 완료 시 Idle 애니메이션으로 전환 (자연스러운 전환을 위해 Start 애니메이션 사용)
             animComponent.RequestTransition(AnimationState.Idle);
-            actorComponent.Behavior.MoveState = MoveState.None;
-            actorComponent.Behavior.MovePosition = targetRootPosition;
+            actorComponent.Move.MoveState = MoveState.None;
+            actorComponent.Move.MovePosition = targetRootPosition;
 
             Debug.Log($"[BehaviorJob] 사다리 이동 완료: {objectComponent.Name}, 거리: {remainingDistance:G3}");
         }
@@ -188,7 +182,7 @@ public partial struct BehaviorJob : IJobEntity
     private void OnStartClimbing(in TSActorComponent actorComponent,
     ref SpriteSheetAnimationComponent animComponent)
     {
-        var purpose = actorComponent.Behavior.MoveState;
+        var purpose = actorComponent.Move.MoveState;
         var currentState = animComponent.CurrentState;
 
         if (purpose == MoveState.ClimbUp)
@@ -215,20 +209,20 @@ public partial struct BehaviorJob : IJobEntity
     ref SpriteSheetAnimationComponent anim)
     {
         // 현재 오브젝트와 타겟의 위치를 가져옵니다.
-        float2 targetRootPosition = actorComponent.Behavior.TargetPosition;
+        float2 targetRootPosition = actorComponent.Move.TargetPosition;
         float2 currentRootPosition = transform.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
 
         // 이동 목적지 리셋
-        if (actorComponent.Behavior.TargetType == TSObjectType.Gimmick)
+        if (actorComponent.Move.TargetType == TSObjectType.Gimmick)
         {
             anim.IsFlip = targetRootPosition.x < currentRootPosition.x;
             anim.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
 
             var interactComponent = new InteractComponent()
             {
-                DataID = actorComponent.Behavior.TargetDataID,
-                DataType = TSObjectType.Gimmick,
+                DataID = actorComponent.Move.TargetDataID,
+                DataType = TableDataType.Gimmick,
             };
 
             Ecb.AddComponent(entityInQueryIndex, entity, interactComponent);
@@ -238,9 +232,9 @@ public partial struct BehaviorJob : IJobEntity
             anim.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
         }
 
-        actorComponent.Behavior.TargetType = TSObjectType.None;
-        actorComponent.Behavior.MovePosition = currentRootPosition;
-        actorComponent.Behavior.MoveState = MoveState.None;
+        actorComponent.Move.TargetType = TSObjectType.None;
+        actorComponent.Move.MovePosition = currentRootPosition;
+        actorComponent.Move.MoveState = MoveState.None;
 
         Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}");
     }

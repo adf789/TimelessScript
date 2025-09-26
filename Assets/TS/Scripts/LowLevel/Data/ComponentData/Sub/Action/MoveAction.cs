@@ -2,7 +2,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-public struct TSObjectBehavior
+public struct MoveAction
 {
     public Entity Target;
     public uint TargetDataID;

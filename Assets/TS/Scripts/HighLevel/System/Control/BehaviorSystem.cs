@@ -19,10 +19,6 @@ public partial struct BehaviorSystem : ISystem
     // [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Singleton Entity 먼저 찾기
-        if (!SystemAPI.TryGetSingletonEntity<CollectorComponent>(out Entity collectorEntity))
-            return;
-
         var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
             .CreateCommandBuffer(state.WorldUnmanaged);
 
@@ -31,8 +27,6 @@ public partial struct BehaviorSystem : ISystem
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
             ObjectTargetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
             Ecb = ecb.AsParallelWriter(),
-            CollectorEntity = collectorEntity,
-            CollectorLookup = SystemAPI.GetComponentLookup<CollectorComponent>(false),
             Speed = 3f,
             ClimbSpeed = 0.7f,
             DeltaTime = SystemAPI.Time.DeltaTime

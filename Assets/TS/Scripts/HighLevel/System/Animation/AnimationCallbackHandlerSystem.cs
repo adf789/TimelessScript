@@ -113,14 +113,10 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         if (objectTargetComponent.Target == Entity.Null)
             return;
 
+        var actorComponent = SystemAPI.GetComponent<TSActorComponent>(objectTargetComponent.Target);
         var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTargetComponent.Target);
-        var collectorComponent = SystemAPI.GetSingletonRW<CollectorComponent>();
-
-        // ComponentLookup을 사용해서 Singleton에 접근
-        if (collectorComponent.IsValid)
-        {
-            collectorComponent.ValueRW.InteractCollector.Add(interactComponent);
-        }
+        
+        // actorComponent.ActionStack.AddInteract(interactComponent.DataID, interactComponent.DataType);
     }
 
     private void HandleClimbAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
@@ -151,7 +147,15 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
     {
         Debug.Log($"Interact Animation Completed for Entity {entity.Index}");
 
-        // animComponent.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipAllPhase);
+        if (!SystemAPI.HasComponent<ObjectTargetComponent>(entity))
+            return;
+
+        var objectTargetComponent = SystemAPI.GetComponent<ObjectTargetComponent>(entity);
+
+        if (objectTargetComponent.Target == Entity.Null)
+            return;
+
+        state.EntityManager.RemoveComponent<InteractComponent>(objectTargetComponent.Target);
     }
 
     private void HandleClimbAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)

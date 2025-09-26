@@ -1505,10 +1505,6 @@ PrefabInstance:
       propertyPath: radius
       value: 2.79
       objectReference: {fileID: 0}
-    - target: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
-      propertyPath: gimmickID
-      value: 200001
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -70,9 +70,9 @@ public partial struct ControlSystem : ISystem
         {
             // 타겟 설정
             var objectComponent = SystemAPI.GetComponentRW<TSActorComponent>(target);
-            objectComponent.ValueRW.Behavior.TargetDataID = selectTarget.DataID;
-            objectComponent.ValueRW.Behavior.TargetType = selectTarget.ObjectType;
-            objectComponent.ValueRW.Behavior.TargetPosition = new float2(rootPosition.x, rootPosition.y);
+            objectComponent.ValueRW.Move.TargetDataID = selectTarget.DataID;
+            objectComponent.ValueRW.Move.TargetType = selectTarget.ObjectType;
+            objectComponent.ValueRW.Move.TargetPosition = new float2(rootPosition.x, rootPosition.y);
 
             if (selectTarget.ObjectType == TSObjectType.Actor)
             {

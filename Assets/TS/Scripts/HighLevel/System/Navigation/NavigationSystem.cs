@@ -152,9 +152,9 @@ public partial struct NavigationSystem : ISystem
     ref TSActorComponent actorComponent,
     NavigationWaypoint waypoint)
     {
-        actorComponent.Behavior.Target = waypoint.TargetEntity;
-        actorComponent.Behavior.MoveState = waypoint.MoveType;
-        actorComponent.Behavior.MovePosition = waypoint.Position;
+        actorComponent.Move.Target = waypoint.TargetEntity;
+        actorComponent.Move.MoveState = waypoint.MoveType;
+        actorComponent.Move.MovePosition = waypoint.Position;
 
 #if UNITY_EDITOR
         UnityEngine.Debug.Log($"[NavigationSystem] 이동 명령 설정: {objectComponent.Name} → Purpose: {waypoint.MoveType}, Position: ({waypoint.Position.x:F2}, {waypoint.Position.y:F2})");

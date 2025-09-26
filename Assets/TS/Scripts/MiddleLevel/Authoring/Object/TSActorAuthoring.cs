@@ -27,7 +27,7 @@ public class TSActorAuthoring : TSObjectAuthoring
             {
                 LifeTime = authoring.lifeTime,
                 LifePassingTime = 0,
-                Behavior = new TSObjectBehavior()
+                Move = new MoveAction()
                 {
                     Target = Entity.Null,
                     TargetDataID = 0,
