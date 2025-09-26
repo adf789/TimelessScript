@@ -1,19 +1,19 @@
 ﻿using UnityEditor;
 using UnityEngine;
-using System.IO;
 using System.Collections.Generic;
 using System;
 using UnityEditor.Compilation;
-using System.Linq;
 
 public class ScriptCreatorEditorWindow : EditorWindow
 {
     private enum CreateScriptType
     {
+        Editor,
         UI,
         Data,
         ECS,
-        Editor
+        Table,
+        Manager,
     }
 
     private string objectName = "";
@@ -40,6 +40,10 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         switch (selectedScriptType)
         {
+             case CreateScriptType.Editor:
+                creator = new EditorScriptCreator();
+                break;
+
             case CreateScriptType.UI:
                 creator = new UIScriptCreator();
                 break;
@@ -52,8 +56,12 @@ public class ScriptCreatorEditorWindow : EditorWindow
                 creator = new ECSScriptCreator();
                 break;
 
-            case CreateScriptType.Editor:
-                creator = new EditorScriptCreator();
+            case CreateScriptType.Table:
+                creator = new TableScriptCreator();
+                break;
+
+            case CreateScriptType.Manager:
+                creator = new ManagerScriptCreator();
                 break;
 
             default:

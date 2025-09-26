@@ -249,7 +249,8 @@ using Unity.Mathematics;
 public struct {name}Component : IComponentData
 {{
     
-}}";
+}}
+";
     }
 
     private string GenerateBufferCode(string name)
@@ -261,7 +262,8 @@ using Unity.Mathematics;
 public struct {name}Buffer : IBufferElementData
 {{
     
-}}";
+}}
+";
     }
 
     private string GenerateAuthoringCode(string name)
@@ -281,7 +283,8 @@ public class {name}Authoring : MonoBehaviour
         }}
 
     }}
-}}";
+}}
+";
     }
 
     private string GenerateJobCode(string name)
@@ -300,7 +303,8 @@ public partial struct {name}Job : IJobEntity
     {{
 
     }}
-}}";
+}}
+";
     }
 
     private string GenerateSystemCode(string name)
@@ -321,6 +325,7 @@ public partial struct {name}System : ISystem
 
         //state.Dependency = job.ScheduleParallel(state.Dependency);
     }}
-}}";
+}}
+";
     }
 }

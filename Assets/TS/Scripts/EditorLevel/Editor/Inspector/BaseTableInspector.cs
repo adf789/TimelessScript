@@ -9,7 +9,6 @@ using System.Reflection;
 public class BaseTableInspector : Editor
 {
     private BaseTable baseTable;
-    private SerializedProperty datasProperty;
     private Type dataType;
     private MethodInfo getDataCountMethod;
     private MethodInfo getAllDatasMethod;
@@ -48,8 +47,7 @@ public class BaseTableInspector : Editor
 
     private void OnEnable()
     {
-        baseTable = (BaseTable)target;
-        datasProperty = serializedObject.FindProperty("datas");
+        baseTable = (BaseTable) target;
 
         // 제네릭 타입 정보 추출
         Type baseType = baseTable.GetType();
@@ -107,35 +105,35 @@ public class BaseTableInspector : Editor
     private int GetItemCount()
     {
         if (getDataCountMethod != null)
-            return (int)getDataCountMethod.Invoke(baseTable, null);
+            return (int) getDataCountMethod.Invoke(baseTable, null);
         return 0;
     }
 
     private System.Collections.IList GetAllItems()
     {
         if (getAllDatasMethod != null)
-            return (System.Collections.IList)getAllDatasMethod.Invoke(baseTable, null);
+            return (System.Collections.IList) getAllDatasMethod.Invoke(baseTable, null);
         return null;
     }
 
     private uint GetNextAutoID()
     {
         if (getNextAutoIDMethod != null)
-            return (uint)getNextAutoIDMethod.Invoke(baseTable, null);
+            return (uint) getNextAutoIDMethod.Invoke(baseTable, null);
         return 0;
     }
 
     private string GetIDRangeInfo()
     {
         if (getIDRangeInfoMethod != null)
-            return (string)getIDRangeInfoMethod.Invoke(baseTable, null);
+            return (string) getIDRangeInfoMethod.Invoke(baseTable, null);
         return "No Range Set";
     }
 
     private bool IsInIDRange(uint id)
     {
         if (isInIDRangeMethod != null)
-            return (bool)isInIDRangeMethod.Invoke(baseTable, new object[] { id });
+            return (bool) isInIDRangeMethod.Invoke(baseTable, new object[] { id });
         return true;
     }
 
@@ -190,8 +188,8 @@ public class BaseTableInspector : Editor
             EditorGUILayout.PropertyField(idRangeSizeProp, new GUIContent("Range Size", "이 대역폭에서 사용할 ID 개수"));
 
             // 실시간 계산된 범위 표시
-            uint bandwidth = (uint)idBandwidthProp.intValue;
-            uint rangeSize = (uint)idRangeSizeProp.intValue;
+            uint bandwidth = (uint) idBandwidthProp.intValue;
+            uint rangeSize = (uint) idRangeSizeProp.intValue;
             uint actualStart = bandwidth + 1;
             uint actualEnd = bandwidth + rangeSize - 1;
 
@@ -283,7 +281,7 @@ public class BaseTableInspector : Editor
 
                 // 정렬 옵션
                 EditorGUILayout.LabelField("Sort:", GUILayout.Width(35));
-                sortMode = (SortMode)EditorGUILayout.EnumPopup(sortMode, GUILayout.Width(60));
+                sortMode = (SortMode) EditorGUILayout.EnumPopup(sortMode, GUILayout.Width(60));
 
                 if (GUILayout.Button(sortAscending ? "⬆" : "⬇", GUILayout.Width(25)))
                 {
@@ -305,7 +303,7 @@ public class BaseTableInspector : Editor
                     if (enumType != null)
                     {
                         EditorGUILayout.LabelField("Type:", GUILayout.Width(35));
-                        var newFilterValue = EditorGUILayout.EnumPopup((Enum)filterEnumValue, GUILayout.Width(80));
+                        var newFilterValue = EditorGUILayout.EnumPopup((Enum) filterEnumValue, GUILayout.Width(80));
                         if (!newFilterValue.Equals(filterEnumValue))
                         {
                             filterEnumValue = newFilterValue;
@@ -458,7 +456,7 @@ public class BaseTableInspector : Editor
 
         GUILayout.BeginHorizontal();
         {
-            uint newId = (uint)EditorGUILayout.IntField("ID", (int)item.ID);
+            uint newId = (uint) EditorGUILayout.IntField("ID", (int) item.ID);
 
             if (GUILayout.Button("Auto", GUILayout.Width(50)))
             {
@@ -540,19 +538,14 @@ public class BaseTableInspector : Editor
     {
         if (item == null) return "Null Data";
 
-        // 이름 관련 필드를 찾아서 표시 (name, itemName, dataName 등)
-        var nameFields = new[] { "itemName", "name", "dataName", "displayName" };
-        foreach (var fieldName in nameFields)
+        var field = dataType.GetField("name", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (field != null && field.FieldType == typeof(string))
         {
-            var field = dataType.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
-            if (field != null && field.FieldType == typeof(string))
-            {
-                var value = (string)field.GetValue(item);
-                if (!string.IsNullOrEmpty(value))
-                    return value;
-            }
+            var value = (string) field.GetValue(item);
+            if (!string.IsNullOrEmpty(value))
+                return value;
         }
-
+        
         return $"{dataType.Name}";
     }
 
@@ -966,8 +959,8 @@ public class BaseTableInspector : Editor
         }
 
         // 현재 값들 가져오기
-        uint currentBandwidth = (uint)idBandwidthProp.intValue;
-        uint currentSize = (uint)idRangeSizeProp.intValue;
+        uint currentBandwidth = (uint) idBandwidthProp.intValue;
+        uint currentSize = (uint) idRangeSizeProp.intValue;
 
         // 다이얼로그 내용 생성
         string message = $"현재 ID 설정:\n\n" +

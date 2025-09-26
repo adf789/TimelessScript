@@ -29,6 +29,7 @@ public partial struct BehaviorSystem : ISystem
         var behaviorJob = new BehaviorJob()
         {
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
+            ObjectTargetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
             Ecb = ecb.AsParallelWriter(),
             CollectorEntity = collectorEntity,
             CollectorLookup = SystemAPI.GetComponentLookup<CollectorComponent>(false),

@@ -5,7 +5,7 @@ using UnityEngine;
 public struct TSObjectBehavior
 {
     public Entity Target;
-    public int TargetDataID;
+    public uint TargetDataID;
     public TSObjectType TargetType;
     public float2 TargetPosition;
     public float2 MovePosition;

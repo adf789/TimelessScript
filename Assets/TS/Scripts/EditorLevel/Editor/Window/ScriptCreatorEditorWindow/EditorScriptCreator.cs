@@ -175,7 +175,8 @@ public class {name}Window : EditorWindow
 
         window.Show();
     }}
-}}";
+}}
+";
     }
 
     private string GenerateInspectorCode(string name)
@@ -199,6 +200,7 @@ public class {name}Inspector : Editor
     {{
         base.OnInspectorGUI();
     }}
-}}";
+}}
+";
     }
 }

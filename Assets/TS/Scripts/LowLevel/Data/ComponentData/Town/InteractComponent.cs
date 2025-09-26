@@ -5,6 +5,6 @@ using Unity.Mathematics;
 
 public struct InteractComponent : IComponentData
 {
-    public int DataID;
+    public uint DataID;
     public TSObjectType DataType;
 }

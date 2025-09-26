@@ -1,10 +1,8 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Item", menuName = "Scriptable Objects/Item Data")]
 public class ItemTableData : BaseTableData
 {
     [Header("Basic Info")]
-    [SerializeField] public string itemName;
     [SerializeField] public ItemType itemType;
 
     [Header("Display")]

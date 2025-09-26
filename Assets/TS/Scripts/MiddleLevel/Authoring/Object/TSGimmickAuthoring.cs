@@ -7,6 +7,7 @@ public class TSGimmickAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Gimmick;
 
+    [SerializeField] private uint gimmickID;
     [SerializeField] private float radius;
 
     private class Baker : Baker<TSGimmickAuthoring>
@@ -19,6 +20,7 @@ public class TSGimmickAuthoring : TSObjectAuthoring
             {
                 Name = authoring.name,
                 Self = entity,
+                DataID = authoring.gimmickID,
                 ObjectType = authoring.Type,
                 RootOffset = authoring.GetRootOffset(),
             });

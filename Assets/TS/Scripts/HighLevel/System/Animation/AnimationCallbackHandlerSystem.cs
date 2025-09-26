@@ -105,7 +105,15 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
     {
         Debug.Log($"Interact Animation Started for Entity {entity.Index}");
 
-        var interactComponent = SystemAPI.GetComponent<InteractComponent>(entity);
+        if (!SystemAPI.HasComponent<ObjectTargetComponent>(entity))
+            return;
+
+        var objectTargetComponent = SystemAPI.GetComponent<ObjectTargetComponent>(entity);
+
+        if (objectTargetComponent.Target == Entity.Null)
+            return;
+
+        var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTargetComponent.Target);
         var collectorComponent = SystemAPI.GetSingletonRW<CollectorComponent>();
 
         // ComponentLookup을 사용해서 Singleton에 접근

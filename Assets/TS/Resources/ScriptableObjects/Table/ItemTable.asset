@@ -29,7 +29,7 @@ MonoBehaviour:
   m_Name: Item_100001
   m_EditorClassIdentifier: LowLevel::ItemTableData
   id: 100001
-  itemName: New ItemTableData
+  name: TestItem
   itemType: 0
   icon: 
   description: 

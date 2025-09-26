@@ -4,7 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-public class DataScriptCreator : BaseScriptCreator
+public class TableScriptCreator : BaseScriptCreator
 {
     public override void Create(string addPath, string assetName)
     {
@@ -14,24 +14,39 @@ public class DataScriptCreator : BaseScriptCreator
             return;
         }
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Data");
+        string tablePath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/Table");
+        string tableDatapath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/TableData");
 
         if (!string.IsNullOrEmpty(addPath))
-            path = Path.Combine(path, addPath);
+            tablePath = Path.Combine(tablePath, addPath);
 
-        CreateDirectoryIfNotExist(path);
-        CreateScript(path, assetName, GenerateDataCode(assetName));
+        if (!string.IsNullOrEmpty(addPath))
+            tableDatapath = Path.Combine(tableDatapath, addPath);
+
+        CreateDirectoryIfNotExist(tablePath);
+        CreateDirectoryIfNotExist(tableDatapath);
+
+        CreateScript(tablePath, $"{assetName}Table", GenerateTableCode(assetName));
+        CreateScript(tableDatapath, $"{assetName}TableData", GenerateTableDataCode(assetName));
     }
 
     public override List<string> GetFinalPaths(string addPath, string assetName)
     {
         var paths = new List<string>();
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Data");
+        // 테이블 경로
+        string tablePath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/Table");
 
         if (!string.IsNullOrEmpty(addPath))
-            path = Path.Combine(path, addPath);
-        paths.Add($"{path.Replace("\\", "/")}{assetName}.cs");
+            tablePath = Path.Combine(tablePath, addPath);
+        paths.Add($"{tablePath.Replace("\\", "/")}{assetName}Table.cs");
+
+        // 테이블 데이터 경로
+        string tableDataPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/TableData");
+
+        if (!string.IsNullOrEmpty(addPath))
+            tableDataPath = Path.Combine(tableDataPath, addPath);
+        paths.Add($"{tableDataPath.Replace("\\", "/")}{assetName}TableData.cs");
 
         return paths;
     }
@@ -65,8 +80,11 @@ public class DataScriptCreator : BaseScriptCreator
 
                         // 에디터 타입별 라벨 스타일
                         GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-                        
-                        labelStyle.normal.textColor = Color.blue;
+                        string fileName = Path.GetFileNameWithoutExtension(normalizedPath);
+                        if (fileName.EndsWith("Table"))
+                            labelStyle.normal.textColor = Color.cyan;
+                        else if (fileName.EndsWith("TableData"))
+                            labelStyle.normal.textColor = Color.aquamarine;
 
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
@@ -89,12 +107,27 @@ public class DataScriptCreator : BaseScriptCreator
         EditorGUILayout.Space();
     }
 
-    private string GenerateDataCode(string name)
+    private string GenerateTableCode(string name)
     {
         return $@"
-public struct {name}
+using UnityEngine;
+
+[CreateAssetMenu(fileName = ""{name}Table"", menuName = ""Scriptable Objects/Table/{name}Table"")]
+public class {name}Table : BaseTable<{name}TableData>
 {{
 
+}}
+";
+    }
+
+    private string GenerateTableDataCode(string name)
+    {
+        return $@"
+using UnityEngine;
+
+public class {name}TableData : BaseTableData
+{{
+    
 }}
 ";
     }

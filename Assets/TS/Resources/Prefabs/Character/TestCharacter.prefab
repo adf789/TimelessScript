@@ -128,7 +128,7 @@ MonoBehaviour:
   - SourceImage: {fileID: 4199067622019808784, guid: 0779a9727e271024581dd1d3d4df70c7, type: 3}
     Guid: 0779a9727e271024581dd1d3d4df70c7
     State: 2
-    FrameDelay: 2
+    FrameDelay: 4
     IsCustomDelay: 0
     IsDefault: 0
     IsPlayOnetime: 0

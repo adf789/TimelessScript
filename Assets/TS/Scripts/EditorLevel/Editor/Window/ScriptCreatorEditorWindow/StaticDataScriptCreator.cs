@@ -95,6 +95,7 @@ public class StaticDataScriptCreator : BaseScriptCreator
 public class {name}Table
 {{
 
-}}";
+}}
+";
     }
 }
