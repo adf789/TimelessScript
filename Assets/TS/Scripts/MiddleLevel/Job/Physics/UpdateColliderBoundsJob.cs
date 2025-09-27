@@ -12,13 +12,13 @@ public partial struct UpdateColliderBoundsJob : IJobEntity
         ref ColliderBoundsComponent bounds,
         in LocalTransform transform)
     {
-        // 위치 업데이트
-        collider.Position = transform.Position.xy;
-        
+        // 위치 가져옴
+        var position = transform.Position.xy;
+
         // Bounds 계산
-        float2 center = collider.Position + collider.Offset;
+        float2 center = position + collider.Offset;
         float2 halfSize = collider.Size * 0.5f;
-        
+
         bounds.Center = center;
         bounds.Min = center - halfSize;
         bounds.Max = center + halfSize;

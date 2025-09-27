@@ -85,7 +85,8 @@ public partial struct ControlSystem : ISystem
                 case TSObjectType.Ground:
                     {
                         var collider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
-                        float2 position = collider.Position + collider.Offset;
+                        var transform = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self);
+                        float2 position = transform.Position.xy + collider.Offset;
                         float halfHeight = collider.Size.y * 0.5f;
 
                         position.x = touchPosition.x;
@@ -111,7 +112,8 @@ public partial struct ControlSystem : ISystem
                         // Gimmick의 위치와 반지름 정보 가져오기
                         var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
                         var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(selectTarget.Self);
-                        var gimmickPosition = gimmickCollider.Position + gimmickCollider.Offset;
+                        var transform = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self);
+                        var gimmickPosition = transform.Position.xy + gimmickCollider.Offset;
                         float gimmickRadius = gimmick.Radius;
 
                         // 원형의 중심 아래에 접하는 지형 찾기
@@ -165,10 +167,12 @@ public partial struct ControlSystem : ISystem
         float2 searchStart = circleCenter + new float2(0, -circleRadius);
         float searchRange = circleRadius * 2f; // 원의 지름만큼 아래까지 검색
 
-        foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
+        foreach (var (collider, groundComp, transform, entity) in
+                 SystemAPI.Query<RefRO<ColliderComponent>,
+                 RefRO<TSGroundComponent>,
+                 RefRO<LocalTransform>>().WithEntityAccess())
         {
-            float2 groundCenter = collider.ValueRO.Position + collider.ValueRO.Offset;
+            float2 groundCenter = transform.ValueRO.Position.xy + collider.ValueRO.Offset;
             float2 groundSize = collider.ValueRO.Size;
 
             // 지형의 경계 계산
@@ -349,19 +353,21 @@ public partial struct ControlSystem : ISystem
         int2 maxCell = math.max(fromCell, touchCell) + new int2(2, 2);
 
         // Ground 컴포넌트를 가진 모든 엔티티를 검색
-        foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
+        foreach (var (collider, groundComp, transform, entity) in
+                 SystemAPI.Query<RefRO<ColliderComponent>,
+                 RefRO<TSGroundComponent>,
+                 RefRO<LocalTransform>>().WithEntityAccess())
         {
             // 해당 지형이 검색 영역 내에 있는지 확인
             int2 groundCell = new int2(
-                (int) math.floor(collider.ValueRO.Position.x / cellSize),
-                (int) math.floor(collider.ValueRO.Position.y / cellSize)
+                (int) math.floor(transform.ValueRO.Position.x / cellSize),
+                (int) math.floor(transform.ValueRO.Position.y / cellSize)
             );
 
             if (groundCell.x >= minCell.x && groundCell.x <= maxCell.x &&
                 groundCell.y >= minCell.y && groundCell.y <= maxCell.y)
             {
-                float2 groundCenter = collider.ValueRO.Position + collider.ValueRO.Offset;
+                float2 groundCenter = transform.ValueRO.Position.xy + collider.ValueRO.Offset;
 
                 // 터치 위치까지의 거리 계산 (X축 우선, Y축은 가중치 적용)
                 float2 diff = groundCenter - touchPosition;

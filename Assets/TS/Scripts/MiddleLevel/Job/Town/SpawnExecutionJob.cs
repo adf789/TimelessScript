@@ -23,7 +23,7 @@ public partial struct SpawnExecutionJob : IJobEntity
 
         // 스폰 오브젝트 인스턴스 생성 (하위 오브젝트들도 함께 생성됨)
         var spawnedEntity = ecb.Instantiate(entityInQueryIndex, spawnRequest.SpawnObject);
-        FixedString64Bytes name = "Spawned Gimmick";
+        FixedString64Bytes name = $"Spawned {spawnRequest.Name} {spawnedEntity.Index}";
 
         ecb.SetName(entityInQueryIndex, spawnedEntity, in name);
 

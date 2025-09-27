@@ -7,5 +7,4 @@ public struct ColliderComponent : IComponentData
     public float2 Size;
     public float2 Offset;
     public bool IsTrigger;
-    public float2 Position;
 }

@@ -64,7 +64,6 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
 
             default:
                 // 기본 처리 로직
-                Debug.Log($"Animation Started: {animComponent.CompletedAnimationState} for Entity {state.EntityManager.GetName(entity)}");
                 break;
         }
     }
@@ -96,15 +95,12 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
 
             default:
                 // 기본 처리 로직
-                Debug.Log($"Animation Completed: {animComponent.CompletedAnimationState} for Entity {state.EntityManager.GetName(entity)}");
                 break;
         }
     }
 
     private void HandleInteractAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Interact Animation Started for Entity {entity.Index}");
-
         if (!SystemAPI.HasComponent<ObjectTargetComponent>(entity))
             return;
 
@@ -114,7 +110,7 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         if (objectTarget == Entity.Null)
             return;
 
-        if(!SystemAPI.HasComponent<InteractComponent>(objectTarget))
+        if (!SystemAPI.HasComponent<InteractComponent>(objectTarget))
             return;
 
         var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTarget);
@@ -141,32 +137,24 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
 
     private void HandleClimbAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Climb Animation Started for Entity {entity.Index}");
-
         // 사다리 애니메이션이 시작할 때의 로직
         // 예: 물리 상태 복원, 특정 효과 재생 등
     }
 
     private void HandleFallAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Fall Animation Started for Entity {entity.Index}");
-
         // 낙하 애니메이션이 시작할 때의 로직
         // 예: 착지 효과, 데미지 계산 등
     }
 
     private void HandleWalkAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Walk Animation Started for Entity {entity.Index}");
-
         // 낙하 애니메이션이 시작할 때의 로직
         // 예: 착지 효과, 데미지 계산 등
     }
 
     private void HandleInteractAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Interact Animation Completed for Entity {entity.Index}");
-
         if (!SystemAPI.HasComponent<ObjectTargetComponent>(entity))
             return;
 
@@ -180,24 +168,18 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
 
     private void HandleClimbAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Climb Animation Completed for Entity {entity.Index}");
-
         // 사다리 애니메이션이 끝났을 때의 로직
         // 예: 물리 상태 복원, 특정 효과 재생 등
     }
 
     private void HandleFallAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Fall Animation Completed for Entity {entity.Index}");
-
         // 낙하 애니메이션이 끝났을 때의 로직
         // 예: 착지 효과, 데미지 계산 등
     }
 
     private void HandleWalkAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
     {
-        Debug.Log($"Walk Animation Completed for Entity {entity.Index}");
-
         // 낙하 애니메이션이 끝났을 때의 로직
         // 예: 착지 효과, 데미지 계산 등
     }

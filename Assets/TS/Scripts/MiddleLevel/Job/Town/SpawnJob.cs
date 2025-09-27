@@ -16,7 +16,7 @@ public partial struct SpawnJob : IJobEntity
     public void Execute(
         [EntityIndexInQuery] int entityInQueryIndex,
         ref SpawnConfigComponent spawnConfig,
-        in TSGroundComponent ground,
+        in LocalTransform transform,
         in ColliderComponent collider)
     {
         // 스폰 쿨다운 체크
@@ -32,13 +32,14 @@ public partial struct SpawnJob : IJobEntity
             return;
 
         // 스폰 가능한 위치 찾기
-        FindValidSpawnPosition(entityInQueryIndex, in ground, in collider, out float2 spawnPosition);
+        FindValidSpawnPosition(entityInQueryIndex, in transform, in collider, out float2 spawnPosition);
 
         // 스폰 요청 생성
         var spawnRequestEntity = ecb.CreateEntity(entityInQueryIndex);
         ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, new SpawnRequestComponent
         {
             SpawnObject = spawnConfig.SpawnObjectPrefab,
+            Name = spawnConfig.Name,
             SpawnPosition = spawnPosition,
             IsActive = true
         });
@@ -52,21 +53,20 @@ public partial struct SpawnJob : IJobEntity
 
     private void FindValidSpawnPosition(
         int entityIndex,
-        in TSGroundComponent ground,
+        in LocalTransform transform,
         in ColliderComponent collider,
         out float2 spawnPosition)
     {
-        spawnPosition = float2.zero;
         float halfSize = collider.Size.x * 0.5f;
 
         uint seed = (uint) (currentTime * IntDefine.TIME_MILLISECONDS_ONE) +
-                       (uint) (collider.Position.x * 10) +
-                       (uint) (collider.Position.y * 100) +
+                       (uint) (transform.Position.x * 10) +
+                       (uint) (transform.Position.y * 100) +
                        (uint) entityIndex * 13 + 1;
 
         var random = new Unity.Mathematics.Random(seed);
         float2 randomOffset = new float2(random.NextFloat(-halfSize, halfSize), 0);
-        float2 candidatePosition = collider.Position + collider.Offset + randomOffset;
+        float2 candidatePosition = transform.Position.xy + collider.Offset + randomOffset;
 
         spawnPosition = candidatePosition;
     }

@@ -16,11 +16,13 @@ public class SpawnConfigAuthoring : MonoBehaviour
         public override void Bake(SpawnConfigAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
+            string spawnName = authoring.spawnObjectPrefab != null ? authoring.spawnObjectPrefab.name : authoring.name;
 
             // SpawnConfigComponent 추가
             AddComponent(entity, new SpawnConfigComponent
             {
                 SpawnObjectPrefab = GetEntity(authoring.spawnObjectPrefab, TransformUsageFlags.Dynamic),
+                Name = spawnName,
                 MaxSpawnCount = authoring.maxSpawnCount,
                 CurrentSpawnCount = 0,
                 SpawnCooldown = authoring.spawnCooldown,

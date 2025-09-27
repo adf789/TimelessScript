@@ -46,7 +46,6 @@ public class TSLadderAuthoring : TSObjectAuthoring
                     Size = new float2(0.5f, calculatedHeight),
                     Offset = new float2(0f, .5f),
                     IsTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
-                    Position = float2.zero
                 });
 
                 AddComponent(entity, new SpatialHashKeyComponent());
