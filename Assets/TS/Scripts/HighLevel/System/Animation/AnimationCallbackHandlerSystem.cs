@@ -163,7 +163,10 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         if (objectTargetComponent.Target == Entity.Null)
             return;
 
-        state.EntityManager.RemoveComponent<InteractComponent>(objectTargetComponent.Target);
+        var ecbSystem = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSystem.CreateCommandBuffer(state.World.Unmanaged);
+
+        ecb.RemoveComponent<InteractBuffer>(objectTargetComponent.Target);
     }
 
     private void HandleClimbAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)

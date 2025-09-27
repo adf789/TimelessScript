@@ -18,10 +18,22 @@ public partial struct SpatialHashUpdateJob : IJobEntity
         in ColliderComponent collider)
     {
         var position = transform.Position.xy;
+        var colliderCenter = position + collider.Offset;
+        var halfSize = collider.Size * 0.5f;
 
-        hashKey.CellPosition = new int2(
-            (int) math.floor(position.x / cellSize),
-            (int) math.floor(position.y / cellSize)
+        // Collider가 차지하는 영역의 최소/최대 좌표 계산
+        var minBounds = colliderCenter - halfSize;
+        var maxBounds = colliderCenter + halfSize;
+
+        // 해당 영역이 차지하는 셀의 범위 계산
+        hashKey.MinCell = new int2(
+            (int) math.floor(minBounds.x / cellSize),
+            (int) math.floor(minBounds.y / cellSize)
+        );
+
+        hashKey.MaxCell = new int2(
+            (int) math.floor(maxBounds.x / cellSize),
+            (int) math.floor(maxBounds.y / cellSize)
         );
     }
 }

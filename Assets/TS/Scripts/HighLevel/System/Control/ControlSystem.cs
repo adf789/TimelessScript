@@ -20,6 +20,10 @@ public partial struct ControlSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        // 엔티티가 참조된 후 삭제되었다면
+        if (target != Entity.Null && !state.World.EntityManager.Exists(target))
+            target = Entity.Null;
+
         var targetHolder = SystemAPI.GetSingletonRW<TargetHolderComponent>();
 
         if (targetHolder.ValueRW.Target.IsNull)

@@ -20,14 +20,16 @@ namespace Utility
         {
             float2 separation = float2.zero;
 
+            // 겹침 크기 계산 (교집합 영역의 크기)
             float overlapX = math.min(bounds1.Max.x, bounds2.Max.x) -
-                            math.max(bounds1.Max.x, bounds2.Min.x);
+                            math.max(bounds1.Min.x, bounds2.Min.x);
             float overlapY = math.min(bounds1.Max.y, bounds2.Max.y) -
                             math.max(bounds1.Min.y, bounds2.Min.y);
 
+            // 최소 이동 거리로 분리 (MTV - Minimum Translation Vector)
             if (overlapX < overlapY)
             {
-                // X축으로 분리
+                // X축으로 분리 (겹침이 적은 축 선택)
                 separation.x = bounds1.Center.x < bounds2.Center.x ? -overlapX : overlapX;
             }
             else
@@ -53,6 +55,24 @@ namespace Utility
         public static void SetVelocity(ref PhysicsComponent physics, float2 velocity)
         {
             physics.Velocity = velocity;
+        }
+
+        public static bool CheckAffectLayer(ColliderLayer layer1, ColliderLayer layer2)
+        {
+            return (layer1, layer2) switch
+            {
+                (ColliderLayer.Actor,
+                ColliderLayer.Ground
+                or ColliderLayer.Ladder
+                or ColliderLayer.Gimmick) => true,
+
+                (ColliderLayer.Ground
+                or ColliderLayer.Ladder
+                or ColliderLayer.Gimmick,
+                ColliderLayer.Actor) => true,
+
+                _ => false
+            };
         }
     }
 }

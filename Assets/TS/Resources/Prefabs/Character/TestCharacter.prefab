@@ -352,4 +352,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSActorAuthoring
   root: {fileID: 7488242015394640608}
-  lifeTime: 600
+  lifeTime: 15

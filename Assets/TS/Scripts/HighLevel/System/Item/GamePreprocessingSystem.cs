@@ -49,9 +49,15 @@ public partial class GamePreprocessingSystem : SystemBase
 
     private void OnUpdateColllectItems()
     {
+        var player = PlayerSubManager.Instance;
         foreach (var item in collectItems)
         {
             // 아이템 획득 로직 추가
+            player.Inventory.Add(item.Key, item.Value.Count);
+
+            var getItem = player.Inventory.GetItem(item.Key);
+
+            Debug.Log($"Collect Item: {getItem.ID}, Count: {getItem.Count}");
         }
 
         collectItems.Clear();
@@ -67,30 +73,28 @@ public partial class GamePreprocessingSystem : SystemBase
         foreach (var interact in interactBuffer)
         {
             switch (interact.DataType)
-                {
-                    case TableDataType.Gimmick:
-                        {
-                            var gimmickTable = TableSubManager.Instance.Get<GimmickTable>();
-                            var gimmickData = gimmickTable.Get(interact.DataID);
+            {
+                case TableDataType.Gimmick:
+                    {
+                        var gimmickTable = TableSubManager.Instance.Get<GimmickTable>();
+                        var gimmickData = gimmickTable.Get(interact.DataID);
 
-                            if (gimmickData == null)
-                                continue;
+                        if (gimmickData == null)
+                            continue;
 
-                            long count = gimmickData.AcquireCount;
-                            var itemData = TableSubManager.Instance.Get<ItemTable>().Get(gimmickData.AcquireItem);
+                        long count = gimmickData.AcquireCount;
+                        var itemData = TableSubManager.Instance.Get<ItemTable>().Get(gimmickData.AcquireItem);
 
-                            if (itemData == null)
-                                continue;
+                        if (itemData == null)
+                            continue;
 
-                            Debug.Log($"Acquire Item: {itemData.Name}, Count: {count}");
-
-                            if (collectItems.TryGetValue(itemData.ID, out var item))
-                                collectItems[itemData.ID] = item.AddCount(count);
-                            else
-                                collectItems[itemData.ID] = new Item(itemData, count);
-                        }
-                        break;
-                }
+                        if (collectItems.TryGetValue(itemData.ID, out var item))
+                            collectItems[itemData.ID] = item.AddCount(count);
+                        else
+                            collectItems[itemData.ID] = new Item(itemData, count);
+                    }
+                    break;
+            }
         }
 
         interactBuffer.Clear();

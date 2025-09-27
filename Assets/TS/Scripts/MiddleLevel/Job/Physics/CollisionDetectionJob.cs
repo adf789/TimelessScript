@@ -54,15 +54,26 @@ public partial struct CollisionDetectionJob : IJob
 
     private void ExecuteWithSpatialHashing()
     {
-        // Spatial Hash를 사용하여 같은 셀과 인접 셀에 있는 entity들만 검사
-        var spatialHashMap = new NativeParallelMultiHashMap<int2, int>(allEntities.Length, Allocator.Temp);
+        // Spatial Hash를 사용하여 Collider 크기를 고려한 충돌 검사
+        var spatialHashMap = new NativeParallelMultiHashMap<int2, int>(allEntities.Length * 4, Allocator.Temp);
 
-        // 모든 entity를 spatial hash에 등록
+        // 모든 entity를 spatial hash에 등록 (각 entity가 차지하는 모든 셀에 등록)
         for (int i = 0; i < allEntities.Length; i++)
         {
             var hashKey = allHashKeys[i];
-            spatialHashMap.Add(hashKey.CellPosition, i);
+
+            // Collider가 차지하는 모든 셀에 entity 등록
+            for (int x = hashKey.MinCell.x; x <= hashKey.MaxCell.x; x++)
+            {
+                for (int y = hashKey.MinCell.y; y <= hashKey.MaxCell.y; y++)
+                {
+                    spatialHashMap.Add(new int2(x, y), i);
+                }
+            }
         }
+
+        // 중복 검사를 방지하기 위한 HashSet
+        var checkedPairs = new NativeHashSet<int2>(allEntities.Length * allEntities.Length / 2, Allocator.Temp);
 
         // 각 entity에 대해 충돌 검사
         for (int i = 0; i < allEntities.Length; i++)
@@ -72,20 +83,27 @@ public partial struct CollisionDetectionJob : IJob
             var colliderA = allColliders[i];
             var hashKeyA = allHashKeys[i];
 
-            // 현재 셀과 인접 8개 셀을 검사
-            for (int x = -1; x <= 1; x++)
+            // 해당 entity가 차지하는 모든 셀을 검사
+            for (int x = hashKeyA.MinCell.x; x <= hashKeyA.MaxCell.x; x++)
             {
-                for (int y = -1; y <= 1; y++)
+                for (int y = hashKeyA.MinCell.y; y <= hashKeyA.MaxCell.y; y++)
                 {
-                    var neighborCell = hashKeyA.CellPosition + new int2(x, y);
+                    var cell = new int2(x, y);
 
-                    if (spatialHashMap.TryGetFirstValue(neighborCell, out int entityBIndex, out var iterator))
+                    if (spatialHashMap.TryGetFirstValue(cell, out int entityBIndex, out var iterator))
                     {
                         do
                         {
-                            // 같은 엔티티이거나
-                            // 이미 검사한 쌍은 건너뛰기 (i < j 조건으로 중복 제거)
-                            if (i >= entityBIndex) continue;
+                            // 같은 엔티티는 건너뛰기
+                            if (i == entityBIndex) continue;
+
+                            // 중복 검사 방지 (i와 j의 순서를 정규화)
+                            int minIndex = math.min(i, entityBIndex);
+                            int maxIndex = math.max(i, entityBIndex);
+                            var pairKey = new int2(minIndex, maxIndex);
+
+                            if (checkedPairs.Contains(pairKey)) continue;
+                            checkedPairs.Add(pairKey);
 
                             var entityB = allEntities[entityBIndex];
                             var boundsB = allBounds[entityBIndex];
@@ -100,6 +118,7 @@ public partial struct CollisionDetectionJob : IJob
             }
         }
 
+        checkedPairs.Dispose();
         spatialHashMap.Dispose();
     }
 
@@ -127,6 +146,9 @@ public partial struct CollisionDetectionJob : IJob
         ColliderBoundsComponent boundsA, ColliderBoundsComponent boundsB,
         ColliderComponent colliderA, ColliderComponent colliderB)
     {
+        if (!Utility.Physics.CheckAffectLayer(colliderA.Layer, colliderB.Layer))
+            return;
+
         // 충돌 검사
         if (Utility.Physics.BoundsIntersect(boundsA, boundsB))
         {
