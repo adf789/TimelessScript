@@ -20,15 +20,15 @@ public class PhysicsAuthoring : MonoBehaviour
             
             AddComponent(entity, new PhysicsComponent
             {
-                entity = entity,
-                velocity = new float2(authoring.velocity.x, authoring.velocity.y),
-                gravity = new float2(authoring.gravity.x, authoring.gravity.y),
-                mass = authoring.mass,
-                drag = authoring.drag,
-                useGravity = authoring.useGravity,
-                isPrevGrounded = false,
-                isGrounded = false,
-                isStatic = authoring.isStatic
+                Entity = entity,
+                Velocity = new float2(authoring.velocity.x, authoring.velocity.y),
+                Gravity = new float2(authoring.gravity.x, authoring.gravity.y),
+                Mass = authoring.mass,
+                Drag = authoring.drag,
+                UseGravity = authoring.useGravity,
+                IsPrevGrounded = false,
+                IsGrounded = false,
+                IsStatic = authoring.isStatic
             });
             
             AddComponent(entity, new PhysicsEventsComponent());

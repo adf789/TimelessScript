@@ -1,9 +1,11 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
 public struct SpawnRequestComponent : IComponentData
 {
-    public Entity spawnObject;
-    public float2 spawnPosition;
-    public bool isActive;
+    public Entity SpawnObject;
+    public FixedString64Bytes Name;
+    public float2 SpawnPosition;
+    public bool IsActive;
 }

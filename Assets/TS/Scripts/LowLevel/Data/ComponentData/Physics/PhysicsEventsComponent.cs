@@ -4,8 +4,8 @@ using Unity.Mathematics;
 
 public struct PhysicsEventsComponent : IComponentData
 {
-    public bool hasTriggerEnter;
-    public bool hasTriggerStay;
-    public bool hasTriggerExit;
-    public Entity triggerEntity;
+    public bool HasTriggerEnter;
+    public bool HasTriggerStay;
+    public bool HasTriggerExit;
+    public Entity TriggerEntity;
 }

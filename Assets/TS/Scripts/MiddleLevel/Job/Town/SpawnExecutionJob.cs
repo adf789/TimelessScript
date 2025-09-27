@@ -18,31 +18,31 @@ public partial struct SpawnExecutionJob : IJobEntity
         Entity entity,
         ref SpawnRequestComponent spawnRequest)
     {
-        if (!spawnRequest.isActive)
+        if (!spawnRequest.IsActive)
             return;
 
         // 스폰 오브젝트 인스턴스 생성 (하위 오브젝트들도 함께 생성됨)
-        var spawnedEntity = ecb.Instantiate(entityInQueryIndex, spawnRequest.spawnObject);
+        var spawnedEntity = ecb.Instantiate(entityInQueryIndex, spawnRequest.SpawnObject);
         FixedString64Bytes name = "Spawned Gimmick";
 
         ecb.SetName(entityInQueryIndex, spawnedEntity, in name);
 
         // 스폰된 오브젝트의 위치 설정
         float3 finalPosition;
-        if (objectLookup.HasComponent(spawnRequest.spawnObject))
+        if (objectLookup.HasComponent(spawnRequest.SpawnObject))
         {
-            var objectComponent = objectLookup[spawnRequest.spawnObject];
+            var objectComponent = objectLookup[spawnRequest.SpawnObject];
 
             // RootOffset을 고려한 위치 계산
             finalPosition = new float3(
-                spawnRequest.spawnPosition.x,
-                spawnRequest.spawnPosition.y - objectComponent.RootOffset,
+                spawnRequest.SpawnPosition.x,
+                spawnRequest.SpawnPosition.y - objectComponent.RootOffset,
                 0f
             );
         }
         else
         {
-            finalPosition = new float3(spawnRequest.spawnPosition.x, spawnRequest.spawnPosition.y, 0f);
+            finalPosition = new float3(spawnRequest.SpawnPosition.x, spawnRequest.SpawnPosition.y, 0f);
         }
 
         ecb.SetComponent(entityInQueryIndex, spawnedEntity, LocalTransform.FromPosition(finalPosition));
@@ -50,9 +50,9 @@ public partial struct SpawnExecutionJob : IJobEntity
         // 스폰된 오브젝트에 SpawnedObjectComponent 추가
         ecb.AddComponent(entityInQueryIndex, spawnedEntity, new SpawnedObjectComponent
         {
-            spawner = Entity.Null, // 스포너 엔티티 참조는 SpawnJob에서 설정
-            spawnTime = currentTime,
-            isManaged = true
+            Spawner = Entity.Null, // 스포너 엔티티 참조는 SpawnJob에서 설정
+            SpawnTime = currentTime,
+            IsManaged = true
         });
 
         // 하위 오브젝트들에게도 기본적인 설정 적용

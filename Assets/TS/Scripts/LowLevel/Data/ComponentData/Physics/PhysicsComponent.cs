@@ -4,18 +4,18 @@ using System.Runtime.InteropServices;
 
 public struct PhysicsComponent : IComponentData
 {
-    public Entity entity;
-    public float2 velocity;
-    public float2 gravity;
-    public float mass;
-    public float drag;
+    public Entity Entity;
+    public float2 Velocity;
+    public float2 Gravity;
+    public float Mass;
+    public float Drag;
     [MarshalAs(UnmanagedType.U1)]
-    public bool useGravity;
+    public bool UseGravity;
     [MarshalAs(UnmanagedType.U1)]
-    public bool isGrounded;
+    public bool IsGrounded;
     [MarshalAs(UnmanagedType.U1)]
-    public bool isPrevGrounded;
+    public bool IsPrevGrounded;
     [MarshalAs(UnmanagedType.U1)]
-    public bool isStatic;
+    public bool IsStatic;
     
 }

@@ -20,13 +20,13 @@ public class SpawnConfigAuthoring : MonoBehaviour
             // SpawnConfigComponent 추가
             AddComponent(entity, new SpawnConfigComponent
             {
-                spawnObjectPrefab = GetEntity(authoring.spawnObjectPrefab, TransformUsageFlags.Dynamic),
-                maxSpawnCount = authoring.maxSpawnCount,
-                currentSpawnCount = 0,
-                spawnCooldown = authoring.spawnCooldown,
-                nextSpawnTime = 0f,
-                minSpawnDistance = authoring.minSpawnDistance,
-                autoSpawn = authoring.autoSpawn
+                SpawnObjectPrefab = GetEntity(authoring.spawnObjectPrefab, TransformUsageFlags.Dynamic),
+                MaxSpawnCount = authoring.maxSpawnCount,
+                CurrentSpawnCount = 0,
+                SpawnCooldown = authoring.spawnCooldown,
+                NextSpawnTime = 0f,
+                MinSpawnDistance = authoring.minSpawnDistance,
+                AutoSpawn = authoring.autoSpawn
             });
 
             // SpawnAreaComponent 추가

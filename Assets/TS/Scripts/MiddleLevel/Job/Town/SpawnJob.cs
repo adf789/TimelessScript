@@ -20,15 +20,15 @@ public partial struct SpawnJob : IJobEntity
         in ColliderComponent collider)
     {
         // 스폰 쿨다운 체크
-        if (currentTime < spawnConfig.nextSpawnTime)
+        if (currentTime < spawnConfig.NextSpawnTime)
             return;
 
         // 최대 스폰 개수 체크
-        if (spawnConfig.currentSpawnCount >= spawnConfig.maxSpawnCount)
+        if (spawnConfig.CurrentSpawnCount >= spawnConfig.MaxSpawnCount)
             return;
 
         // 자동 스폰 비활성화 시 종료
-        if (!spawnConfig.autoSpawn)
+        if (!spawnConfig.AutoSpawn)
             return;
 
         // 스폰 가능한 위치 찾기
@@ -38,16 +38,16 @@ public partial struct SpawnJob : IJobEntity
         var spawnRequestEntity = ecb.CreateEntity(entityInQueryIndex);
         ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, new SpawnRequestComponent
         {
-            spawnObject = spawnConfig.spawnObjectPrefab,
-            spawnPosition = spawnPosition,
-            isActive = true
+            SpawnObject = spawnConfig.SpawnObjectPrefab,
+            SpawnPosition = spawnPosition,
+            IsActive = true
         });
 
         // 스폰 카운트 및 다음 스폰 시간 업데이트
-        spawnConfig.currentSpawnCount++;
+        spawnConfig.CurrentSpawnCount++;
 
         // 스폰 성공 여부와 관계없이 다음 스폰 시간 업데이트
-        spawnConfig.nextSpawnTime = currentTime + spawnConfig.spawnCooldown;
+        spawnConfig.NextSpawnTime = currentTime + spawnConfig.SpawnCooldown;
     }
 
     private void FindValidSpawnPosition(
@@ -57,16 +57,16 @@ public partial struct SpawnJob : IJobEntity
         out float2 spawnPosition)
     {
         spawnPosition = float2.zero;
-        float halfSize = collider.size.x * 0.5f;
+        float halfSize = collider.Size.x * 0.5f;
 
         uint seed = (uint) (currentTime * IntDefine.TIME_MILLISECONDS_ONE) +
-                       (uint) (collider.position.x * 10) +
-                       (uint) (collider.position.y * 100) +
+                       (uint) (collider.Position.x * 10) +
+                       (uint) (collider.Position.y * 100) +
                        (uint) entityIndex * 13 + 1;
 
         var random = new Unity.Mathematics.Random(seed);
         float2 randomOffset = new float2(random.NextFloat(-halfSize, halfSize), 0);
-        float2 candidatePosition = collider.position + collider.offset + randomOffset;
+        float2 candidatePosition = collider.Position + collider.Offset + randomOffset;
 
         spawnPosition = candidatePosition;
     }

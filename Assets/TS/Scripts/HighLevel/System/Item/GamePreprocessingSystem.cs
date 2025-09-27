@@ -38,37 +38,7 @@ public partial class GamePreprocessingSystem : SystemBase
             if (actorComponent.LifePassingTime < actorComponent.LifeTime)
                 return;
 
-            var gimmickTable = TableSubManager.Instance.Get<GimmickTable>();
-
-            // for (int i = 0; i < actorComponent.ActionStack.InteractCount; i++)
-            // {
-            //     var interact = actorComponent.ActionStack.RemoveInteract();
-
-            //     switch (interact.DataType)
-            //     {
-            //         case TableDataType.Gimmick:
-            //             {
-            //                 var gimmickData = gimmickTable.Get(interact.DataID);
-
-            //                 if (gimmickData == null)
-            //                     continue;
-
-            //                 long count = gimmickData.AcquireCount;
-            //                 var itemData = TableSubManager.Instance.Get<ItemTable>().Get(gimmickData.AcquireItem);
-
-            //                 if (itemData == null)
-            //                     continue;
-
-            //                 Debug.Log($"Acquire Item: {itemData.Name}, Count: {count}");
-
-            //                 if (collectItems.TryGetValue(itemData.ID, out var item))
-            //                     collectItems[itemData.ID] = item.AddCount(count);
-            //                 else
-            //                     collectItems[itemData.ID] = new Item(itemData, count);
-            //             }
-            //             break;
-            //     }
-            // }
+            CollectingItemByInteract(entity, ref actorComponent, in ecb);
 
             ecb.DestroyEntity(entity);
         }).Run();
@@ -85,5 +55,44 @@ public partial class GamePreprocessingSystem : SystemBase
         }
 
         collectItems.Clear();
+    }
+
+    private void CollectingItemByInteract(Entity entity, ref TSActorComponent actorComponent, in EntityCommandBuffer ecb)
+    {
+        if (!SystemAPI.HasBuffer<InteractBuffer>(entity))
+            return;
+
+        var interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(entity);
+
+        foreach (var interact in interactBuffer)
+        {
+            switch (interact.DataType)
+                {
+                    case TableDataType.Gimmick:
+                        {
+                            var gimmickTable = TableSubManager.Instance.Get<GimmickTable>();
+                            var gimmickData = gimmickTable.Get(interact.DataID);
+
+                            if (gimmickData == null)
+                                continue;
+
+                            long count = gimmickData.AcquireCount;
+                            var itemData = TableSubManager.Instance.Get<ItemTable>().Get(gimmickData.AcquireItem);
+
+                            if (itemData == null)
+                                continue;
+
+                            Debug.Log($"Acquire Item: {itemData.Name}, Count: {count}");
+
+                            if (collectItems.TryGetValue(itemData.ID, out var item))
+                                collectItems[itemData.ID] = item.AddCount(count);
+                            else
+                                collectItems[itemData.ID] = new Item(itemData, count);
+                        }
+                        break;
+                }
+        }
+
+        interactBuffer.Clear();
     }
 }

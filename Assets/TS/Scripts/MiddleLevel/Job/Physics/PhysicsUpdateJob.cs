@@ -14,22 +14,22 @@ public partial struct PhysicsUpdateJob : IJobEntity
         ref PhysicsComponent physics,
         ref LocalTransform transform)
     {
-        if (physics.isStatic)
+        if (physics.IsStatic)
             return;
             
         float2 previousPosition = transform.Position.xy;
         
         // 중력 적용
-        if (physics.useGravity && !physics.isGrounded)
+        if (physics.UseGravity && !physics.IsGrounded)
         {
-            physics.velocity += physics.gravity * deltaTime;
+            physics.Velocity += physics.Gravity * deltaTime;
         }
         
         // 드래그 적용
-        physics.velocity *= physics.drag;
+        physics.Velocity *= physics.Drag;
         
         // 위치 업데이트
-        float2 newPosition = previousPosition + physics.velocity * deltaTime;
+        float2 newPosition = previousPosition + physics.Velocity * deltaTime;
         transform.Position = new float3(newPosition.x, newPosition.y, transform.Position.z);
     }
 }

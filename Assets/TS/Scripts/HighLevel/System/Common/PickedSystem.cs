@@ -40,7 +40,7 @@ public partial class PickedSystem : SystemBase
         int maxOrder = int.MinValue;
         foreach (var (picked, bounds, entity) in SystemAPI.Query<RefRO<PickedComponent>, RefRO<ColliderBoundsComponent>>().WithEntityAccess())
         {
-            var boundsValue = new Rect(bounds.ValueRO.min, bounds.ValueRO.max - bounds.ValueRO.min);
+            var boundsValue = new Rect(bounds.ValueRO.Min, bounds.ValueRO.Max - bounds.ValueRO.Min);
             if (boundsValue.Contains(touchPosition.xy))
             {
                 if (picked.ValueRO.Order > maxOrder)

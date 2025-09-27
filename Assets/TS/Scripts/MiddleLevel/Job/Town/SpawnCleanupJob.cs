@@ -23,6 +23,6 @@ public partial struct SpawnCleanupJob : IJobEntity
         // 별도의 DynamicBuffer나 컬렉션을 사용해야 합니다.
         // 현재는 간단한 구현으로 대체합니다.
 
-        spawnConfig.currentSpawnCount = validSpawnCount;
+        spawnConfig.CurrentSpawnCount = validSpawnCount;
     }
 }

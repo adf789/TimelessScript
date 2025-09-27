@@ -5,3 +5,12 @@ public enum GroundType
     Slippery,
     Sticky
 }
+
+public enum ColliderLayer
+{
+    None,
+    Actor,
+    Ground,
+    Ladder,
+    Gimmick,
+}

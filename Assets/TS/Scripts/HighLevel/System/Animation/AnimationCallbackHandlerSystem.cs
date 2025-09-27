@@ -109,14 +109,34 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
             return;
 
         var objectTargetComponent = SystemAPI.GetComponent<ObjectTargetComponent>(entity);
+        var objectTarget = objectTargetComponent.Target;
 
-        if (objectTargetComponent.Target == Entity.Null)
+        if (objectTarget == Entity.Null)
             return;
 
-        var actorComponent = SystemAPI.GetComponent<TSActorComponent>(objectTargetComponent.Target);
-        var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTargetComponent.Target);
-        
-        // actorComponent.ActionStack.AddInteract(interactComponent.DataID, interactComponent.DataType);
+        if(!SystemAPI.HasComponent<InteractComponent>(objectTarget))
+            return;
+
+        var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTarget);
+        DynamicBuffer<InteractBuffer> interactBuffer;
+
+        if (!SystemAPI.HasBuffer<InteractBuffer>(objectTarget))
+        {
+            var ecbSystem = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb = ecbSystem.CreateCommandBuffer(state.World.Unmanaged);
+
+            interactBuffer = ecb.AddBuffer<InteractBuffer>(objectTarget);
+        }
+        else
+        {
+            interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(objectTarget);
+        }
+
+        interactBuffer.Add(new InteractBuffer()
+        {
+            DataID = interactComponent.DataID,
+            DataType = interactComponent.DataType,
+        });
     }
 
     private void HandleClimbAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)

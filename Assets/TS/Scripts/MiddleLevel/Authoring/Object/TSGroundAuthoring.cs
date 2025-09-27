@@ -8,7 +8,6 @@ public class TSGroundAuthoring : TSObjectAuthoring
     [Header("Ground Settings")]
     public float bounciness = 0.3f;
     public float friction = 0.8f;
-    public bool isOneWayPlatform = false;
     public GroundType groundType = GroundType.Normal;
 
     private class Baker : Baker<TSGroundAuthoring>
@@ -29,7 +28,6 @@ public class TSGroundAuthoring : TSObjectAuthoring
             {
                 bounciness = authoring.bounciness,
                 friction = authoring.friction,
-                isOneWayPlatform = authoring.isOneWayPlatform,
                 groundType = authoring.groundType
             });
 

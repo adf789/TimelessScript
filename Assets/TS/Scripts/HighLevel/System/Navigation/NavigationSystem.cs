@@ -591,7 +591,7 @@ public partial struct NavigationSystem : ISystem
     {
         var collider = state.EntityManager.GetComponentData<ColliderComponent>(ladder);
         var transform = state.EntityManager.GetComponentData<LocalTransform>(ladder);
-        return transform.Position.xy + collider.offset;
+        return transform.Position.xy + collider.Offset;
     }
 
     [BurstCompile]
@@ -679,8 +679,8 @@ public partial struct NavigationSystem : ISystem
         var transform = state.EntityManager.GetComponentData<LocalTransform>(ground);
 
         // 지형 중심점 계산
-        float groundCenterY = transform.Position.y + collider.offset.y;
-        float halfHeight = collider.size.y * 0.5f;
+        float groundCenterY = transform.Position.y + collider.Offset.y;
+        float halfHeight = collider.Size.y * 0.5f;
 
         // 다각형 지형 대응: 범위 내외 관계없이 상단 표면 높이 반환
         return groundCenterY + halfHeight;
@@ -724,10 +724,10 @@ public partial struct NavigationSystem : ISystem
     [BurstCompile]
     private bool IsPositionOnGround(float2 position, ColliderComponent collider, LocalTransform transform)
     {
-        float groundCenterX = transform.Position.x + collider.offset.x;
-        float groundCenterY = transform.Position.y + collider.offset.y;
-        float halfWidth = collider.size.x * 0.5f;
-        float halfHeight = collider.size.y * 0.5f;
+        float groundCenterX = transform.Position.x + collider.Offset.x;
+        float groundCenterY = transform.Position.y + collider.Offset.y;
+        float halfWidth = collider.Size.x * 0.5f;
+        float halfHeight = collider.Size.y * 0.5f;
 
         // 수평 범위 확인
         bool withinHorizontalRange = position.x >= groundCenterX - halfWidth &&
@@ -886,7 +886,7 @@ public partial struct NavigationSystem : ISystem
                     break;
             }
         }
-        
+
         // 시작 위치 추가
         path.Add(currentNode);
 
@@ -933,7 +933,7 @@ public partial struct NavigationSystem : ISystem
                         float horizontalDistance = math.abs(prevNode.Position.x - ladderTransform.Position.x);
                         if (horizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
                         {
-                            AddWaypoint(waypoints, moveToLadderStartPosition, prevNode.GroundEntity , TSObjectType.Ground, MoveState.Move);
+                            AddWaypoint(waypoints, moveToLadderStartPosition, prevNode.GroundEntity, TSObjectType.Ground, MoveState.Move);
 #if UNITY_EDITOR
                             UnityEngine.Debug.Log($"A* 사다리 접근 웨이포인트: ({moveToLadderStartPosition.x:F2}, {moveToLadderStartPosition.y:F2}) - Move");
 #endif

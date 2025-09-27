@@ -13,14 +13,14 @@ public partial struct UpdateColliderBoundsJob : IJobEntity
         in LocalTransform transform)
     {
         // 위치 업데이트
-        collider.position = transform.Position.xy;
+        collider.Position = transform.Position.xy;
         
         // Bounds 계산
-        float2 center = collider.position + collider.offset;
-        float2 halfSize = collider.size * 0.5f;
+        float2 center = collider.Position + collider.Offset;
+        float2 halfSize = collider.Size * 0.5f;
         
-        bounds.center = center;
-        bounds.min = center - halfSize;
-        bounds.max = center + halfSize;
+        bounds.Center = center;
+        bounds.Min = center - halfSize;
+        bounds.Max = center + halfSize;
     }
 }

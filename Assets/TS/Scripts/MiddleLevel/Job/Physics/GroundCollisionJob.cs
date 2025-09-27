@@ -9,29 +9,29 @@ public partial struct GroundCollisionJob : IJobEntity
 {
     public void Execute(ref GroundCollisionComponent collisionData, in TSGroundComponent ground)
     {
-        if (!collisionData.hasCollision)
+        if (!collisionData.HasCollision)
             return;
             
-        float2 result = collisionData.incomingVelocity;
+        float2 result = collisionData.IncomingVelocity;
         
         switch (ground.groundType)
         {
             case GroundType.Normal:
-                result = HandleNormalGround(collisionData.incomingVelocity, collisionData.collisionNormal, ground);
+                result = HandleNormalGround(collisionData.IncomingVelocity, collisionData.CollisionNormal, ground);
                 break;
             case GroundType.Bouncy:
-                result = HandleBouncyGround(collisionData.incomingVelocity, collisionData.collisionNormal);
+                result = HandleBouncyGround(collisionData.IncomingVelocity, collisionData.CollisionNormal);
                 break;
             case GroundType.Slippery:
-                result = HandleSlipperyGround(collisionData.incomingVelocity, collisionData.collisionNormal);
+                result = HandleSlipperyGround(collisionData.IncomingVelocity, collisionData.CollisionNormal);
                 break;
             case GroundType.Sticky:
-                result = HandleStickyGround(collisionData.incomingVelocity, collisionData.collisionNormal);
+                result = HandleStickyGround(collisionData.IncomingVelocity, collisionData.CollisionNormal);
                 break;
         }
         
-        collisionData.responseVelocity = result;
-        collisionData.hasCollision = false; // 처리 완료 플래그 리셋
+        collisionData.ResponseVelocity = result;
+        collisionData.HasCollision = false; // 처리 완료 플래그 리셋
     }
     
     [BurstCompile]

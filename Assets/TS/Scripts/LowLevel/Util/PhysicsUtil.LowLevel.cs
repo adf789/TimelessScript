@@ -9,8 +9,8 @@ namespace Utility
         /// </summary>
         public static bool BoundsIntersect(in ColliderBoundsComponent bounds1, in ColliderBoundsComponent bounds2)
         {
-            return bounds1.min.x < bounds2.max.x && bounds1.max.x > bounds2.min.x &&
-                   bounds1.min.y < bounds2.max.y && bounds1.max.y > bounds2.min.y;
+            return bounds1.Min.x < bounds2.Max.x && bounds1.Max.x > bounds2.Min.x &&
+                   bounds1.Min.y < bounds2.Max.y && bounds1.Max.y > bounds2.Min.y;
         }
 
         /// <summary>
@@ -20,20 +20,20 @@ namespace Utility
         {
             float2 separation = float2.zero;
 
-            float overlapX = math.min(bounds1.max.x, bounds2.max.x) -
-                            math.max(bounds1.min.x, bounds2.min.x);
-            float overlapY = math.min(bounds1.max.y, bounds2.max.y) -
-                            math.max(bounds1.min.y, bounds2.min.y);
+            float overlapX = math.min(bounds1.Max.x, bounds2.Max.x) -
+                            math.max(bounds1.Max.x, bounds2.Min.x);
+            float overlapY = math.min(bounds1.Max.y, bounds2.Max.y) -
+                            math.max(bounds1.Min.y, bounds2.Min.y);
 
             if (overlapX < overlapY)
             {
                 // X축으로 분리
-                separation.x = bounds1.center.x < bounds2.center.x ? -overlapX : overlapX;
+                separation.x = bounds1.Center.x < bounds2.Center.x ? -overlapX : overlapX;
             }
             else
             {
                 // Y축으로 분리
-                separation.y = bounds1.center.y < bounds2.center.y ? -overlapY : overlapY;
+                separation.y = bounds1.Center.y < bounds2.Center.y ? -overlapY : overlapY;
             }
 
             return separation;
@@ -44,7 +44,7 @@ namespace Utility
         /// </summary>
         public static void AddForce(ref PhysicsComponent physics, float2 force)
         {
-            physics.velocity += force / physics.mass;
+            physics.Velocity += force / physics.Mass;
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Utility
         /// </summary>
         public static void SetVelocity(ref PhysicsComponent physics, float2 velocity)
         {
-            physics.velocity = velocity;
+            physics.Velocity = velocity;
         }
     }
 }

@@ -14,52 +14,52 @@ public partial struct TriggerHandlingJob : IJobEntity
         [ReadOnly] DynamicBuffer<CollisionBuffer> collisions)
     {
         // 현재 트리거 상태 초기화
-        events.hasTriggerEnter = false;
-        events.hasTriggerStay = false;
-        events.hasTriggerExit = false;
-        
+        events.HasTriggerEnter = false;
+        events.HasTriggerStay = false;
+        events.HasTriggerExit = false;
+
         // 새로운 트리거들 수집
         var currentTriggers = new NativeList<Entity>(Allocator.Temp);
-        
+
         for (int i = 0; i < collisions.Length; i++)
         {
             var collision = collisions[i];
-            if (collision.isTrigger)
+            if (collision.IsTrigger)
             {
-                currentTriggers.Add(collision.collidedEntity);
-                
+                currentTriggers.Add(collision.CollidedEntity);
+
                 // 트리거 진입 검사
                 bool wasInTrigger = false;
                 for (int j = 0; j < triggerBuffer.Length; j++)
                 {
-                    if (triggerBuffer[j].triggerEntity.Equals(collision.collidedEntity))
+                    if (triggerBuffer[j].TriggerEntity.Equals(collision.CollidedEntity))
                     {
                         wasInTrigger = true;
                         break;
                     }
                 }
-                
+
                 if (!wasInTrigger)
                 {
                     // 새로운 트리거 진입
-                    events.hasTriggerEnter = true;
-                    events.triggerEntity = collision.collidedEntity;
+                    events.HasTriggerEnter = true;
+                    events.TriggerEntity = collision.CollidedEntity;
                 }
                 else
                 {
                     // 트리거 지속
-                    events.hasTriggerStay = true;
-                    events.triggerEntity = collision.collidedEntity;
+                    events.HasTriggerStay = true;
+                    events.TriggerEntity = collision.CollidedEntity;
                 }
             }
         }
-        
+
         // 트리거 종료 검사
         for (int i = 0; i < triggerBuffer.Length; i++)
         {
-            var oldTrigger = triggerBuffer[i].triggerEntity;
+            var oldTrigger = triggerBuffer[i].TriggerEntity;
             bool stillInTrigger = false;
-            
+
             for (int j = 0; j < currentTriggers.Length; j++)
             {
                 if (currentTriggers[j].Equals(oldTrigger))
@@ -68,25 +68,25 @@ public partial struct TriggerHandlingJob : IJobEntity
                     break;
                 }
             }
-            
+
             if (!stillInTrigger)
             {
-                events.hasTriggerExit = true;
-                events.triggerEntity = oldTrigger;
+                events.HasTriggerExit = true;
+                events.TriggerEntity = oldTrigger;
             }
         }
-        
+
         // 트리거 버퍼 업데이트
         triggerBuffer.Clear();
         for (int i = 0; i < currentTriggers.Length; i++)
         {
             triggerBuffer.Add(new TriggerBuffer
             {
-                triggerEntity = currentTriggers[i],
-                isEntering = true
+                TriggerEntity = currentTriggers[i],
+                IsEntering = true
             });
         }
-        
+
         currentTriggers.Dispose();
     }
 }

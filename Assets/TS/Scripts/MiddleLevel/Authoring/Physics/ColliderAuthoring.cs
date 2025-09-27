@@ -5,6 +5,7 @@ using Unity.Mathematics;
 public class ColliderAuthoring : MonoBehaviour
 {
     [Header("Collider Settings")]
+    public ColliderLayer layer = ColliderLayer.None;
     public Vector2 size = Vector2.one;
     public Vector2 offset = Vector2.zero;
     public bool isTrigger = false;
@@ -17,10 +18,10 @@ public class ColliderAuthoring : MonoBehaviour
             
             AddComponent(entity, new ColliderComponent
             {
-                size = new float2(authoring.size.x, authoring.size.y),
-                offset = new float2(authoring.offset.x, authoring.offset.y),
-                isTrigger = authoring.isTrigger,
-                position = float2.zero // 런타임에 업데이트
+                Size = new float2(authoring.size.x, authoring.size.y),
+                Offset = new float2(authoring.offset.x, authoring.offset.y),
+                IsTrigger = authoring.isTrigger,
+                Position = float2.zero // 런타임에 업데이트
             });
 
             AddComponent(entity, new ColliderBoundsComponent());

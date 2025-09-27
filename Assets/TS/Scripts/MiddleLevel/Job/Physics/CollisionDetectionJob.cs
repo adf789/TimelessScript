@@ -18,7 +18,7 @@ public partial struct CollisionDetectionJob : IJob
     [ReadOnly] public ComponentLookup<TSGroundComponent> GroundLookup;
     [ReadOnly] public bool useSpacialHashing;
     [ReadOnly] public float cellSize;
-    
+
     public void Execute()
     {
         // 모든 entity의 충돌 버퍼 초기화
@@ -34,8 +34,8 @@ public partial struct CollisionDetectionJob : IJob
             if (collisionInfoLookup.HasComponent(entity))
             {
                 var info = collisionInfoLookup[entity];
-                info.hasCollision = false;
-                info.collidedEntity = Entity.Null;
+                info.HasCollision = false;
+                info.CollidedEntity = Entity.Null;
                 collisionInfoLookup[entity] = info;
             }
         }
@@ -61,7 +61,7 @@ public partial struct CollisionDetectionJob : IJob
         for (int i = 0; i < allEntities.Length; i++)
         {
             var hashKey = allHashKeys[i];
-            spatialHashMap.Add(hashKey.cellPosition, i);
+            spatialHashMap.Add(hashKey.CellPosition, i);
         }
 
         // 각 entity에 대해 충돌 검사
@@ -77,21 +77,19 @@ public partial struct CollisionDetectionJob : IJob
             {
                 for (int y = -1; y <= 1; y++)
                 {
-                    var neighborCell = hashKeyA.cellPosition + new int2(x, y);
+                    var neighborCell = hashKeyA.CellPosition + new int2(x, y);
 
                     if (spatialHashMap.TryGetFirstValue(neighborCell, out int entityBIndex, out var iterator))
                     {
                         do
                         {
-                            // 같은 entity는 건너뛰기
-                            if (i == entityBIndex) continue;
+                            // 같은 엔티티이거나
+                            // 이미 검사한 쌍은 건너뛰기 (i < j 조건으로 중복 제거)
+                            if (i >= entityBIndex) continue;
 
                             var entityB = allEntities[entityBIndex];
                             var boundsB = allBounds[entityBIndex];
                             var colliderB = allColliders[entityBIndex];
-
-                            // 이미 검사한 쌍은 건너뛰기 (i < j 조건으로 중복 제거)
-                            if (i >= entityBIndex) continue;
 
                             // 충돌 검사 및 처리
                             CheckAndProcessCollision(entityA, entityB, boundsA, boundsB, colliderA, colliderB);
@@ -133,7 +131,7 @@ public partial struct CollisionDetectionJob : IJob
         if (Utility.Physics.BoundsIntersect(boundsA, boundsB))
         {
             float2 separationVector = Utility.Physics.GetSeparationVector(boundsA, boundsB);
-            bool isTriggerCollision = colliderA.isTrigger || colliderB.isTrigger;
+            bool isTriggerCollision = colliderA.IsTrigger || colliderB.IsTrigger;
             bool isGroundCollision = GroundLookup.HasComponent(entityA) || GroundLookup.HasComponent(entityB);
 
             // entityA에 충돌 데이터 추가
@@ -142,10 +140,10 @@ public partial struct CollisionDetectionJob : IJob
                 var bufferA = collisionBufferLookup[entityA];
                 bufferA.Add(new CollisionBuffer
                 {
-                    collidedEntity = entityB,
-                    separationVector = separationVector,
-                    isTrigger = isTriggerCollision,
-                    isGroundCollision = isGroundCollision
+                    CollidedEntity = entityB,
+                    SeparationVector = separationVector,
+                    IsTrigger = isTriggerCollision,
+                    IsGroundCollision = isGroundCollision
                 });
             }
 
@@ -155,10 +153,10 @@ public partial struct CollisionDetectionJob : IJob
                 var bufferB = collisionBufferLookup[entityB];
                 bufferB.Add(new CollisionBuffer
                 {
-                    collidedEntity = entityA,
-                    separationVector = -separationVector,
-                    isTrigger = isTriggerCollision,
-                    isGroundCollision = isGroundCollision
+                    CollidedEntity = entityA,
+                    SeparationVector = -separationVector,
+                    IsTrigger = isTriggerCollision,
+                    IsGroundCollision = isGroundCollision
                 });
             }
 
@@ -166,18 +164,18 @@ public partial struct CollisionDetectionJob : IJob
             if (collisionInfoLookup.HasComponent(entityA))
             {
                 var infoA = collisionInfoLookup[entityA];
-                infoA.hasCollision = true;
-                infoA.collidedEntity = entityB;
-                infoA.separationVector = separationVector;
+                infoA.HasCollision = true;
+                infoA.CollidedEntity = entityB;
+                infoA.SeparationVector = separationVector;
                 collisionInfoLookup[entityA] = infoA;
             }
 
             if (collisionInfoLookup.HasComponent(entityB))
             {
                 var infoB = collisionInfoLookup[entityB];
-                infoB.hasCollision = true;
-                infoB.collidedEntity = entityA;
-                infoB.separationVector = -separationVector;
+                infoB.HasCollision = true;
+                infoB.CollidedEntity = entityA;
+                infoB.SeparationVector = -separationVector;
                 collisionInfoLookup[entityB] = infoB;
             }
         }

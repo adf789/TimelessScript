@@ -3,11 +3,11 @@ using Unity.Mathematics;
 
 public struct SpawnConfigComponent : IComponentData
 {
-    public Entity spawnObjectPrefab;
-    public int maxSpawnCount;
-    public int currentSpawnCount;
-    public float spawnCooldown;
-    public float nextSpawnTime;
-    public float minSpawnDistance;
-    public bool autoSpawn;
+    public Entity SpawnObjectPrefab;
+    public int MaxSpawnCount;
+    public int CurrentSpawnCount;
+    public float SpawnCooldown;
+    public float NextSpawnTime;
+    public float MinSpawnDistance;
+    public bool AutoSpawn;
 }

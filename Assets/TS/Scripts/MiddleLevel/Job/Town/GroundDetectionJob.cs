@@ -35,9 +35,9 @@ public struct GroundDetectionJob : IJob
             var transform = transformLookup[groundEntity];
 
             // 지면의 콜라이더 영역 계산
-            float2 groundCenter = transform.Position.xy + collider.offset;
-            float2 groundMin = groundCenter - collider.size * 0.5f;
-            float2 groundMax = groundCenter + collider.size * 0.5f;
+            float2 groundCenter = transform.Position.xy + collider.Offset;
+            float2 groundMin = groundCenter - collider.Size * 0.5f;
+            float2 groundMax = groundCenter + collider.Size * 0.5f;
 
             // X축이 겹치는지 확인
             if (checkPosition.x >= groundMin.x && checkPosition.x <= groundMax.x)

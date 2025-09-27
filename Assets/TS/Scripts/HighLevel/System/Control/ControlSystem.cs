@@ -41,7 +41,7 @@ public partial struct ControlSystem : ISystem
                 {
                     var physics = SystemAPI.GetComponentRO<PhysicsComponent>(selectTarget.Self);
 
-                    if (!physics.ValueRO.isGrounded)
+                    if (!physics.ValueRO.IsGrounded)
                         return;
                 }
                 else if (SystemAPI.HasComponent<SpriteSheetAnimationComponent>(selectTarget.Self))
@@ -85,8 +85,8 @@ public partial struct ControlSystem : ISystem
                 case TSObjectType.Ground:
                     {
                         var collider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
-                        float2 position = collider.position + collider.offset;
-                        float halfHeight = collider.size.y * 0.5f;
+                        float2 position = collider.Position + collider.Offset;
+                        float halfHeight = collider.Size.y * 0.5f;
 
                         position.x = touchPosition.x;
                         position.y += halfHeight;
@@ -111,7 +111,7 @@ public partial struct ControlSystem : ISystem
                         // Gimmick의 위치와 반지름 정보 가져오기
                         var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
                         var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(selectTarget.Self);
-                        var gimmickPosition = gimmickCollider.position + gimmickCollider.offset;
+                        var gimmickPosition = gimmickCollider.Position + gimmickCollider.Offset;
                         float gimmickRadius = gimmick.Radius;
 
                         // 원형의 중심 아래에 접하는 지형 찾기
@@ -168,8 +168,8 @@ public partial struct ControlSystem : ISystem
         foreach (var (collider, groundComp, entity) in
                  SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
         {
-            float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
-            float2 groundSize = collider.ValueRO.size;
+            float2 groundCenter = collider.ValueRO.Position + collider.ValueRO.Offset;
+            float2 groundSize = collider.ValueRO.Size;
 
             // 지형의 경계 계산
             float2 groundMin = groundCenter - groundSize * 0.5f;
@@ -335,13 +335,13 @@ public partial struct ControlSystem : ISystem
 
         // 검색할 셀 범위 계산 (현재 위치와 터치 위치를 모두 포함)
         int2 fromCell = new int2(
-            (int)math.floor(fromPosition.x / cellSize),
-            (int)math.floor(fromPosition.y / cellSize)
+            (int) math.floor(fromPosition.x / cellSize),
+            (int) math.floor(fromPosition.y / cellSize)
         );
 
         int2 touchCell = new int2(
-            (int)math.floor(touchPosition.x / cellSize),
-            (int)math.floor(touchPosition.y / cellSize)
+            (int) math.floor(touchPosition.x / cellSize),
+            (int) math.floor(touchPosition.y / cellSize)
         );
 
         // 검색 영역 확장 (주변 셀들도 포함)
@@ -354,14 +354,14 @@ public partial struct ControlSystem : ISystem
         {
             // 해당 지형이 검색 영역 내에 있는지 확인
             int2 groundCell = new int2(
-                (int)math.floor(collider.ValueRO.position.x / cellSize),
-                (int)math.floor(collider.ValueRO.position.y / cellSize)
+                (int) math.floor(collider.ValueRO.Position.x / cellSize),
+                (int) math.floor(collider.ValueRO.Position.y / cellSize)
             );
 
             if (groundCell.x >= minCell.x && groundCell.x <= maxCell.x &&
                 groundCell.y >= minCell.y && groundCell.y <= maxCell.y)
             {
-                float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
+                float2 groundCenter = collider.ValueRO.Position + collider.ValueRO.Offset;
 
                 // 터치 위치까지의 거리 계산 (X축 우선, Y축은 가중치 적용)
                 float2 diff = groundCenter - touchPosition;
@@ -376,63 +376,6 @@ public partial struct ControlSystem : ISystem
                     shortestDistance = distance;
                     nearestGround = entity;
                 }
-            }
-        }
-
-        return nearestGround;
-    }
-
-    /// <summary>
-    /// 브루트 포스 방식의 지형 검색 (간단하지만 엔티티가 많으면 느림)
-    /// </summary>
-    private Entity FindNearestGroundBruteForce(ref SystemState state, float2 fromPosition, float2 touchPosition)
-    {
-        Entity nearestGround = Entity.Null;
-        float shortestDistance = float.MaxValue;
-
-        foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
-        {
-            float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
-            float distance = math.distance(groundCenter, touchPosition);
-
-            if (distance < shortestDistance)
-            {
-                shortestDistance = distance;
-                nearestGround = entity;
-            }
-        }
-
-        return nearestGround;
-    }
-
-    /// <summary>
-    /// Y축 우선 검색 (플랫포머 게임에 최적화)
-    /// 같은 높이나 아래쪽 지형을 우선적으로 선택
-    /// </summary>
-    private Entity FindNearestGroundByHeight(ref SystemState state, float2 fromPosition, float2 touchPosition)
-    {
-        Entity nearestGround = Entity.Null;
-        float bestScore = float.MaxValue;
-
-        foreach (var (collider, groundComp, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>, RefRO<TSGroundComponent>>().WithEntityAccess())
-        {
-            float2 groundCenter = collider.ValueRO.position + collider.ValueRO.offset;
-            float2 diff = groundCenter - touchPosition;
-
-            // 점수 계산: X축 거리 + Y축 높이 차이 (아래쪽 지형 선호)
-            float score = math.abs(diff.x);
-
-            if (diff.y > 0) // 지형이 터치 위치보다 위에 있음
-                score += diff.y * 2f; // 위쪽 지형은 페널티
-            else // 지형이 터치 위치보다 아래에 있음
-                score += math.abs(diff.y) * 0.5f; // 아래쪽 지형은 작은 페널티
-
-            if (score < bestScore)
-            {
-                bestScore = score;
-                nearestGround = entity;
             }
         }
 

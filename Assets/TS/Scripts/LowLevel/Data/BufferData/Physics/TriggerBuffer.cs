@@ -4,6 +4,6 @@ using Unity.Mathematics;
 
 public struct TriggerBuffer : IBufferElementData
 {
-    public Entity triggerEntity;
-    public bool isEntering; // true면 Enter, false면 Exit
+    public Entity TriggerEntity;
+    public bool IsEntering; // true면 Enter, false면 Exit
 }

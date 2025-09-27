@@ -3,8 +3,9 @@ using Unity.Mathematics;
 
 public struct ColliderComponent : IComponentData
 {
-    public float2 size;
-    public float2 offset;
-    public bool isTrigger;
-    public float2 position;
+    public ColliderLayer Layer;
+    public float2 Size;
+    public float2 Offset;
+    public bool IsTrigger;
+    public float2 Position;
 }

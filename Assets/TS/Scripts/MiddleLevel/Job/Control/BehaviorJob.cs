@@ -80,11 +80,11 @@ public partial struct BehaviorJob : IJobEntity
             Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {actorComponent.Move.MoveState}");
             HandleClimbing(ref transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
         }
-        else if (!physicsComponent.isGrounded)
+        else if (!physicsComponent.IsGrounded)
         {
             animComponent.ValueRW.RequestTransition(AnimationState.Fall, AnimationTransitionType.SkipAllPhase);
         }
-        else if (!physicsComponent.isPrevGrounded && physicsComponent.isGrounded)
+        else if (!physicsComponent.IsPrevGrounded && physicsComponent.IsGrounded)
         {
             // 땅에 착지했을 때 애니메이션 수정
             animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipCurrentPhase);

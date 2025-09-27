@@ -4,7 +4,7 @@ using Unity.Mathematics;
 
 public struct ColliderBoundsComponent : IComponentData
 {
-    public float2 center;
-    public float2 min;
-    public float2 max;
+    public float2 Center;
+    public float2 Min;
+    public float2 Max;
 }

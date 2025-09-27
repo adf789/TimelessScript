@@ -15,9 +15,9 @@ public partial struct SpatialHashUpdateJob : IJobEntity
         ref SpatialHashKeyComponent hashKey,
         in ColliderComponent collider)
     {
-        hashKey.cellPosition = new int2(
-            (int)math.floor(collider.position.x / cellSize),
-            (int)math.floor(collider.position.y / cellSize)
+        hashKey.CellPosition = new int2(
+            (int)math.floor(collider.Position.x / cellSize),
+            (int)math.floor(collider.Position.y / cellSize)
         );
     }
 }

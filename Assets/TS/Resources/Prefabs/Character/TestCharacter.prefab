@@ -309,6 +309,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
+  layer: 1
   size: {x: 1.63, y: 3.72}
   offset: {x: 0, y: 0.09}
   isTrigger: 0
