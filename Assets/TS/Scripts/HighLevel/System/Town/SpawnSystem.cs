@@ -60,10 +60,8 @@ public partial struct SpawnSystem : ISystem
         var spawnExecutionJob = new SpawnExecutionJob
         {
             currentTime = currentTime,
-            objectLookup = SystemAPI.GetComponentLookup<TSObjectComponent>(true),
-            spawnConfigLookup = SystemAPI.GetComponentLookup<SpawnConfigComponent>(true),
-            spawnedEntityBufferLookup = SystemAPI.GetBufferLookup<SpawnedEntityBuffer>(false),
-            ecb = ecb.AsParallelWriter()
+            recycleComponent = SystemAPI.GetSingletonRW<RecycleComponent>(),
+            ecb = ecb
         };
 
         state.Dependency = spawnExecutionJob.Schedule(state.Dependency);

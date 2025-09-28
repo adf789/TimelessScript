@@ -25,6 +25,30 @@ public partial struct ControlSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        // Ground entities를 수집
+        var groundQuery = SystemAPI.QueryBuilder()
+            .WithAll<TSGroundComponent, ColliderComponent, LocalTransform>()
+            .Build();
+        var groundEntities = groundQuery.ToEntityArray(Allocator.TempJob);
+
+        var controlRestoreJob = new ControlRestoreJob
+        {
+            ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+                .CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+            groundEntities = groundEntities,
+            colliderLookup = SystemAPI.GetComponentLookup<ColliderComponent>(true),
+            groundLookup = SystemAPI.GetComponentLookup<TSGroundComponent>(true),
+            gimmickLookup = SystemAPI.GetComponentLookup<TSGimmickComponent>(true),
+            transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true)
+        };
+
+        state.Dependency = controlRestoreJob.ScheduleParallel(state.Dependency);
+
+        state.Dependency.Complete();
+
+        // 임시로 할당된 NativeArray 해제
+        groundEntities.Dispose();
+
         // 엔티티가 참조된 후 삭제되었다면 타겟 캐싱 취소
         entityLookup.Update(ref state);
 
@@ -81,6 +105,7 @@ public partial struct ControlSystem : ISystem
         {
             // 타겟 설정
             var objectComponent = SystemAPI.GetComponentRW<TSActorComponent>(target);
+            objectComponent.ValueRW.Move.Target = selectTarget.Self;
             objectComponent.ValueRW.Move.TargetDataID = selectTarget.DataID;
             objectComponent.ValueRW.Move.TargetType = selectTarget.ObjectType;
             objectComponent.ValueRW.Move.TargetPosition = new float2(rootPosition.x, rootPosition.y);
@@ -90,6 +115,9 @@ public partial struct ControlSystem : ISystem
                 target = selectTarget.Self;
                 return;
             }
+
+            // 현재 타겟 저장(엔티티 재생성 시 복구용)
+            SaveMoveTarget(ref objectComponent.ValueRW, touchPosition);
 
             switch (selectTarget.ObjectType)
             {
@@ -114,7 +142,7 @@ public partial struct ControlSystem : ISystem
                             navigation.ValueRW.State = NavigationState.PathFinding;
                         }
 
-                        Debug.Log($"position: {position}, touchPosition: {touchPosition}");
+
                     }
                     break;
 
@@ -130,20 +158,20 @@ public partial struct ControlSystem : ISystem
                         // 원형의 중심 아래에 접하는 지형 찾기
                         var groundResult = FindGroundBelowCircle(ref state, gimmickPosition, gimmickRadius);
 
-                        if (groundResult.groundEntity != Entity.Null)
+                        if (groundResult.GroundEntity != Entity.Null)
                         {
                             // Navigation 시스템으로 이동
                             if (SystemAPI.HasComponent<NavigationComponent>(target))
                             {
                                 var navigation = SystemAPI.GetComponentRW<NavigationComponent>(target);
                                 navigation.ValueRW.IsActive = true;
-                                navigation.ValueRW.FinalTargetPosition = groundResult.contactPoint;
-                                navigation.ValueRW.FinalTargetGround = groundResult.groundEntity;
+                                navigation.ValueRW.FinalTargetPosition = groundResult.ContactPoint;
+                                navigation.ValueRW.FinalTargetGround = groundResult.GroundEntity;
                                 navigation.ValueRW.CurrentWaypointIndex = 0;
                                 navigation.ValueRW.State = NavigationState.PathFinding;
                             }
 
-                            Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.contactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
+                            Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
                         }
                         else
                         {
@@ -153,16 +181,6 @@ public partial struct ControlSystem : ISystem
                     break;
             }
         }
-    }
-
-    /// <summary>
-    /// 원과 지형의 접촉 결과를 나타내는 구조체
-    /// </summary>
-    private struct GroundContactResult
-    {
-        public Entity groundEntity;
-        public float2 contactPoint;
-        public float distance;
     }
 
     /// <summary>
@@ -217,9 +235,9 @@ public partial struct ControlSystem : ISystem
 
         return new GroundContactResult
         {
-            groundEntity = bestGround,
-            contactPoint = bestContactPoint,
-            distance = shortestDistance
+            GroundEntity = bestGround,
+            ContactPoint = bestContactPoint,
+            Distance = shortestDistance
         };
     }
 
@@ -321,81 +339,10 @@ public partial struct ControlSystem : ISystem
         return intersections;
     }
 
-    /// <summary>
-    /// 주어진 위치에서 가장 가까운 지형을 찾는 메서드
-    /// 여러 가지 전략을 제공합니다.
-    /// </summary>
-    private Entity FindNearestGround(ref SystemState state, float2 fromPosition, float2 touchPosition)
+    private void SaveMoveTarget(ref TSActorComponent actorComponent, float2 touchPosition)
     {
-        // 방법 1: Spatial Hashing을 활용한 효율적인 검색
-        return FindNearestGroundWithSpatialHash(ref state, fromPosition, touchPosition);
-
-        // 방법 2: 브루트 포스 검색 (엔티티가 적을 때)
-        // return FindNearestGroundBruteForce(ref state, fromPosition, touchPosition);
-
-        // 방법 3: Y축 우선 검색 (플랫포머 게임에 특화)
-        // return FindNearestGroundByHeight(ref state, fromPosition, touchPosition);
-    }
-
-    /// <summary>
-    /// Spatial Hashing을 활용한 효율적인 지형 검색
-    /// </summary>
-    private Entity FindNearestGroundWithSpatialHash(ref SystemState state, float2 fromPosition, float2 touchPosition)
-    {
-        Entity nearestGround = Entity.Null;
-        float shortestDistance = float.MaxValue;
-
-        // CollisionSystem의 설정을 가져와서 셀 크기 사용
-        float cellSize = 5f; // 기본값, 실제로는 CollisionSystem에서 가져와야 함
-
-        // 검색할 셀 범위 계산 (현재 위치와 터치 위치를 모두 포함)
-        int2 fromCell = new int2(
-            (int) math.floor(fromPosition.x / cellSize),
-            (int) math.floor(fromPosition.y / cellSize)
-        );
-
-        int2 touchCell = new int2(
-            (int) math.floor(touchPosition.x / cellSize),
-            (int) math.floor(touchPosition.y / cellSize)
-        );
-
-        // 검색 영역 확장 (주변 셀들도 포함)
-        int2 minCell = math.min(fromCell, touchCell) - new int2(2, 2);
-        int2 maxCell = math.max(fromCell, touchCell) + new int2(2, 2);
-
-        // Ground 컴포넌트를 가진 모든 엔티티를 검색
-        foreach (var (collider, groundComp, transform, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>,
-                 RefRO<TSGroundComponent>,
-                 RefRO<LocalTransform>>().WithEntityAccess())
-        {
-            // 해당 지형이 검색 영역 내에 있는지 확인
-            int2 groundCell = new int2(
-                (int) math.floor(transform.ValueRO.Position.x / cellSize),
-                (int) math.floor(transform.ValueRO.Position.y / cellSize)
-            );
-
-            if (groundCell.x >= minCell.x && groundCell.x <= maxCell.x &&
-                groundCell.y >= minCell.y && groundCell.y <= maxCell.y)
-            {
-                float2 groundCenter = transform.ValueRO.Position.xy + collider.ValueRO.Offset;
-
-                // 터치 위치까지의 거리 계산 (X축 우선, Y축은 가중치 적용)
-                float2 diff = groundCenter - touchPosition;
-                float distance = math.length(diff);
-
-                // 플랫포머 게임 특성상 Y축 차이에 더 큰 가중치 적용
-                if (math.abs(diff.y) > 3f) // 3 유닛 이상 높이 차이는 페널티
-                    distance += math.abs(diff.y) * 0.5f;
-
-                if (distance < shortestDistance)
-                {
-                    shortestDistance = distance;
-                    nearestGround = entity;
-                }
-            }
-        }
-
-        return nearestGround;
+        actorComponent.RestoreMove.Target = actorComponent.Move.Target;
+        actorComponent.RestoreMove.TargetDataID = actorComponent.Move.TargetDataID;
+        actorComponent.RestoreMove.TargetType = actorComponent.Move.TargetType; actorComponent.RestoreMove.Position = touchPosition;
     }
 }

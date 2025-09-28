@@ -1,5 +1,6 @@
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -8,14 +9,11 @@ using Unity.Transforms;
 public partial struct SpawnExecutionJob : IJobEntity
 {
     [ReadOnly] public float currentTime;
-    [ReadOnly] public ComponentLookup<TSObjectComponent> objectLookup;
-    [ReadOnly] public ComponentLookup<SpawnConfigComponent> spawnConfigLookup;
-
-    [ReadOnly] public BufferLookup<SpawnedEntityBuffer> spawnedEntityBufferLookup;
-    public EntityCommandBuffer.ParallelWriter ecb;
+    public EntityCommandBuffer ecb;
+    [NativeDisableUnsafePtrRestriction]
+    public RefRW<RecycleComponent> recycleComponent;
 
     public void Execute(
-        [EntityIndexInQuery] int entityIndexInQuery,
         Entity entity,
         ref SpawnRequestComponent spawnRequest)
     {
@@ -23,33 +21,35 @@ public partial struct SpawnExecutionJob : IJobEntity
             return;
 
         // 스폰 오브젝트 인스턴스 생성 (하위 오브젝트들도 함께 생성됨)
-        var spawnedEntity = ecb.Instantiate(entityIndexInQuery, spawnRequest.SpawnObject);
+        var spawnedEntity = ecb.Instantiate(spawnRequest.SpawnObject);
         FixedString64Bytes name = $"Spawned {spawnRequest.Name} {spawnedEntity.Index}";
 
-        ecb.SetName(entityIndexInQuery, spawnedEntity, in name);
+        ecb.SetName(spawnedEntity, in name);
 
         // 스폰된 오브젝트의 위치 설정
-        float3 finalPosition;
-        if (objectLookup.HasComponent(spawnRequest.SpawnObject))
-        {
-            var objectComponent = objectLookup[spawnRequest.SpawnObject];
+        float3 finalPosition = new float3(spawnRequest.SpawnPosition.x, spawnRequest.SpawnPosition.y, 0f);
 
-            // RootOffset을 고려한 위치 계산
-            finalPosition = new float3(
-                spawnRequest.SpawnPosition.x,
-                spawnRequest.SpawnPosition.y - objectComponent.RootOffset,
-                0f
-            );
-        }
-        else
-        {
-            finalPosition = new float3(spawnRequest.SpawnPosition.x, spawnRequest.SpawnPosition.y, 0f);
-        }
+        ecb.SetComponent(spawnedEntity, LocalTransform.FromPosition(finalPosition));
 
-        ecb.SetComponent(entityIndexInQuery, spawnedEntity, LocalTransform.FromPosition(finalPosition));
+        switch (spawnRequest.ObjectType)
+        {
+            case TSObjectType.Actor:
+                {
+                    if (recycleComponent.ValueRW.GetActorCount() > 0)
+                    {
+                        var actorComponent = recycleComponent.ValueRW.GetActor();
+
+                        actorComponent.LifePassingTime = 0;
+
+                        ecb.AddComponent<TSActorComponent>(spawnedEntity, actorComponent);
+                        ecb.AddComponent<MoveRestoreFlagComponent>(spawnedEntity);
+                    }
+                }
+                break;
+        }
 
         // 스폰된 오브젝트에 SpawnedObjectComponent 추가
-        ecb.AddComponent(entityIndexInQuery, spawnedEntity, new SpawnedObjectComponent
+        ecb.AddComponent(spawnedEntity, new SpawnedObjectComponent
         {
             Spawner = spawnRequest.Spawner, // 스포너 엔티티 참조 설정
             SpawnTime = currentTime,
@@ -57,13 +57,13 @@ public partial struct SpawnExecutionJob : IJobEntity
         });
 
         // 스포너의 SpawnedEntityBuffer에 스폰된 Entity 추가
-        ecb.AppendToBuffer(entityIndexInQuery, spawnRequest.Spawner, new SpawnedEntityBuffer
+        ecb.AppendToBuffer(spawnRequest.Spawner, new SpawnedEntityBuffer
         {
             SpawnedEntity = spawnedEntity,
             SpawnTime = currentTime
         });
 
         // 스폰 요청 제거
-        ecb.DestroyEntity(entityIndexInQuery, entity);
+        ecb.DestroyEntity(entity);
     }
 }

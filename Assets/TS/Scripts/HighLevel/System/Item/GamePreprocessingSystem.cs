@@ -13,7 +13,17 @@ public partial class GamePreprocessingSystem : SystemBase
 
     protected override void OnCreate()
     {
+        if (!SystemAPI.HasSingleton<RecycleComponent>())
+        {
+            var entity = EntityManager.CreateEntity(typeof(RecycleComponent));
 
+            EntityManager.SetComponentData(entity, new RecycleComponent
+            {
+                RemoveActors = new NativeQueue<TSActorComponent>(Allocator.Persistent)
+            });
+        }
+
+        RequireForUpdate<RecycleComponent>();
     }
 
     protected override void OnUpdate()
@@ -25,6 +35,7 @@ public partial class GamePreprocessingSystem : SystemBase
 
     private void OnUpdateActorLifeCycle()
     {
+        var recycle = SystemAPI.GetSingletonRW<RecycleComponent>();
         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
         float deltaTime = World.Time.DeltaTime;
 
@@ -39,6 +50,8 @@ public partial class GamePreprocessingSystem : SystemBase
                 return;
 
             CollectingItemByInteract(entity, ref actorComponent, in ecb);
+
+            recycle.ValueRW.AddActor(actorComponent);
 
             ecb.DestroyEntity(entity);
         }).Run();

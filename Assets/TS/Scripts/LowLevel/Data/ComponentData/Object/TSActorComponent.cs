@@ -6,4 +6,5 @@ public struct TSActorComponent : IComponentData
     public float LifeTime;
     public float LifePassingTime;
     public MoveAction Move;
+    public RestoreMoveAction RestoreMove;
 }

@@ -112,11 +112,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7980339820073648b87a29c3f013a73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
-  spawnObjectPrefab: {fileID: 853595635999183450, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
+  spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
   maxSpawnCount: 10
   spawnCooldown: 2
   minSpawnDistance: 1
-  autoSpawn: 1
 --- !u!1 &5301358066985815050
 GameObject:
   m_ObjectHideFlags: 0
