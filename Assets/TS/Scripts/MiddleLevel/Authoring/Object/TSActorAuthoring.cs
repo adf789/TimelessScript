@@ -32,7 +32,6 @@ public class TSActorAuthoring : TSObjectAuthoring
                     Target = Entity.Null,
                     TargetDataID = 0,
                     TargetType = TSObjectType.None,
-                    TargetPosition = float2.zero,
                     MovePosition = authoring.GetRootPosition(),
                     MoveState = MoveState.None
                 },

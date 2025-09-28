@@ -14,6 +14,8 @@ public partial struct BehaviorJob : IJobEntity
 
     [NativeDisableParallelForRestriction]
     public ComponentLookup<ObjectTargetComponent> ObjectTargetComponentLookup;
+    [NativeDisableParallelForRestriction]
+    public ComponentLookup<LocalTransform> TransformLookup;
     public EntityCommandBuffer.ParallelWriter Ecb;
     public float Speed;
     public float ClimbSpeed;
@@ -22,13 +24,13 @@ public partial struct BehaviorJob : IJobEntity
 
     public void Execute([EntityIndexInQuery] int entityInQueryIndex,
         Entity entity,
-        ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref TSActorComponent actorComponent,
     ref PhysicsComponent physicsComponent,
     in NavigationComponent navigationComponent,
     [ReadOnly] DynamicBuffer<Child> children)
     {
+        RefRW<LocalTransform> transform = TransformLookup.GetRefRW(entity);
         RefRW<SpriteSheetAnimationComponent> animComponent = default;
 
         if (objectComponent.AnimationEntity == Entity.Null)
@@ -67,10 +69,10 @@ public partial struct BehaviorJob : IJobEntity
             OnStartMoving(ref animComponent.ValueRW);
 
             Debug.Log($"[BehaviorJob] 일반 이동 처리 중: {objectComponent.Name}");
-            HandleMovement(ref transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+            HandleMovement(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
 
             if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
-                OnEndMoving(entityInQueryIndex, in entity, in transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+                OnEndMoving(entityInQueryIndex, in entity, in transform.ValueRO, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
         }
         else if (purpose == MoveState.ClimbUp
         || purpose == MoveState.ClimbDown)
@@ -78,7 +80,7 @@ public partial struct BehaviorJob : IJobEntity
             OnStartClimbing(in actorComponent, ref animComponent.ValueRW);
 
             Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {actorComponent.Move.MoveState}");
-            HandleClimbing(ref transform, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+            HandleClimbing(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
         }
         else if (!physicsComponent.IsGrounded)
         {
@@ -209,14 +211,14 @@ public partial struct BehaviorJob : IJobEntity
     ref SpriteSheetAnimationComponent anim)
     {
         // 현재 오브젝트와 타겟의 위치를 가져옵니다.
-        float2 targetRootPosition = actorComponent.Move.TargetPosition;
+        float2 targetPosition = TransformLookup[actorComponent.Move.Target].Position.xy;
         float2 currentRootPosition = transform.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
 
         // 이동 목적지 리셋
         if (actorComponent.Move.TargetType == TSObjectType.Gimmick)
         {
-            anim.IsFlip = targetRootPosition.x < currentRootPosition.x;
+            anim.IsFlip = targetPosition.x < currentRootPosition.x;
             anim.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
 
             var interactComponent = new InteractComponent()

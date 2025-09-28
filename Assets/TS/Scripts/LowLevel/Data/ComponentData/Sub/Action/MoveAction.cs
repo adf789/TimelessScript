@@ -7,7 +7,6 @@ public struct MoveAction
     public Entity Target;
     public uint TargetDataID;
     public TSObjectType TargetType;
-    public float2 TargetPosition;
     public float2 MovePosition;
     public MoveState MoveState;
 }

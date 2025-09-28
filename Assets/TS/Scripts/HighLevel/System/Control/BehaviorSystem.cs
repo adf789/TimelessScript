@@ -1,6 +1,7 @@
 
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(NavigationSystem))]
@@ -26,6 +27,7 @@ public partial struct BehaviorSystem : ISystem
         {
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
             ObjectTargetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
+            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
             Ecb = ecb.AsParallelWriter(),
             Speed = 3f,
             ClimbSpeed = 0.7f,

@@ -108,7 +108,6 @@ public partial struct ControlSystem : ISystem
             objectComponent.ValueRW.Move.Target = selectTarget.Self;
             objectComponent.ValueRW.Move.TargetDataID = selectTarget.DataID;
             objectComponent.ValueRW.Move.TargetType = selectTarget.ObjectType;
-            objectComponent.ValueRW.Move.TargetPosition = new float2(rootPosition.x, rootPosition.y);
 
             if (selectTarget.ObjectType == TSObjectType.Actor)
             {
