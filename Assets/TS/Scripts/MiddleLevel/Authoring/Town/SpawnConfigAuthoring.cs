@@ -9,7 +9,6 @@ public class SpawnConfigAuthoring : MonoBehaviour
     [SerializeField] private int maxSpawnCount = 10;
     [SerializeField] private float spawnCooldown = 2.0f;
     [SerializeField] private float minSpawnDistance = 1.0f;
-    [SerializeField] private bool autoSpawn = true;
 
     private class Baker : Baker<SpawnConfigAuthoring>
     {
@@ -28,7 +27,6 @@ public class SpawnConfigAuthoring : MonoBehaviour
                 SpawnCooldown = authoring.spawnCooldown,
                 NextSpawnTime = 0f,
                 MinSpawnDistance = authoring.minSpawnDistance,
-                AutoSpawn = authoring.autoSpawn
             });
 
             // SpawnAreaComponent 추가

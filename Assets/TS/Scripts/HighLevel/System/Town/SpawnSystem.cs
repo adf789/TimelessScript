@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct SpawnSystem : ISystem
 {
     private EntityQuery _spawnConfigQuery;
@@ -34,17 +35,25 @@ public partial struct SpawnSystem : ISystem
         var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
             .CreateCommandBuffer(state.WorldUnmanaged);
 
+        var spawnCleanupJob = new SpawnCleanupJob
+        {
+            currentTime = currentTime,
+            entityLookup = state.GetEntityStorageInfoLookup(),
+            spawnedObjectLookup = state.GetComponentLookup<SpawnedObjectComponent>(),
+        };
+
+        state.Dependency = spawnCleanupJob.ScheduleParallel(state.Dependency);
+        state.Dependency.Complete();
+
         // 스폰 로직 실행 (스폰 설정이 있는 경우에만)
         var spawnJob = new SpawnJob
         {
             currentTime = currentTime,
-            spawnedEntityBufferLookup = SystemAPI.GetBufferLookup<SpawnedEntityBuffer>(true),
             transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
             ecb = ecb.AsParallelWriter()
         };
 
         state.Dependency = spawnJob.ScheduleParallel(state.Dependency);
-
         state.Dependency.Complete();
 
         // 스폰 요청 실행
@@ -53,9 +62,10 @@ public partial struct SpawnSystem : ISystem
             currentTime = currentTime,
             objectLookup = SystemAPI.GetComponentLookup<TSObjectComponent>(true),
             spawnConfigLookup = SystemAPI.GetComponentLookup<SpawnConfigComponent>(true),
+            spawnedEntityBufferLookup = SystemAPI.GetBufferLookup<SpawnedEntityBuffer>(false),
             ecb = ecb.AsParallelWriter()
         };
 
-        state.Dependency = spawnExecutionJob.ScheduleParallel(state.Dependency);
+        state.Dependency = spawnExecutionJob.Schedule(state.Dependency);
     }
 }

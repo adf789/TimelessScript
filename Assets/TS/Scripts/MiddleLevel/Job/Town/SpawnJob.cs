@@ -8,13 +8,13 @@ using Unity.Transforms;
 public partial struct SpawnJob : IJobEntity
 {
     [ReadOnly] public float currentTime;
-    [ReadOnly] public BufferLookup<SpawnedEntityBuffer> spawnedEntityBufferLookup;
     [ReadOnly] public ComponentLookup<LocalTransform> transformLookup;
 
     public EntityCommandBuffer.ParallelWriter ecb;
 
     public void Execute(
         [EntityIndexInQuery] int entityInQueryIndex,
+        Entity spawnerEntity,
         ref SpawnConfigComponent spawnConfig,
         in LocalTransform transform,
         in ColliderComponent collider)
@@ -27,10 +27,6 @@ public partial struct SpawnJob : IJobEntity
         if (spawnConfig.CurrentSpawnCount >= spawnConfig.MaxSpawnCount)
             return;
 
-        // 자동 스폰 비활성화 시 종료
-        if (!spawnConfig.AutoSpawn)
-            return;
-
         // 스폰 가능한 위치 찾기
         FindValidSpawnPosition(entityInQueryIndex, in transform, in collider, out float2 spawnPosition);
 
@@ -39,6 +35,7 @@ public partial struct SpawnJob : IJobEntity
         ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, new SpawnRequestComponent
         {
             SpawnObject = spawnConfig.SpawnObjectPrefab,
+            Spawner = spawnerEntity, // 스포너 Entity 참조 설정
             Name = spawnConfig.Name,
             SpawnPosition = spawnPosition,
             IsActive = true

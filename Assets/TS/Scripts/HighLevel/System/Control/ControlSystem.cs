@@ -13,15 +13,22 @@ using UnityEngine;
 public partial struct ControlSystem : ISystem
 {
     private Entity target;
+    private EntityStorageInfoLookup entityLookup;
 
     public void OnCreate(ref SystemState state)
-       => state.RequireForUpdate<TSActorComponent>();
+    {
+        state.RequireForUpdate<TSActorComponent>();
+
+        entityLookup = state.GetEntityStorageInfoLookup();
+    }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // 엔티티가 참조된 후 삭제되었다면
-        if (target != Entity.Null && !state.World.EntityManager.Exists(target))
+        // 엔티티가 참조된 후 삭제되었다면 타겟 캐싱 취소
+        entityLookup.Update(ref state);
+
+        if (!entityLookup.Exists(target))
             target = Entity.Null;
 
         var targetHolder = SystemAPI.GetSingletonRW<TargetHolderComponent>();

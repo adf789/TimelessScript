@@ -11,5 +11,4 @@ public struct SpawnConfigComponent : IComponentData
     public float SpawnCooldown;
     public float NextSpawnTime;
     public float MinSpawnDistance;
-    public bool AutoSpawn;
 }
