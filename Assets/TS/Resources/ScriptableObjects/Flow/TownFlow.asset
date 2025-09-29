@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3982b2e18d5924844938d04124e70453, type: 3}
   m_Name: TownFlow
   m_EditorClassIdentifier: 
-  uis: 
+  uis: 01000000

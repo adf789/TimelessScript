@@ -14,4 +14,9 @@ public abstract class BaseView : MonoBehaviour
     {
         baseModel = model;
     }
+
+    public virtual void Show()
+    {
+
+    }
 }

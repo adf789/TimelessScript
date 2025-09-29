@@ -16,7 +16,7 @@ namespace EditorLevel.Processor
         private static void Initialize()
         {
             // 컴포넌트가 추가될 때마다 체크
-            // ObjectFactory.componentWasAdded += OnComponentAdded;
+            ObjectFactory.componentWasAdded += OnComponentAdded;
         }
 
         /// <summary>

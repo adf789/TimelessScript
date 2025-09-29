@@ -65,7 +65,7 @@ public class UIScriptCreator : BaseScriptCreator
             CreateScript(viewPath, createViewName, GenerateViewCode(createViewName));
         }
 
-        createPrefabPath = $"{Path.Combine(createPrefabPath, createViewName).Replace("\\", "/")}.prefab";
+        createPrefabPath = $"{createPrefabPath}{selectedType}.prefab";
 
         CreatePrefab(createPrefabPath, createViewName);
 
@@ -160,7 +160,7 @@ public class UIScriptCreator : BaseScriptCreator
 
         string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{selectedType}");
         string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{selectedType}");
-        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType);
+        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType, assetName);
         string createViewName = $"{assetName}{selectedType}";
         string createModelName = $"{assetName}{selectedType}Model";
 
@@ -168,7 +168,6 @@ public class UIScriptCreator : BaseScriptCreator
         {
             modelPath = Path.Combine(modelPath, addPath);
             viewPath = Path.Combine(viewPath, addPath);
-            createPrefabPath = Path.Combine(createPrefabPath, addPath);
         }
 
         // Unit 타입은 다른 구조
@@ -190,7 +189,7 @@ public class UIScriptCreator : BaseScriptCreator
         }
 
         // 프리팹 경로
-        paths.Add($"{createPrefabPath.Replace("\\", "/")}{createViewName}.prefab");
+        paths.Add($"{createPrefabPath}.prefab");
 
         return paths;
     }
@@ -343,7 +342,7 @@ public class UIScriptCreator : BaseScriptCreator
         string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{uiTypeText}");
         string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{uiTypeText}");
         string controllerPath = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Controller/{uiTypeText}");
-        string prefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, uiTypeText);
+        string prefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, uiTypeText, uiType);
         string originName = uiType.ToString().Replace(uiTypeText, "");
 
         DeleteFileInFolder($"{uiType}Model", "*.cs", modelPath);
@@ -429,6 +428,7 @@ public class {name}Unit : BaseUnit<{name}UnitModel>
     private string GenerateControllerCode(string name, bool isPopup)
     {
         return $@"
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class {name}Controller : BaseController<{name}, {name}Model>
