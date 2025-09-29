@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public abstract class BaseFlow : ScriptableObject
 {
@@ -6,19 +8,49 @@ public abstract class BaseFlow : ScriptableObject
     protected UIType[] uis = null;
 
     public virtual GameState State { get; }
-    public virtual void Enter()
+    public virtual async UniTask Enter()
     {
-        OpenUI();
+        await OpenScene();
+
+        await OpenUI();
     }
 
-    public virtual void Exit()
+    public virtual async UniTask Exit()
     {
-        CloseUI();
+        await CloseScene();
+
+        await CloseUI();
     }
 
-    protected async void OpenUI()
+    protected async UniTask OpenScene()
     {
-        for(int index = 0; index < uis.Length; index++)
+        Debug.Log($"Open: {State}");
+        string sceneName = string.Format(StringDefine.PATH_SCENE, State);
+
+        var scene = SceneManager.GetSceneByName(sceneName);
+
+        if (scene.isLoaded)
+            return;
+
+        await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+    }
+
+    protected async UniTask CloseScene()
+    {
+        Debug.Log($"Close: {State}");
+        string sceneName = string.Format(StringDefine.PATH_SCENE, State);
+
+        var scene = SceneManager.GetSceneByName(sceneName);
+
+        if (!scene.IsValid())
+            return;
+
+        await SceneManager.UnloadSceneAsync(scene);
+    }
+
+    protected async UniTask OpenUI()
+    {
+        for (int index = 0; index < uis.Length; index++)
         {
             var ui = UIManager.Instance.GetController(uis[index]);
 
@@ -26,7 +58,7 @@ public abstract class BaseFlow : ScriptableObject
         }
     }
 
-    protected async void CloseUI()
+    protected async UniTask CloseUI()
     {
         for (int index = 0; index < uis.Length; index++)
         {

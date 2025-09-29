@@ -63,7 +63,7 @@ public partial struct ControlRestoreJob : IJobEntity
                 break;
         }
 
-        ecb.RemoveComponent(entityIndexInQuery, entity, typeof(MoveRestoreFlagComponent));
+        ecb.RemoveComponent<MoveRestoreFlagComponent>(entityIndexInQuery, entity);
     }
 
     /// <summary>

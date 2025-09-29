@@ -4,15 +4,4 @@ using UnityEngine;
 public class IntroFlow : BaseFlow
 {
     public override GameState State => GameState.Intro;
-
-
-    public override void Enter()
-    {
-        
-    }
-
-    public override void Exit()
-    {
-        
-    }
 }

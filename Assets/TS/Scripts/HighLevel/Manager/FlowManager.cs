@@ -10,9 +10,24 @@ public class FlowManager : BaseManager<FlowManager>
         if (CurrentFlow != null && CurrentFlow.State == state)
             return;
 
+        var beforeFlow = CurrentFlow;
+
+        // 현재 플로우 로드
         CurrentFlow = await LoadFlow(state);
 
-        CurrentFlow.Enter();
+        // 로딩 시작
+        var loadingFlow = await LoadFlow(GameState.Loading);
+        await loadingFlow.Enter();
+
+        // 이전 플로우 종료
+        if (beforeFlow)
+            await beforeFlow.Exit();
+
+        // 플로우 시작
+        await CurrentFlow.Enter();
+
+        // 로딩 종료
+        await loadingFlow.Exit();
     }
 
     private async UniTask<BaseFlow> LoadFlow(GameState state)

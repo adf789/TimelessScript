@@ -42,12 +42,12 @@ MonoBehaviour:
   - guid: aa7f67e64275d604282b545859eb9c3b
     assetPath: Assets/TS/Resources/ScriptableObjects/Flow/IntroFlow.asset
     displayName: IntroFlow
-  - guid: 2dcc3f488332e5f43a085fc0e99253ce
-    assetPath: Assets/TS/Resources/ScriptableObjects/Flow/HomeFlow.asset
-    displayName: HomeFlow
   - guid: ca4dd91bea863184c9114735992b4f9e
     assetPath: Assets/TS/Resources/ScriptableObjects/Flow/LoadingFlow.asset
     displayName: LoadingFlow
+  - guid: 2dcc3f488332e5f43a085fc0e99253ce
+    assetPath: Assets/TS/Resources/ScriptableObjects/Flow/TownFlow.asset
+    displayName: TownFlow
 --- !u!114 &-3992443798061177277
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -22,7 +22,7 @@ public class GameManager : BaseManager<GameManager>
 
     private void Awake()
     {
-        DontDestroyOnLoad(this);
+        DontDestroyOnLoad(Instance);
     }
 
     private void Start()
@@ -52,7 +52,7 @@ public class GameManager : BaseManager<GameManager>
 
         SetFocusPosition(position);
     }
-    
+
     public void SetDragRange()
     {
         towerBounds = dragRange.bounds;

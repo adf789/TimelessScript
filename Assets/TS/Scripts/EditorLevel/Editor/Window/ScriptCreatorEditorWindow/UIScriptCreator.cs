@@ -28,7 +28,7 @@ public class UIScriptCreator : BaseScriptCreator
 
         string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{selectedType}");
         string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{selectedType}");
-        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType);
+        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType, assetName);
         string createViewName = $"{assetName}{selectedType}";
         string createModelName = $"{assetName}{selectedType}Model";
 
@@ -37,9 +37,6 @@ public class UIScriptCreator : BaseScriptCreator
 
         if (!string.IsNullOrEmpty(addPath))
             viewPath = Path.Combine(viewPath, addPath);
-
-        if (!string.IsNullOrEmpty(addPath))
-            createPrefabPath = Path.Combine(createPrefabPath, addPath);
 
         CreateDirectoryIfNotExist(modelPath);
         CreateDirectoryIfNotExist(viewPath);
@@ -384,7 +381,7 @@ public class UIScriptCreator : BaseScriptCreator
 
         return types.FirstOrDefault(t => t.Name == typeName);
     }
-    
+
     private string GenerateModelCode(string name)
     {
         return $@"
@@ -438,6 +435,26 @@ public class {name}Controller : BaseController<{name}, {name}Model>
 {{
     public override UIType UIType => UIType.{name};
     public override bool IsPopup => {(isPopup ? "true" : "false")};
+
+    public override async UniTask BeforeEnterProcess()
+    {{
+
+    }}
+
+    public override async UniTask EnterProcess()
+    {{
+
+    }}
+
+    public override async UniTask BeforeExitProcess()
+    {{
+
+    }}
+
+    public override async UniTask ExitProcess()
+    {{
+
+    }}
 }}
 ";
     }

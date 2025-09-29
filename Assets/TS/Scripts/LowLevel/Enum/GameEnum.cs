@@ -2,7 +2,7 @@ public enum GameState
 {
     Intro,
     Loading,
-    Home
+    Town
 }
 
 public enum MoveState

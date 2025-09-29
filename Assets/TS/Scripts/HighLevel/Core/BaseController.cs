@@ -3,19 +3,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BaseController<T, V> : BaseController where T: BaseView where V : BaseModel
+public class BaseController<T, V> : BaseController where T : BaseView where V : BaseModel
 {
-    public virtual T GetView<T>() where T : BaseView
-    {
-        return view as T;
-    }
-
-    public virtual V GetModel<V>() where V : BaseModel, new()
+    public V GetModel()
     {
         if (model == null)
-            model = new V();
+            model = Activator.CreateInstance<V>();
 
         return model as V;
+    }
+
+    public override void InitializeModel()
+    {
+        if (view)
+            view.SetModel(GetModel());
     }
 }
 
@@ -25,7 +26,7 @@ public class BaseController
     public IReadOnlyCollection<BaseController> ChildControllers { get => childControllers; }
     public virtual UIType UIType { get; }
     public virtual bool IsPopup { get; }
-    public virtual string ViewPath { get => string.Format(StringDefine.PATH_LOAD_VIEW_PREFAB, UIType, (IsPopup ? "Popup" : "View")); }
+    public virtual string ViewPath { get => string.Format(StringDefine.PATH_LOAD_VIEW_PREFAB, (IsPopup ? "Popup" : "View"), UIType); }
 
     private Queue<BaseController> childControllers = null;
     private Func<BaseController, UniTask> onEventEnter = null;
@@ -72,6 +73,31 @@ public class BaseController
         await onEventExit(this);
     }
 
+    public virtual void InitializeModel()
+    {
+
+    }
+
+    public virtual async UniTask BeforeEnterProcess()
+    {
+
+    }
+
+    public virtual async UniTask EnterProcess()
+    {
+
+    }
+
+    public virtual async UniTask BeforeExitProcess()
+    {
+
+    }
+
+    public virtual async UniTask ExitProcess()
+    {
+
+    }
+
     public bool AddChild(BaseController controller)
     {
         if (this == controller)
@@ -79,7 +105,7 @@ public class BaseController
 
         if (childControllers == null)
         {
-            if(childControllers == null)
+            if (childControllers == null)
                 childControllers = new Queue<BaseController>();
         }
 

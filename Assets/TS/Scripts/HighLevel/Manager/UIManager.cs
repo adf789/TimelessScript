@@ -6,9 +6,11 @@ using UnityEngine;
 
 public class UIManager : BaseManager<UIManager>
 {
-    private List<BaseController> openControllers = new List<BaseController>();
+    [SerializeField] private Canvas viewCanvas;
+    [SerializeField] private Canvas frontCanvas;
 
-    private Dictionary<UIType, BaseController> readyControllers = null;
+    private List<BaseController> openControllers = new List<BaseController>();
+    private Dictionary<UIType, BaseController> openedControllers = null;
 
     public bool CheckOpenedView()
     {
@@ -22,10 +24,10 @@ public class UIManager : BaseManager<UIManager>
 
     public BaseController GetController(UIType uiType)
     {
-        if (readyControllers == null)
-            readyControllers = new Dictionary<UIType, BaseController>();
+        if (openedControllers == null)
+            openedControllers = new Dictionary<UIType, BaseController>();
 
-        if (readyControllers.TryGetValue(uiType, out var controller))
+        if (openedControllers.TryGetValue(uiType, out var controller))
             return controller;
 
         string typeName = string.Format(StringDefine.DEFINE_CONTROLLER_TYPE_NAME, uiType);
@@ -40,7 +42,7 @@ public class UIManager : BaseManager<UIManager>
             newController.SetEventEnter(Enter);
             newController.SetEventExit(Exit);
 
-            readyControllers.Add(uiType, newController);
+            openedControllers.Add(uiType, newController);
         }
 
         return newController;
@@ -57,10 +59,12 @@ public class UIManager : BaseManager<UIManager>
         if (CheckOpenedView(controller.UIType))
             return;
 
-        // »£√‚ ¥Î±‚ ¡ﬂ¿Œ UI ªË¡¶
-        readyControllers.Remove(controller.UIType);
+        await controller.BeforeEnterProcess();
 
-        controller.CreateView(transform);
+        controller.CreateView(viewCanvas.transform);
+        controller.InitializeModel();
+
+        await controller.EnterProcess();
     }
 
     public async UniTask Exit(BaseController controller)
@@ -68,12 +72,13 @@ public class UIManager : BaseManager<UIManager>
         if (controller == null)
             return;
 
-        controller.DeleteView();
-    }
+        await controller.BeforeExitProcess();
 
-    [ContextMenu("Test")]
-    public void Test()
-    {
-        
+        controller.DeleteView();
+
+        await controller.ExitProcess();
+
+        // Ïò§ÌîàÎêú UI Ï∫êÏã± ÏÇ≠Ï†ú
+        openedControllers.Remove(controller.UIType);
     }
 }
