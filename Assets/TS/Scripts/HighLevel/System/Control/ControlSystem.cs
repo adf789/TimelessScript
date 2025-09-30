@@ -31,6 +31,7 @@ public partial struct ControlSystem : ISystem
             .Build();
         var groundEntities = groundQuery.ToEntityArray(Allocator.TempJob);
 
+        // 리스폰 후 컨트롤 상태를 복구함
         var controlRestoreJob = new ControlRestoreJob
         {
             ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
@@ -43,7 +44,6 @@ public partial struct ControlSystem : ISystem
         };
 
         state.Dependency = controlRestoreJob.ScheduleParallel(state.Dependency);
-
         state.Dependency.Complete();
 
         // 임시로 할당된 NativeArray 해제
@@ -115,6 +115,13 @@ public partial struct ControlSystem : ISystem
                 return;
             }
 
+            // 위치 가져옴
+            var transform = SystemAPI.GetComponent<LocalTransform>(target);
+            var targetTransform = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self);
+
+            float2 selfPosition = transform.Position.xy;
+            float2 targetPosition = targetTransform.Position.xy;
+
             // 현재 타겟 저장(엔티티 재생성 시 복구용)
             SaveMoveTarget(ref objectComponent.ValueRW, touchPosition);
 
@@ -123,8 +130,7 @@ public partial struct ControlSystem : ISystem
                 case TSObjectType.Ground:
                     {
                         var collider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
-                        var transform = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self);
-                        float2 position = transform.Position.xy + collider.Offset;
+                        float2 position = targetPosition + collider.Offset;
                         float halfHeight = collider.Size.y * 0.5f;
 
                         position.x = touchPosition.x;
@@ -150,12 +156,11 @@ public partial struct ControlSystem : ISystem
                         // Gimmick의 위치와 반지름 정보 가져오기
                         var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
                         var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(selectTarget.Self);
-                        var transform = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self);
-                        var gimmickPosition = transform.Position.xy + gimmickCollider.Offset;
+                        var gimmickPosition = targetPosition + gimmickCollider.Offset;
                         float gimmickRadius = gimmick.Radius;
 
                         // 원형의 중심 아래에 접하는 지형 찾기
-                        var groundResult = FindGroundBelowCircle(ref state, gimmickPosition, gimmickRadius);
+                        var groundResult = FindGroundBelowCircle(ref state, selfPosition, gimmickPosition, gimmickRadius);
 
                         if (groundResult.GroundEntity != Entity.Null)
                         {
@@ -185,7 +190,7 @@ public partial struct ControlSystem : ISystem
     /// <summary>
     /// 원형의 중심 아래에 접하는 지형을 찾고 접촉점을 계산하는 메서드
     /// </summary>
-    private GroundContactResult FindGroundBelowCircle(ref SystemState state, float2 circleCenter, float circleRadius)
+    private GroundContactResult FindGroundBelowCircle(ref SystemState state, float2 basePosition, float2 circleCenter, float circleRadius)
     {
         Entity bestGround = Entity.Null;
         float2 bestContactPoint = float2.zero;
@@ -212,7 +217,7 @@ public partial struct ControlSystem : ISystem
             if (groundTopY < circleCenter.y)
             {
                 // 원과 지형 사각형의 접촉점 계산
-                float2 contactPoint = CalculateCircleRectangleContact(circleCenter, circleRadius, groundMin, groundMax);
+                float2 contactPoint = CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);
 
                 // 접촉점이 유효한지 확인 (NaN이 아님)
                 if (!math.isnan(contactPoint.x) && !math.isnan(contactPoint.y))
@@ -244,7 +249,7 @@ public partial struct ControlSystem : ISystem
     /// 원과 사각형(지형) 사이의 접촉점을 계산하는 메서드
     /// 원이 지형 상단면과 접촉하는 실제 지점들을 모두 찾아서 가장 적절한 점을 반환
     /// </summary>
-    private float2 CalculateCircleRectangleContact(float2 circleCenter, float circleRadius, float2 rectMin, float2 rectMax)
+    private float2 CalculateCircleRectangleContact(float2 basePosition, float2 circleCenter, float circleRadius, float2 rectMin, float2 rectMax)
     {
         float groundTopY = rectMax.y;
 
@@ -255,11 +260,11 @@ public partial struct ControlSystem : ISystem
         {
             // 교점이 있으면 원의 중심에서 가장 가까운 교점 반환
             float2 bestPoint = intersections[0];
-            float shortestDist = math.distance(circleCenter, bestPoint);
+            float shortestDist = math.distance(basePosition, bestPoint);
 
             for (int i = 1; i < intersections.Length; i++)
             {
-                float dist = math.distance(circleCenter, intersections[i]);
+                float dist = math.distance(basePosition, intersections[i]);
                 if (dist < shortestDist)
                 {
                     shortestDist = dist;
@@ -269,29 +274,6 @@ public partial struct ControlSystem : ISystem
 
             Debug.Log($"Circle-Ground intersection found at: {bestPoint}, Total intersections: {intersections.Length}");
             return bestPoint;
-        }
-
-        // 교점이 없으면 모서리와의 접촉 확인
-        float2 topLeftCorner = new float2(rectMin.x, rectMax.y);
-        float2 topRightCorner = new float2(rectMax.x, rectMax.y);
-
-        float distToTopLeft = math.distance(circleCenter, topLeftCorner);
-        float distToTopRight = math.distance(circleCenter, topRightCorner);
-
-        if (distToTopLeft <= circleRadius)
-        {
-            float2 direction = math.normalize(topLeftCorner - circleCenter);
-            float2 contactPoint = circleCenter + direction * circleRadius;
-            Debug.Log($"Circle-Corner contact (left): {contactPoint}");
-            return contactPoint;
-        }
-
-        if (distToTopRight <= circleRadius)
-        {
-            float2 direction = math.normalize(topRightCorner - circleCenter);
-            float2 contactPoint = circleCenter + direction * circleRadius;
-            Debug.Log($"Circle-Corner contact (right): {contactPoint}");
-            return contactPoint;
         }
 
         // 접촉하지 않는 경우

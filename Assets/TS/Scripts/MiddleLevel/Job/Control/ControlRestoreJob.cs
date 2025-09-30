@@ -38,15 +38,19 @@ public partial struct ControlRestoreJob : IJobEntity
                     actor.Move.TargetDataID = actor.RestoreMove.TargetDataID;
                     actor.Move.TargetType = actor.RestoreMove.TargetType;
 
+                    // Actor 위치 가져오기
+                    var transform = transformLookup[entity];
+                    var actorPosition = transform.Position.xy;
+
                     // Gimmick의 위치와 반지름 정보 가져오기
                     var gimmickCollider = colliderLookup.GetRefRO(target);
                     var gimmick = gimmickLookup.GetRefRO(target);
-                    var transform = transformLookup.GetRefRO(target);
-                    var gimmickPosition = transform.ValueRO.Position.xy + gimmickCollider.ValueRO.Offset;
+                    var gimmickTransform = transformLookup.GetRefRO(target);
+                    var gimmickPosition = gimmickTransform.ValueRO.Position.xy + gimmickCollider.ValueRO.Offset;
                     float gimmickRadius = gimmick.ValueRO.Radius;
 
                     // 원형의 중심 아래에 접하는 지형 찾기
-                    var groundResult = FindGroundBelowCircle(gimmickPosition, gimmickRadius);
+                    var groundResult = FindGroundBelowCircle(actorPosition, gimmickPosition, gimmickRadius);
 
                     if (groundResult.GroundEntity != Entity.Null)
                     {
@@ -69,7 +73,7 @@ public partial struct ControlRestoreJob : IJobEntity
     /// <summary>
     /// 원형의 중심 아래에 접하는 지형을 찾고 접촉점을 계산하는 메서드
     /// </summary>
-    public GroundContactResult FindGroundBelowCircle(float2 circleCenter, float circleRadius)
+    public GroundContactResult FindGroundBelowCircle(float2 basePosition, float2 circleCenter, float circleRadius)
     {
         Entity bestGround = Entity.Null;
         float2 bestContactPoint = float2.zero;
@@ -103,7 +107,7 @@ public partial struct ControlRestoreJob : IJobEntity
             if (groundTopY < circleCenter.y)
             {
                 // 원과 지형 사각형의 접촉점 계산
-                float2 contactPoint = CalculateCircleRectangleContact(circleCenter, circleRadius, groundMin, groundMax);
+                float2 contactPoint = CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);
 
                 // 접촉점이 유효한지 확인 (NaN이 아님)
                 if (!math.isnan(contactPoint.x) && !math.isnan(contactPoint.y))
@@ -135,7 +139,7 @@ public partial struct ControlRestoreJob : IJobEntity
     /// 원과 사각형(지형) 사이의 접촉점을 계산하는 메서드
     /// 원이 지형 상단면과 접촉하는 실제 지점들을 모두 찾아서 가장 적절한 점을 반환
     /// </summary>
-    private float2 CalculateCircleRectangleContact(float2 circleCenter, float circleRadius, float2 rectMin, float2 rectMax)
+    private float2 CalculateCircleRectangleContact(float2 basePosition, float2 circleCenter, float circleRadius, float2 rectMin, float2 rectMax)
     {
         float groundTopY = rectMax.y;
 
@@ -146,11 +150,11 @@ public partial struct ControlRestoreJob : IJobEntity
         {
             // 교점이 있으면 원의 중심에서 가장 가까운 교점 반환
             float2 bestPoint = intersections[0];
-            float shortestDist = math.distance(circleCenter, bestPoint);
+            float shortestDist = math.distance(basePosition, bestPoint);
 
             for (int i = 1; i < intersections.Length; i++)
             {
-                float dist = math.distance(circleCenter, intersections[i]);
+                float dist = math.distance(basePosition, intersections[i]);
                 if (dist < shortestDist)
                 {
                     shortestDist = dist;
@@ -160,29 +164,6 @@ public partial struct ControlRestoreJob : IJobEntity
 
             Debug.Log($"Circle-Ground intersection found at: {bestPoint}, Total intersections: {intersections.Length}");
             return bestPoint;
-        }
-
-        // 교점이 없으면 모서리와의 접촉 확인
-        float2 topLeftCorner = new float2(rectMin.x, rectMax.y);
-        float2 topRightCorner = new float2(rectMax.x, rectMax.y);
-
-        float distToTopLeft = math.distance(circleCenter, topLeftCorner);
-        float distToTopRight = math.distance(circleCenter, topRightCorner);
-
-        if (distToTopLeft <= circleRadius)
-        {
-            float2 direction = math.normalize(topLeftCorner - circleCenter);
-            float2 contactPoint = circleCenter + direction * circleRadius;
-            Debug.Log($"Circle-Corner contact (left): {contactPoint}");
-            return contactPoint;
-        }
-
-        if (distToTopRight <= circleRadius)
-        {
-            float2 direction = math.normalize(topRightCorner - circleCenter);
-            float2 contactPoint = circleCenter + direction * circleRadius;
-            Debug.Log($"Circle-Corner contact (right): {contactPoint}");
-            return contactPoint;
         }
 
         // 접촉하지 않는 경우

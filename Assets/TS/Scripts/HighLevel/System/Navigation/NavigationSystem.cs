@@ -152,7 +152,6 @@ public partial struct NavigationSystem : ISystem
     ref TSActorComponent actorComponent,
     NavigationWaypoint waypoint)
     {
-        actorComponent.Move.Target = waypoint.TargetEntity;
         actorComponent.Move.MoveState = waypoint.MoveType;
         actorComponent.Move.MovePosition = waypoint.Position;
 

@@ -62,6 +62,12 @@ public partial struct BehaviorJob : IJobEntity
         if (!animComponent.IsValid)
             return;
 
+        if (!physicsComponent.IsGrounded)
+        {
+            animComponent.ValueRW.RequestTransition(AnimationState.Fall, AnimationTransitionType.SkipAllPhase);
+            return;
+        }
+
         var purpose = actorComponent.Move.MoveState;
 
         if (purpose == MoveState.Move)
@@ -81,10 +87,6 @@ public partial struct BehaviorJob : IJobEntity
 
             Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {actorComponent.Move.MoveState}");
             HandleClimbing(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
-        }
-        else if (!physicsComponent.IsGrounded)
-        {
-            animComponent.ValueRW.RequestTransition(AnimationState.Fall, AnimationTransitionType.SkipAllPhase);
         }
         else if (!physicsComponent.IsPrevGrounded && physicsComponent.IsGrounded)
         {
