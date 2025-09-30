@@ -172,27 +172,27 @@ public class ResourcesTypeRegistry : ScriptableObject
     /// <summary>
     /// Load asset using type-specific ResourcesPath
     /// </summary>
-    public async UniTask<T> Load<T>(string guid) where T : UnityEngine.Object
+    public T Load<T>(string guid) where T : UnityEngine.Object
     {
         var resourcesPath = GetResourcesPath<T>();
 
         if (resourcesPath == null)
             return null;
 
-        return await resourcesPath.Load<T>(guid);
+        return resourcesPath.Load<T>(guid);
     }
 
     /// <summary>
     /// Load asset using type-specific ResourcesPath
     /// </summary>
-    public async UniTask<UnityEngine.Object> Load(string guid, Type type)
+    public async UniTask<T> LoadAsync<T>(string guid) where T : UnityEngine.Object
     {
-        var resourcesPath = GetResourcesPath(type);
+        var resourcesPath = GetResourcesPath<T>();
 
         if (resourcesPath == null)
             return null;
 
-        return await resourcesPath.Load(guid, type);
+        return await resourcesPath.LoadAsync<T>(guid);
     }
 
     /// <summary>

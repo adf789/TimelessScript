@@ -85,7 +85,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
-  m_Size: {x: 4, y: 4}
+  m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -106,7 +106,7 @@ MonoBehaviour:
   defaultState: 1
   spriteRenderer: {fileID: 8070793168041068064}
   spriteImage: {fileID: 0}
-  size: {x: 4, y: 4}
+  size: {x: 1, y: 1}
   spriteSheets:
   - SourceImage: {fileID: 7408791951343775973, guid: bbbaf36ec5c6401459b9e54454f8eff7, type: 3}
     Guid: bbbaf36ec5c6401459b9e54454f8eff7
@@ -235,7 +235,7 @@ Transform:
   m_GameObject: {fileID: 4422742858844270500}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.78, z: 0}
+  m_LocalPosition: {x: 0, y: -0.44, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -310,7 +310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
   layer: 1
-  size: {x: 1.63, y: 3.72}
+  size: {x: 0.55, y: 1.26}
   offset: {x: 0, y: 0.09}
   isTrigger: 0
 --- !u!114 &4772863480542143071
@@ -352,4 +352,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSActorAuthoring
   root: {fileID: 7488242015394640608}
-  lifeTime: 10
+  lifeTime: 30

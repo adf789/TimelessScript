@@ -90,6 +90,9 @@ MonoBehaviour:
   - guid: 17559c1925ab2af47942d1c14e89ff84
     assetPath: Assets/TS/Resources/Prefabs/Character/TestCharacter.prefab
     displayName: TestCharacter
+  - guid: e59810f912172d94c87af1abff93b0fd
+    assetPath: Assets/TS/Resources/Prefabs/Effect/RewardEffect.prefab
+    displayName: RewardEffect
 --- !u!114 &-25286370874405263
 MonoBehaviour:
   m_ObjectHideFlags: 0

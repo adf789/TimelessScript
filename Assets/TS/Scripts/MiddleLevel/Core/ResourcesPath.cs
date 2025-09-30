@@ -151,27 +151,6 @@ public class ResourcesPath : ScriptableObject
     /// <summary>
     /// Load asset by GUID
     /// </summary>
-    public async UniTask<T> Load<T>(string guid) where T : UnityEngine.Object
-    {
-        var assetPath = GetAssetPath(guid);
-        if (string.IsNullOrEmpty(assetPath))
-        {
-            Debug.LogWarning($"No asset path found for GUID: {guid}");
-            return null;
-        }
-
-        var request = Resources.LoadAsync<T>(ConvertToResourcesPath(assetPath));
-        var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode())) as T;
-
-        if (loadedAsset == null)
-            Debug.LogError($"Not found asset by path: {assetPath}");
-
-        return loadedAsset;
-    }
-
-    /// <summary>
-    /// Load asset by GUID
-    /// </summary>
     public T[] LoadAll<T>(string guid) where T : UnityEngine.Object
     {
         var assetPath = GetAssetPath(guid);
@@ -185,19 +164,39 @@ public class ResourcesPath : ScriptableObject
     }
 
     /// <summary>
-    /// Load asset by GUID (non-generic)
+    /// Load asset by GUID
     /// </summary>
-    public async UniTask<UnityEngine.Object> Load(string guid, System.Type type)
+    public T Load<T>(string guid) where T : UnityEngine.Object
     {
         var assetPath = GetAssetPath(guid);
         if (string.IsNullOrEmpty(assetPath))
         {
             Debug.LogWarning($"No asset path found for GUID: {guid}");
-            return default;
+            return null;
         }
 
-        var request = Resources.LoadAsync(ConvertToResourcesPath(assetPath), type);
-        var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode()));
+        var loadedAsset = Resources.Load<T>(ConvertToResourcesPath(assetPath));
+
+        if (loadedAsset == null)
+            Debug.LogError($"Not found asset by path: {assetPath}");
+
+        return loadedAsset;
+    }
+
+    /// <summary>
+    /// Load asset by GUID
+    /// </summary>
+    public async UniTask<T> LoadAsync<T>(string guid) where T : UnityEngine.Object
+    {
+        var assetPath = GetAssetPath(guid);
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            Debug.LogWarning($"No asset path found for GUID: {guid}");
+            return null;
+        }
+
+        var request = Resources.LoadAsync<T>(ConvertToResourcesPath(assetPath));
+        var loadedAsset = await request.ToUniTask(cancellationToken: TokenPool.Get(GetHashCode())) as T;
 
         if (loadedAsset == null)
             Debug.LogError($"Not found asset by path: {assetPath}");
@@ -224,7 +223,7 @@ public class ResourcesPath : ScriptableObject
         return loadedAsset;
     }
 
-     /// <summary>
+    /// <summary>
     /// Load asset by Name
     /// </summary>
     public T LoadByName<T>(string name) where T : UnityEngine.Object

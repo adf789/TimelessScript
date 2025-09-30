@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Transforms;
 using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -81,6 +82,7 @@ public partial class GamePreprocessingSystem : SystemBase
         if (!SystemAPI.HasBuffer<InteractBuffer>(entity))
             return;
 
+        var transform = SystemAPI.GetComponent<LocalTransform>(entity);
         var interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(entity);
 
         foreach (var interact in interactBuffer)
@@ -105,6 +107,15 @@ public partial class GamePreprocessingSystem : SystemBase
                             collectItems[itemData.ID] = item.AddCount(count);
                         else
                             collectItems[itemData.ID] = new Item(itemData, count);
+
+                        if (count > 0)
+                        {
+                            ObserverSubManager.Instance.NotifyObserver(new RewardEffectParam()
+                            {
+                                Position = transform.Position.xy,
+                                RewardCount = (int) count
+                            });
+                        }
                     }
                     break;
             }

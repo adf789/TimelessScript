@@ -68,7 +68,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
   layer: 4
-  size: {x: 3, y: 3}
+  size: {x: 1, y: 1}
   offset: {x: 0, y: 0}
   isTrigger: 1
 --- !u!114 &534198486437448583
@@ -98,7 +98,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.MiddleLevel::TSGimmickAuthoring
   root: {fileID: 3971888583458909171}
   gimmickID: 200001
-  radius: 2.32
+  radius: 0.8
 --- !u!1 &3513460485882666974
 GameObject:
   m_ObjectHideFlags: 0
@@ -183,7 +183,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
-  m_Size: {x: 3, y: 3}
+  m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -214,7 +214,7 @@ Transform:
   m_GameObject: {fileID: 8785457166557062792}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.43, z: 0}
+  m_LocalPosition: {x: 0, y: -0.49, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

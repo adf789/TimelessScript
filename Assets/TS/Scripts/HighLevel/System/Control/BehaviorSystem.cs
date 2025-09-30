@@ -29,8 +29,8 @@ public partial struct BehaviorSystem : ISystem
             ObjectTargetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
             TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
             Ecb = ecb.AsParallelWriter(),
-            Speed = 3f,
-            ClimbSpeed = 0.7f,
+            Speed = 1f,
+            ClimbSpeed = 0.3f,
             DeltaTime = SystemAPI.Time.DeltaTime
         };
 
