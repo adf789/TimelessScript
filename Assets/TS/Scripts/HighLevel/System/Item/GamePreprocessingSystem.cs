@@ -84,6 +84,7 @@ public partial class GamePreprocessingSystem : SystemBase
 
         var transform = SystemAPI.GetComponent<LocalTransform>(entity);
         var interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(entity);
+        long totalCount = 0;
 
         foreach (var interact in interactBuffer)
         {
@@ -108,18 +109,17 @@ public partial class GamePreprocessingSystem : SystemBase
                         else
                             collectItems[itemData.ID] = new Item(itemData, count);
 
-                        if (count > 0)
-                        {
-                            ObserverSubManager.Instance.NotifyObserver(new RewardEffectParam()
-                            {
-                                Position = transform.Position.xy,
-                                RewardCount = (int) count
-                            });
-                        }
+                        totalCount += count;
                     }
                     break;
             }
         }
+
+        ObserverSubManager.Instance.NotifyObserver(new RewardEffectParam()
+        {
+            Position = transform.Position.xy,
+            RewardCount = (int) totalCount
+        });
 
         interactBuffer.Clear();
     }
