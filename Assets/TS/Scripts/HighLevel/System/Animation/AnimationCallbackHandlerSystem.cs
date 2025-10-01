@@ -19,6 +19,7 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         foreach (var (animComponent, entity)
         in SystemAPI.Query<RefRW<SpriteSheetAnimationComponent>>().WithEntityAccess())
         {
+            // 애니메이션이 시작한 경우
             if (animComponent.ValueRO.AnimationStarted)
             {
                 HandleAnimationStarted(entity, ref animComponent.ValueRW, ref state);
@@ -27,6 +28,7 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
                 animComponent.ValueRW.StartedAnimationState = AnimationState.None;
             }
 
+            // 애니메이션이 종료한 경우
             if (animComponent.ValueRO.AnimationCompleted)
             {
                 HandleAnimationCompleted(entity, ref animComponent.ValueRW, ref state);

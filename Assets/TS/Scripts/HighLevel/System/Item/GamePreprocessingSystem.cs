@@ -45,15 +45,19 @@ public partial class GamePreprocessingSystem : SystemBase
         .WithoutBurst()
         .ForEach((Entity entity, ref TSActorComponent actorComponent) =>
         {
+            // 액터 생명시간 체크
             actorComponent.LifePassingTime += deltaTime;
 
             if (actorComponent.LifePassingTime < actorComponent.LifeTime)
                 return;
 
+            // 시간이 모두 지나면 얻은 아이템들 인벤토리로 획득
             CollectingItemByInteract(entity, ref actorComponent, in ecb);
 
+            // 컴포넌트 값 재사용
             recycle.ValueRW.AddActor(actorComponent);
 
+            // 엔티티 삭제
             ecb.DestroyEntity(entity);
         }).Run();
 

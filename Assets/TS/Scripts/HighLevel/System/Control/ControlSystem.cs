@@ -12,7 +12,7 @@ using UnityEngine;
 [BurstCompile]
 public partial struct ControlSystem : ISystem
 {
-    private Entity target;
+    private Entity controlTarget;
     private EntityStorageInfoLookup entityLookup;
 
     public void OnCreate(ref SystemState state)
@@ -24,6 +24,41 @@ public partial struct ControlSystem : ISystem
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
+    {
+        // 리스폰 된 액터 컨트롤 복구
+        OnUpdateRestoreControl(ref state);
+
+        // 엔티티가 참조된 후 삭제되었다면 타겟 캐싱 취소
+        CheckValidControlTarget(ref state);
+
+        // 터치된 타겟 가져옴
+        if (!TryGetPickedTarget(ref state, out var pickedTarget, out float2 touchPosition))
+            return;
+
+        // 컨트롤 타겟 설정
+        if (controlTarget == Entity.Null
+        || pickedTarget.ObjectType == TSObjectType.Actor)
+        {
+            // 선택 가능한 타겟인지 확인
+            if (!CheckPossibleControlTarget(ref state, in pickedTarget))
+                return;
+
+            controlTarget = pickedTarget.Self;
+
+            Debug.Log($"Select {pickedTarget.Name}");
+
+            return;
+        }
+
+        // 목표 타겟 설정
+        if (!SetTarget(ref state, pickedTarget))
+            return;
+
+        // 이동에 필요한 값 설정
+        SetMoveStatus(ref state, in pickedTarget, in touchPosition);
+    }
+
+    private void OnUpdateRestoreControl(ref SystemState state)
     {
         // Ground entities를 수집
         var groundQuery = SystemAPI.QueryBuilder()
@@ -48,142 +83,152 @@ public partial struct ControlSystem : ISystem
 
         // 임시로 할당된 NativeArray 해제
         groundEntities.Dispose();
+    }
 
-        // 엔티티가 참조된 후 삭제되었다면 타겟 캐싱 취소
-        entityLookup.Update(ref state);
+    private bool TryGetPickedTarget(ref SystemState state,
+    out TSObjectComponent pickedTarget,
+    out float2 touchPosition)
+    {
+        pickedTarget = default;
+        touchPosition = float2.zero;
 
-        if (!entityLookup.Exists(target))
-            target = Entity.Null;
-
+        // 선택된 타겟 가져옴
         var targetHolder = SystemAPI.GetSingletonRW<TargetHolderComponent>();
 
         if (targetHolder.ValueRW.Target.IsNull)
-            return;
+            return false;
 
-        // 선택된 오브젝트 해제
-        var selectTarget = targetHolder.ValueRW.Target;
-        var touchPosition = targetHolder.ValueRW.TouchPosition;
-        var rootPosition = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self).Position;
-        rootPosition.y += selectTarget.RootOffset;
+        pickedTarget = targetHolder.ValueRW.Target;
+        touchPosition = targetHolder.ValueRW.TouchPosition;
 
+        // 선택된 타겟 해제
         targetHolder.ValueRW.Release();
 
-        if (target == Entity.Null)
+        return true;
+    }
+
+    private void CheckValidControlTarget(ref SystemState state)
+    {
+        entityLookup.Update(ref state);
+
+        if (!entityLookup.Exists(controlTarget))
+            controlTarget = Entity.Null;
+    }
+
+    /// <summary>
+    /// 현재 선택 가능한 타겟인지 확인
+    /// </summary>
+    private bool CheckPossibleControlTarget(ref SystemState state, in TSObjectComponent selectTarget)
+    {
+        if (selectTarget.IsNull)
+            return false;
+
+        if (selectTarget.Self == controlTarget)
+            return false;
+
+        if (selectTarget.ObjectType != TSObjectType.Actor)
+            return false;
+
+        if (SystemAPI.HasComponent<PhysicsComponent>(selectTarget.Self))
         {
-            if (selectTarget.ObjectType == TSObjectType.Actor)
-            {
-                if (SystemAPI.HasComponent<PhysicsComponent>(selectTarget.Self))
-                {
-                    var physics = SystemAPI.GetComponentRO<PhysicsComponent>(selectTarget.Self);
+            var physics = SystemAPI.GetComponent<PhysicsComponent>(selectTarget.Self);
 
-                    if (!physics.ValueRO.IsGrounded)
-                        return;
-                }
-                else if (SystemAPI.HasComponent<SpriteSheetAnimationComponent>(selectTarget.Self))
-                {
-                    var animation = SystemAPI.GetComponentRO<SpriteSheetAnimationComponent>(selectTarget.Self);
-
-                    if (animation.ValueRO.CurrentState != AnimationState.Idle)
-                        return;
-                }
-
-                target = selectTarget.Self;
-
-                Debug.Log($"Select {selectTarget.Name}");
-            }
-            return;
+            if (!physics.IsGrounded)
+                return false;
         }
 
-        if (target == selectTarget.Self)
-        {
-            target = Entity.Null;
+        return true;
+    }
 
-            Debug.Log($"Unselect {selectTarget.Name}");
+    /// <summary>
+    /// 목표 타겟을 설정함
+    /// </summary>
+    private bool SetTarget(ref SystemState state, in TSObjectComponent target)
+    {
+        if (controlTarget == Entity.Null)
+            return false;
+
+        if (!SystemAPI.HasComponent<TSActorComponent>(controlTarget))
+            return false;
+
+        var actorObject = SystemAPI.GetComponentRW<TSActorComponent>(controlTarget);
+
+        actorObject.ValueRW.Move.Target = target.Self;
+        actorObject.ValueRW.Move.TargetDataID = target.DataID;
+        actorObject.ValueRW.Move.TargetType = target.ObjectType;
+
+        return true;
+    }
+
+    private void SetMoveStatus(ref SystemState state,
+    in TSObjectComponent target,
+    in float2 touchPosition)
+    {
+        // Navigation 컴포넌트를 가져옴
+        if (!SystemAPI.HasComponent<NavigationComponent>(controlTarget))
             return;
-        }
-        else
+
+        // 이동에 필요한 컴포넌트를 가져옴
+        var navigation = SystemAPI.GetComponentRW<NavigationComponent>(controlTarget);
+        var controlTransform = SystemAPI.GetComponent<LocalTransform>(controlTarget);
+        var targetTransform = SystemAPI.GetComponent<LocalTransform>(target.Self);
+        var actorObject = SystemAPI.GetComponentRW<TSActorComponent>(controlTarget);
+
+        // 시작 지점과 도착 지점
+        float2 selfPosition = controlTransform.Position.xy;
+        float2 targetPosition = targetTransform.Position.xy;
+
+        // 현재 타겟 저장(엔티티 재생성 시 복구용)
+        SaveMoveTarget(ref actorObject.ValueRW, touchPosition);
+
+        switch (target.ObjectType)
         {
-            // 타겟 설정
-            var objectComponent = SystemAPI.GetComponentRW<TSActorComponent>(target);
-            objectComponent.ValueRW.Move.Target = selectTarget.Self;
-            objectComponent.ValueRW.Move.TargetDataID = selectTarget.DataID;
-            objectComponent.ValueRW.Move.TargetType = selectTarget.ObjectType;
+            case TSObjectType.Ground:
+                {
+                    var collider = SystemAPI.GetComponent<ColliderComponent>(target.Self);
+                    float2 position = targetPosition + collider.Offset;
+                    float halfHeight = collider.Size.y * 0.5f;
 
-            if (selectTarget.ObjectType == TSObjectType.Actor)
-            {
-                target = selectTarget.Self;
-                return;
-            }
+                    position.x = touchPosition.x;
+                    position.y += halfHeight;
 
-            // 위치 가져옴
-            var transform = SystemAPI.GetComponent<LocalTransform>(target);
-            var targetTransform = SystemAPI.GetComponent<LocalTransform>(selectTarget.Self);
+                    // Navigation 시스템으로 이동
+                    navigation.ValueRW.IsActive = true;
+                    navigation.ValueRW.FinalTargetPosition = position;
+                    navigation.ValueRW.FinalTargetGround = target.Self;
+                    navigation.ValueRW.CurrentWaypointIndex = 0;
+                    navigation.ValueRW.State = NavigationState.PathFinding;
+                }
+                break;
 
-            float2 selfPosition = transform.Position.xy;
-            float2 targetPosition = targetTransform.Position.xy;
+            case TSObjectType.Gimmick:
+                {
+                    // Gimmick의 위치와 반지름 정보 가져오기
+                    var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(target.Self);
+                    var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(target.Self);
+                    var gimmickPosition = targetPosition + gimmickCollider.Offset;
+                    float gimmickRadius = gimmick.Radius;
 
-            // 현재 타겟 저장(엔티티 재생성 시 복구용)
-            SaveMoveTarget(ref objectComponent.ValueRW, touchPosition);
+                    // 원형의 중심 아래에 접하는 지형 찾기
+                    var groundResult = FindGroundBelowCircle(ref state, selfPosition, gimmickPosition, gimmickRadius);
 
-            switch (selectTarget.ObjectType)
-            {
-                case TSObjectType.Ground:
+                    if (groundResult.GroundEntity != Entity.Null)
                     {
-                        var collider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
-                        float2 position = targetPosition + collider.Offset;
-                        float halfHeight = collider.Size.y * 0.5f;
+                        // Navigation 시스템으로 이동
+                        navigation.ValueRW.IsActive = true;
+                        navigation.ValueRW.FinalTargetPosition = groundResult.ContactPoint;
+                        navigation.ValueRW.FinalTargetGround = groundResult.GroundEntity;
+                        navigation.ValueRW.CurrentWaypointIndex = 0;
+                        navigation.ValueRW.State = NavigationState.PathFinding;
 
-                        position.x = touchPosition.x;
-                        position.y += halfHeight;
-
-                        // Navigation 컴포넌트가 있으면 Navigation 시스템 사용
-                        if (SystemAPI.HasComponent<NavigationComponent>(target))
-                        {
-                            var navigation = SystemAPI.GetComponentRW<NavigationComponent>(target);
-                            navigation.ValueRW.IsActive = true;
-                            navigation.ValueRW.FinalTargetPosition = position;
-                            navigation.ValueRW.FinalTargetGround = selectTarget.Self;
-                            navigation.ValueRW.CurrentWaypointIndex = 0;
-                            navigation.ValueRW.State = NavigationState.PathFinding;
-                        }
-
-
+                        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
                     }
-                    break;
-
-                case TSObjectType.Gimmick:
+                    else
                     {
-                        // Gimmick의 위치와 반지름 정보 가져오기
-                        var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(selectTarget.Self);
-                        var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(selectTarget.Self);
-                        var gimmickPosition = targetPosition + gimmickCollider.Offset;
-                        float gimmickRadius = gimmick.Radius;
-
-                        // 원형의 중심 아래에 접하는 지형 찾기
-                        var groundResult = FindGroundBelowCircle(ref state, selfPosition, gimmickPosition, gimmickRadius);
-
-                        if (groundResult.GroundEntity != Entity.Null)
-                        {
-                            // Navigation 시스템으로 이동
-                            if (SystemAPI.HasComponent<NavigationComponent>(target))
-                            {
-                                var navigation = SystemAPI.GetComponentRW<NavigationComponent>(target);
-                                navigation.ValueRW.IsActive = true;
-                                navigation.ValueRW.FinalTargetPosition = groundResult.ContactPoint;
-                                navigation.ValueRW.FinalTargetGround = groundResult.GroundEntity;
-                                navigation.ValueRW.CurrentWaypointIndex = 0;
-                                navigation.ValueRW.State = NavigationState.PathFinding;
-                            }
-
-                            Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
-                        }
-                        else
-                        {
-                            Debug.Log("No ground found below the gimmick circle");
-                        }
+                        Debug.Log("No ground found below the gimmick circle");
                     }
-                    break;
-            }
+                }
+                break;
         }
     }
 
@@ -217,7 +262,7 @@ public partial struct ControlSystem : ISystem
             if (groundTopY < circleCenter.y)
             {
                 // 원과 지형 사각형의 접촉점 계산
-                float2 contactPoint = CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);
+                float2 contactPoint = Utility.Mathematic.CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);
 
                 // 접촉점이 유효한지 확인 (NaN이 아님)
                 if (!math.isnan(contactPoint.x) && !math.isnan(contactPoint.y))
@@ -243,81 +288,6 @@ public partial struct ControlSystem : ISystem
             ContactPoint = bestContactPoint,
             Distance = shortestDistance
         };
-    }
-
-    /// <summary>
-    /// 원과 사각형(지형) 사이의 접촉점을 계산하는 메서드
-    /// 원이 지형 상단면과 접촉하는 실제 지점들을 모두 찾아서 가장 적절한 점을 반환
-    /// </summary>
-    private float2 CalculateCircleRectangleContact(float2 basePosition, float2 circleCenter, float circleRadius, float2 rectMin, float2 rectMax)
-    {
-        float groundTopY = rectMax.y;
-
-        // 원과 지형 상단면(수평선)의 교점들을 찾기
-        var intersections = FindCircleLineIntersections(circleCenter, circleRadius, groundTopY, rectMin.x, rectMax.x);
-
-        if (intersections.Length > 0)
-        {
-            // 교점이 있으면 원의 중심에서 가장 가까운 교점 반환
-            float2 bestPoint = intersections[0];
-            float shortestDist = math.distance(basePosition, bestPoint);
-
-            for (int i = 1; i < intersections.Length; i++)
-            {
-                float dist = math.distance(basePosition, intersections[i]);
-                if (dist < shortestDist)
-                {
-                    shortestDist = dist;
-                    bestPoint = intersections[i];
-                }
-            }
-
-            Debug.Log($"Circle-Ground intersection found at: {bestPoint}, Total intersections: {intersections.Length}");
-            return bestPoint;
-        }
-
-        // 접촉하지 않는 경우
-        Debug.Log("No contact found between circle and ground");
-        return new float2(float.NaN, float.NaN);
-    }
-
-    /// <summary>
-    /// 원과 수평선의 교점들을 찾는 메서드
-    /// </summary>
-    private NativeList<float2> FindCircleLineIntersections(float2 circleCenter, float circleRadius, float lineY, float lineMinX, float lineMaxX)
-    {
-        var intersections = new NativeList<float2>(2, Unity.Collections.Allocator.Temp);
-
-        // 원의 방정식: (x - cx)² + (y - cy)² = r²
-        // 수평선: y = lineY
-        // 교점을 구하기 위해 y = lineY를 원의 방정식에 대입
-
-        float dy = lineY - circleCenter.y;
-        float discriminant = circleRadius * circleRadius - dy * dy;
-
-        // 판별식이 음수면 교점 없음
-        if (discriminant < 0)
-        {
-            return intersections;
-        }
-
-        // 교점의 X 좌표들 계산
-        float sqrtDiscriminant = math.sqrt(discriminant);
-        float x1 = circleCenter.x - sqrtDiscriminant;
-        float x2 = circleCenter.x + sqrtDiscriminant;
-
-        // 교점이 지형의 X 범위 내에 있는지 확인
-        if (x1 >= lineMinX && x1 <= lineMaxX)
-        {
-            intersections.Add(new float2(x1, lineY));
-        }
-
-        if (x2 >= lineMinX && x2 <= lineMaxX && math.abs(x2 - x1) > 0.001f)
-        {
-            intersections.Add(new float2(x2, lineY));
-        }
-
-        return intersections;
     }
 
     private void SaveMoveTarget(ref TSActorComponent actorComponent, float2 touchPosition)

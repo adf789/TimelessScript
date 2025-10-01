@@ -28,52 +28,60 @@ public partial struct ControlRestoreJob : IJobEntity
         if (!physicsComponent.IsGrounded)
             return;
 
+        // Actor 위치 가져오기
+        var transform = transformLookup[entity];
+        var actorPosition = transform.Position.xy;
+
+        // 타겟 정보 가져오기
         var target = actor.RestoreMove.Target;
 
         switch (actor.RestoreMove.TargetType)
         {
             case TSObjectType.Gimmick:
-                {
-                    actor.Move.Target = target;
-                    actor.Move.TargetDataID = actor.RestoreMove.TargetDataID;
-                    actor.Move.TargetType = actor.RestoreMove.TargetType;
-
-                    // Actor 위치 가져오기
-                    var transform = transformLookup[entity];
-                    var actorPosition = transform.Position.xy;
-
-                    // Gimmick의 위치와 반지름 정보 가져오기
-                    var gimmickCollider = colliderLookup.GetRefRO(target);
-                    var gimmick = gimmickLookup.GetRefRO(target);
-                    var gimmickTransform = transformLookup.GetRefRO(target);
-                    var gimmickPosition = gimmickTransform.ValueRO.Position.xy + gimmickCollider.ValueRO.Offset;
-                    float gimmickRadius = gimmick.ValueRO.Radius;
-
-                    // 원형의 중심 아래에 접하는 지형 찾기
-                    var groundResult = FindGroundBelowCircle(actorPosition, gimmickPosition, gimmickRadius);
-
-                    if (groundResult.GroundEntity != Entity.Null)
-                    {
-                        // Navigation 시스템으로 이동
-                        navigation.IsActive = true;
-                        navigation.FinalTargetPosition = groundResult.ContactPoint;
-                        navigation.FinalTargetGround = groundResult.GroundEntity;
-                        navigation.CurrentWaypointIndex = 0;
-                        navigation.State = NavigationState.PathFinding;
-
-                        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
-                    }
-                }
+                RestoreMoveForGimmick(target, actorPosition, ref actor, ref navigation);
                 break;
         }
 
         ecb.RemoveComponent<MoveRestoreFlagComponent>(entityIndexInQuery, entity);
     }
 
+    private void RestoreMoveForGimmick(
+        Entity target,
+        float2 actorPosition,
+        ref TSActorComponent actor,
+        ref NavigationComponent navigation)
+    {
+        actor.Move.Target = target;
+        actor.Move.TargetDataID = actor.RestoreMove.TargetDataID;
+        actor.Move.TargetType = actor.RestoreMove.TargetType;
+
+        // Gimmick의 위치와 반지름 정보 가져오기
+        var gimmickCollider = colliderLookup.GetRefRO(target);
+        var gimmick = gimmickLookup.GetRefRO(target);
+        var gimmickTransform = transformLookup.GetRefRO(target);
+        var gimmickPosition = gimmickTransform.ValueRO.Position.xy + gimmickCollider.ValueRO.Offset;
+        float gimmickRadius = gimmick.ValueRO.Radius;
+
+        // 원형의 중심 아래에 접하는 지형 찾기
+        var groundResult = FindGroundBelowCircle(actorPosition, gimmickPosition, gimmickRadius);
+
+        if (groundResult.GroundEntity == Entity.Null)
+            return;
+
+        // Navigation 시스템으로 이동
+        navigation.IsActive = true;
+        navigation.FinalTargetPosition = groundResult.ContactPoint;
+        navigation.FinalTargetGround = groundResult.GroundEntity;
+        navigation.CurrentWaypointIndex = 0;
+        navigation.State = NavigationState.PathFinding;
+
+        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
+    }
+
     /// <summary>
     /// 원형의 중심 아래에 접하는 지형을 찾고 접촉점을 계산하는 메서드
     /// </summary>
-    public GroundContactResult FindGroundBelowCircle(float2 basePosition, float2 circleCenter, float circleRadius)
+    private GroundContactResult FindGroundBelowCircle(float2 basePosition, float2 circleCenter, float circleRadius)
     {
         Entity bestGround = Entity.Null;
         float2 bestContactPoint = float2.zero;
@@ -107,7 +115,7 @@ public partial struct ControlRestoreJob : IJobEntity
             if (groundTopY < circleCenter.y)
             {
                 // 원과 지형 사각형의 접촉점 계산
-                float2 contactPoint = CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);
+                float2 contactPoint = Utility.Mathematic.CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);
 
                 // 접촉점이 유효한지 확인 (NaN이 아님)
                 if (!math.isnan(contactPoint.x) && !math.isnan(contactPoint.y))
@@ -133,80 +141,5 @@ public partial struct ControlRestoreJob : IJobEntity
             ContactPoint = bestContactPoint,
             Distance = shortestDistance
         };
-    }
-
-    /// <summary>
-    /// 원과 사각형(지형) 사이의 접촉점을 계산하는 메서드
-    /// 원이 지형 상단면과 접촉하는 실제 지점들을 모두 찾아서 가장 적절한 점을 반환
-    /// </summary>
-    private float2 CalculateCircleRectangleContact(float2 basePosition, float2 circleCenter, float circleRadius, float2 rectMin, float2 rectMax)
-    {
-        float groundTopY = rectMax.y;
-
-        // 원과 지형 상단면(수평선)의 교점들을 찾기
-        var intersections = FindCircleLineIntersections(circleCenter, circleRadius, groundTopY, rectMin.x, rectMax.x);
-
-        if (intersections.Length > 0)
-        {
-            // 교점이 있으면 원의 중심에서 가장 가까운 교점 반환
-            float2 bestPoint = intersections[0];
-            float shortestDist = math.distance(basePosition, bestPoint);
-
-            for (int i = 1; i < intersections.Length; i++)
-            {
-                float dist = math.distance(basePosition, intersections[i]);
-                if (dist < shortestDist)
-                {
-                    shortestDist = dist;
-                    bestPoint = intersections[i];
-                }
-            }
-
-            Debug.Log($"Circle-Ground intersection found at: {bestPoint}, Total intersections: {intersections.Length}");
-            return bestPoint;
-        }
-
-        // 접촉하지 않는 경우
-        Debug.Log("No contact found between circle and ground");
-        return new float2(float.NaN, float.NaN);
-    }
-
-    /// <summary>
-    /// 원과 수평선의 교점들을 찾는 메서드
-    /// </summary>
-    private NativeList<float2> FindCircleLineIntersections(float2 circleCenter, float circleRadius, float lineY, float lineMinX, float lineMaxX)
-    {
-        var intersections = new NativeList<float2>(2, Unity.Collections.Allocator.Temp);
-
-        // 원의 방정식: (x - cx)² + (y - cy)² = r²
-        // 수평선: y = lineY
-        // 교점을 구하기 위해 y = lineY를 원의 방정식에 대입
-
-        float dy = lineY - circleCenter.y;
-        float discriminant = circleRadius * circleRadius - dy * dy;
-
-        // 판별식이 음수면 교점 없음
-        if (discriminant < 0)
-        {
-            return intersections;
-        }
-
-        // 교점의 X 좌표들 계산
-        float sqrtDiscriminant = math.sqrt(discriminant);
-        float x1 = circleCenter.x - sqrtDiscriminant;
-        float x2 = circleCenter.x + sqrtDiscriminant;
-
-        // 교점이 지형의 X 범위 내에 있는지 확인
-        if (x1 >= lineMinX && x1 <= lineMaxX)
-        {
-            intersections.Add(new float2(x1, lineY));
-        }
-
-        if (x2 >= lineMinX && x2 <= lineMaxX && math.abs(x2 - x1) > 0.001f)
-        {
-            intersections.Add(new float2(x2, lineY));
-        }
-
-        return intersections;
     }
 }

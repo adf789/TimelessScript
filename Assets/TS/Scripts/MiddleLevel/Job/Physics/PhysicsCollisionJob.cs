@@ -67,8 +67,6 @@ public partial struct PhysicsCollisionJob : IJobEntity
                 physics.Velocity.x = -physics.Velocity.x * 0.5f;
             }
         }
-
-        // CheckGround(ref physics);
     }
 
     [BurstCompile]
