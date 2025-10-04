@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6063675442632334909}
   - component: {fileID: 7083436543514721155}
   - component: {fileID: 7829086977568245687}
+  - component: {fileID: 5880341917412959436}
   m_Layer: 0
   m_Name: MainCamera
   m_TagString: MainCamera
@@ -150,6 +151,30 @@ MonoBehaviour:
   zoomSpeed: 10
   minSize: 10
   maxSize: 25
+--- !u!114 &5880341917412959436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1277166248994909572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c88f5cead0c0b2a4eb05b5900433f8d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.PixelPerfectCamera
+  m_ComponentVersion: 1
+  m_AssetsPPU: 100
+  m_RefResolutionX: 640
+  m_RefResolutionY: 320
+  m_CropFrame: 0
+  m_GridSnapping: 2
+  m_FilterMode: 0
+  m_UpscaleRT: 0
+  m_PixelSnapping: 0
+  m_CropFrameX: 0
+  m_CropFrameY: 0
+  m_StretchFill: 0
 --- !u!1 &1810743634490859686
 GameObject:
   m_ObjectHideFlags: 0

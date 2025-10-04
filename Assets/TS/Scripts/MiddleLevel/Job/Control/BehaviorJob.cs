@@ -43,10 +43,12 @@ public partial struct BehaviorJob : IJobEntity
             return;
         }
         // 착지했을 때
-        else if (!physicsComponent.IsPrevGrounded && physicsComponent.IsGrounded)
+        else if (physicsComponent.IsRandingAnimation && physicsComponent.IsGrounded)
         {
             // 땅에 착지했을 때 애니메이션 수정
             animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipCurrentPhase);
+
+            physicsComponent.IsRandingAnimation = false;
 
             return;
         }

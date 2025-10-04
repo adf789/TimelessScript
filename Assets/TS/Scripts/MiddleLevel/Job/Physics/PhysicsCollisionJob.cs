@@ -36,19 +36,17 @@ public partial struct PhysicsCollisionJob : IJobEntity
 
             // 사다리 영역에서의 Ground 충돌 처리
             if (isInLadderArea && collision.IsGroundCollision)
-            {
-                // 사다리 영역에서는 Ground와의 충돌을 무시 (지면을 뚫고 지나갈 수 있음)
-#if UNITY_EDITOR
-                UnityEngine.Debug.Log($"[PhysicsCollisionJob] 사다리 영역에서 Ground 충돌 무시");
-#endif
                 continue;
-            }
 
             // 위치 보정
             float2 currentPos = transform.Position.xy;
             currentPos += collision.SeparationVector;
             transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
-            physics.IsPrevGrounded = physics.IsGrounded;
+
+            if (!physics.IsPrevGrounded && collision.IsGroundCollision)
+                physics.IsRandingAnimation = true;
+
+            physics.IsPrevGrounded = collision.IsGroundCollision;
 
             // 속도 반응 (간단한 반발)
             float2 normal = math.normalize(collision.SeparationVector);

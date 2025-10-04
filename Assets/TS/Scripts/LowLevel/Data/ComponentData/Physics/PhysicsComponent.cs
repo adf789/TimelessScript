@@ -16,6 +16,8 @@ public struct PhysicsComponent : IComponentData
     [MarshalAs(UnmanagedType.U1)]
     public bool IsPrevGrounded;
     [MarshalAs(UnmanagedType.U1)]
+    public bool IsRandingAnimation;
+    [MarshalAs(UnmanagedType.U1)]
     public bool IsStatic;
     
 }

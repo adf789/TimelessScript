@@ -27,6 +27,7 @@ public class PhysicsAuthoring : MonoBehaviour
                 Drag = authoring.drag,
                 UseGravity = authoring.useGravity,
                 IsPrevGrounded = false,
+                IsRandingAnimation = false,
                 IsGrounded = false,
                 IsStatic = authoring.isStatic
             });
