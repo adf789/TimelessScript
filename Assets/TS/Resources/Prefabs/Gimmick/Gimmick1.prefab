@@ -68,8 +68,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
   layer: 4
-  size: {x: 1, y: 1}
-  offset: {x: 0, y: 0}
+  size: {x: 0.55, y: 3.55}
+  offset: {x: 0, y: 1.29}
   isTrigger: 1
 --- !u!114 &534198486437448583
 MonoBehaviour:
@@ -83,7 +83,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d707e90e778988a40b0770fa063cee7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
-  order: 1
+  order: 0
 --- !u!114 &7602456729251230026
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -310,7 +310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
   layer: 1
-  size: {x: 0.55, y: 1.29}
+  size: {x: 0.52, y: 1.29}
   offset: {x: 0, y: 0.19}
   isTrigger: 0
 --- !u!114 &4772863480542143071
@@ -325,7 +325,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d707e90e778988a40b0770fa063cee7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::PickedAuthoring
-  order: 0
+  order: 1
 --- !u!114 &1172464439533719287
 MonoBehaviour:
   m_ObjectHideFlags: 0

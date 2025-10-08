@@ -41,24 +41,35 @@ public partial class GamePreprocessingSystem : SystemBase
         float deltaTime = World.Time.DeltaTime;
 
         Entities
-        .WithAll<TSActorComponent>()
+        .WithAll<SpawnConfigComponent>()
         .WithoutBurst()
-        .ForEach((Entity entity, ref TSActorComponent actorComponent) =>
+        .ForEach((Entity spawner,
+        ref DynamicBuffer<SpawnedEntityBuffer> spawnedEntities,
+        ref DynamicBuffer<AvailableLayerBuffer> availableLayers,
+        ref SpawnConfigComponent spawnConfig) =>
         {
-            // 액터 생명시간 체크
-            actorComponent.LifePassingTime += deltaTime;
+            for (int i = 0; i < spawnedEntities.Length; i++)
+            {
+                var entity = spawnedEntities[i].SpawnedEntity;
 
-            if (actorComponent.LifePassingTime < actorComponent.LifeTime)
-                return;
+                if (!SystemAPI.HasComponent<TSActorComponent>(entity))
+                    return;
 
-            // 시간이 모두 지나면 얻은 아이템들 인벤토리로 획득
-            CollectingItemByInteract(entity, ref actorComponent, in ecb);
+                var actor = SystemAPI.GetComponentRW<TSActorComponent>(entity);
 
-            // 컴포넌트 값 재사용
-            recycle.ValueRW.AddActor(actorComponent);
+                // 액터 생명시간 체크
+                if (!CheckLifeOn(deltaTime, ref actor.ValueRW))
+                    return;
 
-            // 엔티티 삭제
-            ecb.DestroyEntity(entity);
+                // 시간이 모두 지나면 얻은 아이템들 인벤토리로 획득
+                CollectingItemByInteract(entity, ref actor.ValueRW, in ecb);
+
+                // 엔티티 삭제 시 재활용 가능한 컴포넌트 값 반환
+                ReturningResources(in entity, in actor.ValueRW, ref availableLayers);
+
+                // 엔티티 삭제
+                ecb.DestroyEntity(entity);
+            }
         }).Run();
 
         ecb.Playback(EntityManager);
@@ -78,6 +89,16 @@ public partial class GamePreprocessingSystem : SystemBase
             ObserverSubManager.Instance.NotifyObserver(new ShowCurrencyParam());
 
         collectItems.Clear();
+    }
+
+    private bool CheckLifeOn(float deltaTime, ref TSActorComponent actor)
+    {
+        actor.LifePassingTime += deltaTime;
+
+        if (actor.LifePassingTime < actor.LifeTime)
+            return false;
+
+        return true;
     }
 
     private void CollectingItemByInteract(Entity entity, ref TSActorComponent actorComponent, in EntityCommandBuffer ecb)
@@ -125,5 +146,28 @@ public partial class GamePreprocessingSystem : SystemBase
         });
 
         interactBuffer.Clear();
+    }
+
+    private void ReturningResources(in Entity entity,
+    in TSActorComponent actor,
+    ref DynamicBuffer<AvailableLayerBuffer> availableLayers)
+    {
+        // 존재하지 않는 Entity이면 layer를 큐에 반환하고 버퍼에서 제거
+        if (SystemAPI.HasComponent<TSObjectComponent>(entity))
+        {
+            var tsObject = SystemAPI.GetComponentRW<TSObjectComponent>(entity);
+
+            if (tsObject.ValueRW.AnimationEntity != Entity.Null &&
+                SystemAPI.HasComponent<SpriteSheetAnimationComponent>(tsObject.ValueRW.AnimationEntity))
+            {
+                var animComponent = SystemAPI.GetComponentRO<SpriteSheetAnimationComponent>(tsObject.ValueRW.AnimationEntity);
+                availableLayers.Add(new AvailableLayerBuffer { Layer = animComponent.ValueRO.Layer });
+            }
+        }
+
+        // 컴포넌트 값 재사용
+        var recycle = SystemAPI.GetSingletonRW<RecycleComponent>();
+
+        recycle.ValueRW.AddActor(actor);
     }
 }

@@ -69,6 +69,8 @@ public partial struct SpriteSheetAnimationSystem : ISystem
         }
 
         ProcessCurrentAnimation(authoring, ref component);
+
+        UpdateLayer(authoring, in component);
     }
 
     private void ProcessAnimationTransition(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
@@ -137,6 +139,11 @@ public partial struct SpriteSheetAnimationSystem : ISystem
                 }
                 break;
         }
+    }
+
+    private void UpdateLayer(SpriteSheetAnimationAuthoring authoring, in SpriteSheetAnimationComponent component)
+    {
+        authoring.SetLayer(component.Layer);
     }
 
     private void SetStartAnimationCallback(ref SpriteSheetAnimationComponent component)

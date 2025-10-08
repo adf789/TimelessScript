@@ -9,12 +9,14 @@ public partial struct SpawnCleanupJob : IJobEntity
     [ReadOnly] public float currentTime;
     [ReadOnly] public EntityStorageInfoLookup entityLookup;
     [ReadOnly] public ComponentLookup<SpawnedObjectComponent> spawnedObjectLookup;
+    [ReadOnly] public ComponentLookup<TSObjectComponent> tsObjectLookup;
+    [ReadOnly] public ComponentLookup<SpriteSheetAnimationComponent> animationComponentLookup;
 
     public void Execute(
-        [EntityIndexInQuery] int entityInQueryIndex,
         Entity entity,
         ref SpawnConfigComponent spawnConfig,
-        ref DynamicBuffer<SpawnedEntityBuffer> spawnedObjects)
+        ref DynamicBuffer<SpawnedEntityBuffer> spawnedObjects,
+        ref DynamicBuffer<AvailableLayerBuffer> availableLayers)
     {
         // 스폰된 오브젝트들의 상태를 확인하고 카운트 업데이트
         int validSpawnCount = 0;
@@ -43,11 +45,10 @@ public partial struct SpawnCleanupJob : IJobEntity
             }
             else
             {
-                // 존재하지 않는 Entity이면 버퍼에서 제거
                 spawnedObjects.RemoveAt(i);
             }
         }
 
-        spawnConfig.CurrentSpawnCount = validSpawnCount;
+        spawnConfig.ReadySpawnCount = spawnConfig.CurrentSpawnCount = validSpawnCount;
     }
 }

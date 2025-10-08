@@ -8,6 +8,7 @@ public struct SpawnConfigComponent : IComponentData
     public TSObjectType ObjectType;
     public FixedString64Bytes Name;
     public int MaxSpawnCount;
+    public int ReadySpawnCount;
     public int CurrentSpawnCount;
     public float SpawnCooldown;
     public float NextSpawnTime;

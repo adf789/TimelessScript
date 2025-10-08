@@ -88,10 +88,6 @@ public partial struct NavigationSystem : ISystem
         {
             navigation.CurrentWaypointIndex = 0;
             navigation.State = NavigationState.MovingToWaypoint;
-
-#if UNITY_EDITOR
-            Debug.Log($"Navigation path generated with {waypoints.Length} waypoints");
-#endif
         }
         else
         {
@@ -108,17 +104,10 @@ public partial struct NavigationSystem : ISystem
         if (navigation.CurrentWaypointIndex >= waypoints.Length)
         {
             navigation.State = NavigationState.Completed;
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"Navigation 완료: 모든 웨이포인트 도달");
-#endif
             return;
         }
 
         var currentWaypoint = waypoints[navigation.CurrentWaypointIndex];
-
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[NavigationSystem] 웨이포인트 처리 {navigation.CurrentWaypointIndex}/{waypoints.Length}: {currentWaypoint.MoveType} → ({currentWaypoint.Position.x:F2}, {currentWaypoint.Position.y:F2})");
-#endif
 
         // 이동 명령 설정
         SetMovementCommand(in objectComponent, ref actorComponent, currentWaypoint);
@@ -127,9 +116,6 @@ public partial struct NavigationSystem : ISystem
         // 도달 확인
         if (HasReachedWaypoint(entity, currentWaypoint.Position, ref state))
         {
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"웨이포인트 {navigation.CurrentWaypointIndex} 도달! 다음 웨이포인트로 이동");
-#endif
             navigation.CurrentWaypointIndex++;
         }
     }
@@ -154,10 +140,6 @@ public partial struct NavigationSystem : ISystem
     {
         actorComponent.Move.MoveState = waypoint.MoveType;
         actorComponent.Move.MovePosition = waypoint.Position;
-
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[NavigationSystem] 이동 명령 설정: {objectComponent.Name} → Purpose: {waypoint.MoveType}, Position: ({waypoint.Position.x:F2}, {waypoint.Position.y:F2})");
-#endif
     }
 
     private bool HasReachedWaypoint(Entity entity, float2 waypointPosition, ref SystemState state)
@@ -165,22 +147,12 @@ public partial struct NavigationSystem : ISystem
         var currentPosition = CalculateCurrentPosition(entity, ref state);
         float distance = math.distance(currentPosition, waypointPosition);
 
-#if UNITY_EDITOR
-        if (distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE + 0.1f) // 거의 도착한 경우에만 로그
-        {
-            UnityEngine.Debug.Log($"웨이포인트 도달 확인: 거리 = {distance:F3}, 임계값 = {StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE}");
-        }
-#endif
-
         return distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE;
     }
 
     private void SetNavigationFailed(ref NavigationComponent navigation, string reason)
     {
         navigation.State = NavigationState.Failed;
-#if UNITY_EDITOR
-        Debug.LogWarning($"Navigation failed: {reason}");
-#endif
     }
 
     #endregion
@@ -281,36 +253,15 @@ public partial struct NavigationSystem : ISystem
         // 시작 지형과 목표 지형이 같은지 확인
         Entity startGround = FindGroundAtPosition(startPos);
 
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[FindMultiLadderPath] 시작 지형: {startGround.Index}, 목표 지형: {targetGround.Index}");
-#endif
-
         // 같은 지형이면 직접 이동
         if (startGround == targetGround && startGround != Entity.Null)
         {
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[FindMultiLadderPath] 같은 지형이므로 직접 이동");
-#endif
             return CreateDirectPath(targetPos, targetGround, waypoints);
         }
-
-        // 다른 지형이므로 사다리 경유 필요
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[FindMultiLadderPath] 다른 지형이므로 사다리 경유 필요");
-#endif
-
-        // 항상 A* 알고리즘을 사용하여 최적 경로 찾기 (단일/다중 사다리 모두 고려)
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[FindMultiLadderPath] A* 알고리즘으로 최적 경로 찾기 시작");
-#endif
 
         // 사다리 정보 수집
         var ladderInfos = new NativeList<LadderInfo>(Allocator.Temp);
         CollectLadderInfos(ladders, ladderInfos, ref state);
-
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[FindMultiLadderPath] 수집된 사다리 개수: {ladderInfos.Length}");
-#endif
 
         if (ladderInfos.Length == 0)
         {
@@ -324,16 +275,9 @@ public partial struct NavigationSystem : ISystem
 
         if (path.Length == 0)
         {
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[FindMultiLadderPath] A* 알고리즘으로 경로를 찾지 못함");
-#endif
             path.Dispose();
             return false;
         }
-
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[FindMultiLadderPath] A* 알고리즘으로 {path.Length}개 노드 경로 발견");
-#endif
 
         // 경로를 웨이포인트로 변환
         GenerateWaypointsFromPath(path, waypoints, ref state);
@@ -348,10 +292,6 @@ public partial struct NavigationSystem : ISystem
             if (finalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
             {
                 AddWaypoint(waypoints, targetPos, targetGround, TSObjectType.Ground, MoveState.Move);
-
-#if UNITY_EDITOR
-                UnityEngine.Debug.Log($"A* 최종 목표 웨이포인트 추가: ({targetPos.x:F2}, {targetPos.y:F2}) - Move");
-#endif
             }
         }
 
@@ -444,41 +384,23 @@ public partial struct NavigationSystem : ISystem
     /// </summary>
     private void ExploreNeighborNodes(PathNode currentNode, float2 targetPos, Entity targetGround, NativeList<LadderInfo> ladderInfos, NativeList<PathNode> openList, NativeList<PathNode> closedList, ref SystemState state)
     {
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"[ExploreNeighborNodes] 현재 노드: 지형 {currentNode.GroundEntity.Index}, 목표 지형: {targetGround.Index}");
-#endif
-
         for (int i = 0; i < ladderInfos.Length; i++)
         {
             var ladder = ladderInfos[i];
-
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[ExploreNeighborNodes] 사다리 {ladder.Entity.Index} 검사: 상단({ladder.TopConnectedGround.Index}) - 하단({ladder.BottomConnectedGround.Index})");
-#endif
 
             // 현재 지형에서 이 사다리에 도달할 수 있는지 확인
             bool canReachBottom = CanReachLadderFromGround(currentNode, ladder.Entity, ladder.BottomConnectedGround, ref state);
             bool canReachTop = CanReachLadderFromGround(currentNode, ladder.Entity, ladder.TopConnectedGround, ref state);
 
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[ExploreNeighborNodes] 사다리 {ladder.Entity.Index} 도달 가능성: 하단 {canReachBottom}, 상단 {canReachTop}");
-#endif
-
             // 하단에 도달 가능하면 상단으로 이동 가능
             if (canReachBottom)
             {
-#if UNITY_EDITOR
-                UnityEngine.Debug.Log($"[ExploreNeighborNodes] 사다리 {ladder.Entity.Index} 하단에서 상단(지형 {ladder.TopConnectedGround.Index})으로 이동 시도");
-#endif
                 AddLadderNode(currentNode, ladder, ladder.TopConnectedGround, targetPos, targetGround, openList, closedList, ref state);
             }
 
             // 상단에 도달 가능하면 하단으로 이동 가능
             if (canReachTop)
             {
-#if UNITY_EDITOR
-                UnityEngine.Debug.Log($"[ExploreNeighborNodes] 사다리 {ladder.Entity.Index} 상단에서 하단(지형 {ladder.BottomConnectedGround.Index})으로 이동 시도");
-#endif
                 AddLadderNode(currentNode, ladder, ladder.BottomConnectedGround, targetPos, targetGround, openList, closedList, ref state);
             }
         }
@@ -494,12 +416,7 @@ public partial struct NavigationSystem : ISystem
 
         // 현재 지형과 같은 지형으로는 이동하지 않음 (이미 그 지형에 있음)
         if (currentNode.GroundEntity == connectedGround)
-        {
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[AddLadderNode] 스킵: 현재 지형({currentNode.GroundEntity.Index})과 연결 지형({connectedGround.Index})이 같음");
-#endif
             return;
-        }
 
         // 사다리 위치에서 연결된 지형의 표면 높이 계산
         var ladderTransform = state.EntityManager.GetComponentData<LocalTransform>(ladder.Entity);
@@ -546,114 +463,7 @@ public partial struct NavigationSystem : ISystem
                 LadderUsed = ladder.Entity
             };
             openList.Add(newNode);
-
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"A* 노드 추가: 지형 {connectedGround.Index} 표면 ({surfacePosition.x:F2}, {surfacePosition.y:F2}) - 사다리 {ladder.Entity.Index} (현재: {currentNode.GroundEntity.Index})");
-#endif
         }
-    }
-
-    private LadderInfo FindOptimalLadder(float2 startPos, float2 targetPos, NativeArray<Entity> ladders, ref SystemState state)
-    {
-        var bestLadder = new LadderInfo
-        {
-            Entity = Entity.Null,
-            Distance = float.MaxValue
-        };
-
-        for (int i = 0; i < ladders.Length; i++)
-        {
-            var ladder = ladders[i];
-            var ladderPosition = CalculateLadderPosition(ladder, ref state);
-
-            // 도달 가능성 및 효율성 검사
-            if (IsLadderUsable(startPos, targetPos, ladderPosition))
-            {
-                float totalDistance = CalculateTotalPathDistance(startPos, targetPos, ladderPosition);
-
-                if (totalDistance < bestLadder.Distance)
-                {
-                    bestLadder = new LadderInfo
-                    {
-                        Entity = ladder,
-                        Position = ladderPosition,
-                        Distance = totalDistance
-                    };
-                }
-            }
-        }
-
-        return bestLadder;
-    }
-
-    private float2 CalculateLadderPosition(Entity ladder, ref SystemState state)
-    {
-        var collider = state.EntityManager.GetComponentData<ColliderComponent>(ladder);
-        var transform = state.EntityManager.GetComponentData<LocalTransform>(ladder);
-        return transform.Position.xy + collider.Offset;
-    }
-
-    [BurstCompile]
-    private bool IsLadderUsable(float2 startPos, float2 targetPos, float2 ladderPos)
-    {
-        // 수평 거리 검사
-        float distanceToLadder = math.abs(startPos.x - ladderPos.x);
-        float distanceFromLadder = math.abs(ladderPos.x - targetPos.x);
-
-        return distanceToLadder <= StringDefine.AUTO_MOVE_MAX_HORIZONTAL_REACH &&
-               distanceFromLadder <= StringDefine.AUTO_MOVE_MAX_HORIZONTAL_REACH;
-    }
-
-    [BurstCompile]
-    private float CalculateTotalPathDistance(float2 startPos, float2 targetPos, float2 ladderPos)
-    {
-        return math.distance(startPos, ladderPos) + math.distance(ladderPos, targetPos);
-    }
-
-    [BurstCompile]
-    private bool GenerateLadderWaypoints(float2 startPos, float2 targetPos, Entity targetGround, LadderInfo ladderInfo, DynamicBuffer<NavigationWaypoint> waypoints)
-    {
-        var ladderPos = ladderInfo.Position;
-
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"사다리 경로 생성: Start({startPos.x:F2}, {startPos.y:F2}) → Ladder({ladderPos.x:F2}, {ladderPos.y:F2}) → Target({targetPos.x:F2}, {targetPos.y:F2})");
-#endif
-
-        // 1. 사다리 X 위치로 수평 이동 (필요한 경우)
-        float horizontalDistance = math.abs(startPos.x - ladderPos.x);
-        if (horizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
-        {
-            var moveToLadderPos = new float2(ladderPos.x, startPos.y);
-            AddWaypoint(waypoints, moveToLadderPos, ladderInfo.Entity, TSObjectType.Ground, MoveState.Move);
-
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"웨이포인트 1 - 사다리로 이동: ({moveToLadderPos.x:F2}, {moveToLadderPos.y:F2})");
-#endif
-        }
-
-        // 2. 사다리 이용 (수직 이동)
-        bool isClimbingUp = startPos.y < targetPos.y;
-        var climbType = isClimbingUp ? MoveState.ClimbUp : MoveState.ClimbDown;
-        var climbTargetPos = new float2(ladderPos.x, targetPos.y);
-
-        AddWaypoint(waypoints, climbTargetPos, ladderInfo.Entity, TSObjectType.Ladder, climbType);
-
-#if UNITY_EDITOR
-        UnityEngine.Debug.Log($"웨이포인트 2 - 사다리 {(isClimbingUp ? "올라가기" : "내려가기")}: ({climbTargetPos.x:F2}, {climbTargetPos.y:F2})");
-#endif
-
-        // 3. 목표 지점으로 수평 이동 (필요한 경우)
-        float finalHorizontalDistance = math.abs(ladderPos.x - targetPos.x);
-        if (finalHorizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
-        {
-            AddWaypoint(waypoints, targetPos, targetGround, TSObjectType.Ground, MoveState.Move);
-
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"웨이포인트 3 - 최종 목표로 이동: ({targetPos.x:F2}, {targetPos.y:F2})");
-#endif
-        }
-
-        return true;
     }
 
     [BurstCompile]
@@ -966,10 +776,6 @@ public partial struct NavigationSystem : ISystem
                         var ladderEndPosition = new float2(ladderTransform.Position.x, endSurfaceY);
 
                         AddWaypoint(waypoints, ladderEndPosition, node.LadderUsed, TSObjectType.Ladder, moveType);
-
-#if UNITY_EDITOR
-                        UnityEngine.Debug.Log($"A* 사다리 {(isClimbingUp ? "올라가기" : "내려가기")} 웨이포인트: ({ladderEndPosition.x:F2}, {ladderEndPosition.y:F2}) - {moveType} to {(isClimbingUp ? "Top" : "Bottom")}");
-#endif
                     }
 
                     continue;
@@ -978,10 +784,6 @@ public partial struct NavigationSystem : ISystem
 
             // 일반 지형 이동
             AddWaypoint(waypoints, node.Position, targetEntity, objectType, moveType);
-
-#if UNITY_EDITOR
-            UnityEngine.Debug.Log($"A* 웨이포인트 {i}: ({node.Position.x:F2}, {node.Position.y:F2}) - {moveType}");
-#endif
         }
     }
 

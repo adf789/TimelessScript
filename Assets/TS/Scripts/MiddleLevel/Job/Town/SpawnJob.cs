@@ -24,7 +24,7 @@ public partial struct SpawnJob : IJobEntity
             return;
 
         // 최대 스폰 개수 체크
-        if (spawnConfig.CurrentSpawnCount >= spawnConfig.MaxSpawnCount)
+        if (spawnConfig.ReadySpawnCount >= spawnConfig.MaxSpawnCount)
             return;
 
         // 스폰 가능한 위치 찾기
@@ -43,7 +43,7 @@ public partial struct SpawnJob : IJobEntity
         });
 
         // 스폰 카운트 및 다음 스폰 시간 업데이트
-        spawnConfig.CurrentSpawnCount++;
+        spawnConfig.ReadySpawnCount++;
 
         // 스폰 성공 여부와 관계없이 다음 스폰 시간 업데이트
         spawnConfig.NextSpawnTime = currentTime + spawnConfig.SpawnCooldown;

@@ -88,10 +88,10 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         }
 
     }
-    
+
     private void OnValidate()
     {
-        if(spriteRenderer != null || TryGetComponent(out spriteRenderer))
+        if (spriteRenderer != null || TryGetComponent(out spriteRenderer))
         {
             size = spriteRenderer.size;
         }
@@ -99,7 +99,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         {
             RectTransform rectTransform = transform as RectTransform;
 
-            if(rectTransform != null)
+            if (rectTransform != null)
                 size = rectTransform.sizeDelta;
         }
     }
@@ -322,7 +322,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         {
             spriteRenderer.sprite = sprite;
 
-            if(size.x > 0 && size.y > 0)
+            if (size.x > 0 && size.y > 0)
                 spriteRenderer.size = size;
         }
         else if (spriteImage != null)
@@ -374,7 +374,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             spriteRenderer.color = color;
         }
 
-        if(spriteImage != null)
+        if (spriteImage != null)
         {
             Color color = spriteImage.color;
             color.a = alpha;

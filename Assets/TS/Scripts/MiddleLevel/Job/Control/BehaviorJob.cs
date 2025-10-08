@@ -60,7 +60,6 @@ public partial struct BehaviorJob : IJobEntity
         {
             OnStartMoving(ref animComponent.ValueRW);
 
-            Debug.Log($"[BehaviorJob] 일반 이동 처리 중: {objectComponent.Name}");
             HandleMovement(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
 
             if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
@@ -75,7 +74,6 @@ public partial struct BehaviorJob : IJobEntity
         {
             OnStartClimbing(in actorComponent, ref animComponent.ValueRW);
 
-            Debug.Log($"[BehaviorJob] 사다리 이동 처리 중: {objectComponent.Name} - {actorComponent.Move.MoveState}");
             HandleClimbing(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
 
             return;
@@ -125,8 +123,6 @@ public partial struct BehaviorJob : IJobEntity
 
         float2 targetRootPosition = actorComponent.Move.MovePosition;
 
-        Debug.Log($"사다리 이동: 현재({currentRootPosition.x:G2}, {currentRootPosition.y:G2}) → 목표({targetRootPosition.x:G2}, {targetRootPosition.y:G2})");
-
         float maxDistanceDelta = ClimbSpeed * DeltaTime; // 일반 이동 속도 사용
 
         // 사다리 이동은 일반적인 MoveTowards 사용 (물리 무시)
@@ -143,7 +139,6 @@ public partial struct BehaviorJob : IJobEntity
         currentRootPosition.y += objectComponent.RootOffset;
 
         float remainingDistance = math.distance(currentRootPosition, targetRootPosition);
-        Debug.Log($"[BehaviorJob] 사다리 이동 중: 남은 거리 = {remainingDistance:G3}");
 
         if (remainingDistance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE)
         {
@@ -156,8 +151,6 @@ public partial struct BehaviorJob : IJobEntity
             animComponent.RequestTransition(AnimationState.Idle);
             actorComponent.Move.MoveState = MoveState.None;
             actorComponent.Move.MovePosition = targetRootPosition;
-
-            Debug.Log($"[BehaviorJob] 사다리 이동 완료: {objectComponent.Name}, 거리: {remainingDistance:G3}");
         }
     }
 
@@ -226,8 +219,6 @@ public partial struct BehaviorJob : IJobEntity
         actorComponent.Move.TargetType = TSObjectType.None;
         actorComponent.Move.MovePosition = currentRootPosition;
         actorComponent.Move.MoveState = MoveState.None;
-
-        Debug.Log($"[BehaviorJob] 일반 이동 완료: {objectComponent.Name}");
     }
 
     private RefRW<SpriteSheetAnimationComponent> GetAnimation(

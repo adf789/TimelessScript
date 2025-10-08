@@ -26,6 +26,7 @@ public class SpawnConfigAuthoring : MonoBehaviour
                 Name = spawnName,
                 ObjectType = objectType,
                 MaxSpawnCount = authoring.maxSpawnCount,
+                ReadySpawnCount = 0,
                 CurrentSpawnCount = 0,
                 SpawnCooldown = authoring.spawnCooldown,
                 NextSpawnTime = 0f,
@@ -38,6 +39,9 @@ public class SpawnConfigAuthoring : MonoBehaviour
 
             // 스폰된 엔티티들을 추적하기 위한 버퍼 추가
             AddBuffer<SpawnedEntityBuffer>(entity);
+
+            // 재사용 가능한 Layer를 관리하기 위한 버퍼 추가
+            AddBuffer<AvailableLayerBuffer>(entity);
         }
     }
 }
