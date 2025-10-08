@@ -72,11 +72,10 @@ public partial class GamePreprocessingSystem : SystemBase
         {
             // 아이템 획득 로직 추가
             player.Inventory.Add(item.Key, item.Value.Count);
-
-            var getItem = player.Inventory.GetItem(item.Key);
-
-            Debug.Log($"Collect Item: {getItem.ID}, Count: {getItem.Count}");
         }
+
+        if (collectItems.Count > 0)
+            ObserverSubManager.Instance.NotifyObserver(new ShowCurrencyParam());
 
         collectItems.Clear();
     }

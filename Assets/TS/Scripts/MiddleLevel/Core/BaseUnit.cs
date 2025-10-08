@@ -1,17 +1,24 @@
 using UnityEngine;
 
-public class BaseUnit<T> : BaseUnit where T : BaseModel
+public class BaseUnit<T> : BaseUnit where T : struct
 {
-    public T Model { get => baseModel as T; }
+    protected T model;
 
-    public void SetModel(T model)
+    public ref T Model => ref model;
+
+    public bool IsNullModel => default(T).Equals(model);
+
+    public void SetModel(T value)
     {
-        baseModel = model;
+        model = value;
     }
 }
 
 
 public abstract class BaseUnit : MonoBehaviour
 {
-    protected BaseModel baseModel = null;
+    public virtual void Show()
+    {
+
+    }
 }

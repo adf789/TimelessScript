@@ -16,6 +16,10 @@ namespace TS.MiddleLevel
 
         private void OnEnable()
         {
+            originPosition = transform.localPosition;
+            originRotation = transform.localEulerAngles;
+            originScale = transform.localScale;
+
             tweenData.isPlaying = true;
         }
 
@@ -24,13 +28,6 @@ namespace TS.MiddleLevel
             tweenData.isPlaying = false;
 
             ResetToStart();
-        }
-
-        private void Start()
-        {
-            originPosition = transform.localPosition;
-            originRotation = transform.localEulerAngles;
-            originScale = transform.localScale;
         }
 
         private void Update()

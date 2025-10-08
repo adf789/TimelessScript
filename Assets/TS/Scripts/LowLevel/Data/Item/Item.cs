@@ -16,7 +16,7 @@ public struct Item
     {
         ID = data.ID;
         Type = data.itemType;
-        Count = 0;
+        Count = count;
     }
 
     public Item SetCount(long count)

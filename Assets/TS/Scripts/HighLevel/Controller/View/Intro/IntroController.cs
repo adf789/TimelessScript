@@ -6,22 +6,22 @@ public class IntroViewController : BaseController<IntroView, IntroViewModel>
     public override UIType UIType => UIType.IntroView;
     public override bool IsPopup => false;
 
-    public override async UniTask BeforeEnterProcess()
-    {
-
-    }
-
-    public override async UniTask EnterProcess()
+    public override void BeforeEnterProcess()
     {
         GetModel().SetEventNext(OnEventNext);
     }
 
-    public override async UniTask BeforeExitProcess()
+    public override void EnterProcess()
+    {
+        GetView().Show();
+    }
+
+    public override void BeforeExitProcess()
     {
 
     }
 
-    public override async UniTask ExitProcess()
+    public override void ExitProcess()
     {
 
     }

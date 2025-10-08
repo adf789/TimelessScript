@@ -40,7 +40,6 @@ public class UIScriptCreator : BaseScriptCreator
 
         CreateDirectoryIfNotExist(modelPath);
         CreateDirectoryIfNotExist(viewPath);
-        CreateDirectoryIfNotExist(createPrefabPath);
 
         // Unit �� ���
         if (selectedType == ScriptType.Unit)
@@ -398,7 +397,10 @@ using UnityEngine;
 
 public class {name} : BaseView<{name}Model>
 {{
+    public override void Show()
+    {{
 
+    }}
 }}
 ";
     }
@@ -406,7 +408,7 @@ public class {name} : BaseView<{name}Model>
     private string GenerateUnitModelCode(string name)
     {
         return $@"
-public class {name}UnitModel : BaseModel
+public struct {name}UnitModel : IUnitModel
 {{
     
 }}
@@ -420,7 +422,10 @@ using UnityEngine;
 
 public class {name}Unit : BaseUnit<{name}UnitModel>
 {{
+    public override void Show()
+    {{
 
+    }}
 }}
 ";
     }
@@ -436,22 +441,22 @@ public class {name}Controller : BaseController<{name}, {name}Model>
     public override UIType UIType => UIType.{name};
     public override bool IsPopup => {(isPopup ? "true" : "false")};
 
-    public override async UniTask BeforeEnterProcess()
+    public override void BeforeEnterProcess()
     {{
 
     }}
 
-    public override async UniTask EnterProcess()
+    public override void EnterProcess()
+    {{
+        view.Show();
+    }}
+
+    public override void BeforeExitProcess()
     {{
 
     }}
 
-    public override async UniTask BeforeExitProcess()
-    {{
-
-    }}
-
-    public override async UniTask ExitProcess()
+    public override void ExitProcess()
     {{
 
     }}

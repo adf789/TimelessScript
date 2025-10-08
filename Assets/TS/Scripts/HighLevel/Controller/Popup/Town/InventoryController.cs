@@ -7,24 +7,24 @@ public class InventoryPopupController : BaseController<InventoryPopup, Inventory
     public override UIType UIType => UIType.InventoryPopup;
     public override bool IsPopup => true;
 
-    public override async UniTask BeforeEnterProcess()
+    public override void BeforeEnterProcess()
     {
         GetModel().SetEventClose(OnEventClose);
 
         GetModel().SetCount(GetFirstItemCount());
     }
 
-    public override async UniTask EnterProcess()
+    public override void EnterProcess()
     {
-        view.Show();
+        GetView().Show();
     }
 
-    public override async UniTask BeforeExitProcess()
+    public override void BeforeExitProcess()
     {
 
     }
 
-    public override async UniTask ExitProcess()
+    public override void ExitProcess()
     {
 
     }
@@ -41,6 +41,6 @@ public class InventoryPopupController : BaseController<InventoryPopup, Inventory
 
     private void OnEventClose()
     {
-        Exit().Forget();
+        Exit();
     }
 }

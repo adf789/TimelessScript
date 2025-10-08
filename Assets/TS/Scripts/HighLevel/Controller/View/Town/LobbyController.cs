@@ -1,36 +1,58 @@
-
-using Cysharp.Threading.Tasks;
-using UnityEngine;
-
 public class LobbyViewController : BaseController<LobbyView, LobbyViewModel>
 {
     public override UIType UIType => UIType.LobbyView;
     public override bool IsPopup => false;
 
-    public override async UniTask BeforeEnterProcess()
+    public override void BeforeEnterProcess()
     {
         GetModel().SetEventShowInventory(OnEventShowInventory);
+
+        ObserverSubManager.Instance.AddObserver<ShowCurrencyParam>(OnShowCurrency);
     }
 
-    public override async UniTask EnterProcess()
+    public override void EnterProcess()
+    {
+        GetView().Show();
+
+        ShowCurrency();
+    }
+
+    public override void BeforeExitProcess()
     {
 
     }
 
-    public override async UniTask BeforeExitProcess()
+    public override void ExitProcess()
     {
-
-    }
-
-    public override async UniTask ExitProcess()
-    {
-
+        ObserverSubManager.Instance.RemoveObserver<ShowCurrencyParam>(OnShowCurrency);
     }
 
     private void OnEventShowInventory()
     {
         var inventoryPopup = UIManager.Instance.GetController(UIType.InventoryPopup);
 
-        inventoryPopup.Enter().Forget();
+        inventoryPopup.Enter();
+    }
+
+    private void ShowCurrency()
+    {
+        if (ViewIsNull)
+            return;
+
+        long currency = 0;
+
+        foreach (var item in PlayerSubManager.Instance.Inventory.GetAllItems())
+        {
+            currency = item.Count;
+
+            break;
+        }
+
+        GetView().ShowCurrencies(currency);
+    }
+
+    private void OnShowCurrency(ShowCurrencyParam param)
+    {
+        ShowCurrency();
     }
 }

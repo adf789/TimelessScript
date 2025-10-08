@@ -12,14 +12,14 @@ public abstract class BaseFlow : ScriptableObject
     {
         await OpenScene();
 
-        await OpenUI();
+        OpenUI();
     }
 
     public virtual async UniTask Exit()
     {
         await CloseScene();
 
-        await CloseUI();
+        CloseUI();
     }
 
     protected async UniTask OpenScene()
@@ -48,23 +48,23 @@ public abstract class BaseFlow : ScriptableObject
         await SceneManager.UnloadSceneAsync(scene);
     }
 
-    protected async UniTask OpenUI()
+    protected void OpenUI()
     {
         for (int index = 0; index < uis.Length; index++)
         {
             var ui = UIManager.Instance.GetController(uis[index]);
 
-            await ui.Enter();
+            ui.Enter();
         }
     }
 
-    protected async UniTask CloseUI()
+    protected void CloseUI()
     {
         for (int index = 0; index < uis.Length; index++)
         {
             var ui = UIManager.Instance.GetController(uis[index]);
 
-            await ui.Exit();
+            ui.Exit();
         }
     }
 }

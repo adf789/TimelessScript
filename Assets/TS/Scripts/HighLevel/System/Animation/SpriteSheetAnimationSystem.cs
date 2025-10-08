@@ -155,8 +155,6 @@ public partial struct SpriteSheetAnimationSystem : ISystem
     /// </summary>
     private void StartNextAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
     {
-        Debug.Log($"Start Next Animation Current: {component.CurrentState}, Next: {component.NextState}");
-
         // 애니메이션 완료 이벤트 플래그 설정
         component.AnimationCompleted = true;
         component.CompletedAnimationState = component.CurrentState;

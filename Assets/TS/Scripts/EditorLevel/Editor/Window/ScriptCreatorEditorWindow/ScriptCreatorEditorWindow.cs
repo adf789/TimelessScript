@@ -8,12 +8,13 @@ public class ScriptCreatorEditorWindow : EditorWindow
 {
     private enum CreateScriptType
     {
-        Editor,
         UI,
         Data,
         ECS,
         Table,
         Manager,
+        Observer,
+        Editor,
     }
 
     private string objectName = "";
@@ -40,10 +41,6 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         switch (selectedScriptType)
         {
-             case CreateScriptType.Editor:
-                creator = new EditorScriptCreator();
-                break;
-
             case CreateScriptType.UI:
                 creator = new UIScriptCreator();
                 break;
@@ -62,6 +59,14 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
             case CreateScriptType.Manager:
                 creator = new ManagerScriptCreator();
+                break;
+
+            case CreateScriptType.Observer:
+                creator = new ObserverScriptCreator();
+                break;
+
+            case CreateScriptType.Editor:
+                creator = new EditorScriptCreator();
                 break;
 
             default:

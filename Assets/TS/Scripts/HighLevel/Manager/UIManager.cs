@@ -51,7 +51,7 @@ public class UIManager : BaseManager<UIManager>
     /// <summary>
     /// Auto generate model.
     /// </summary>
-    public async UniTask Enter(BaseController controller)
+    public void Enter(BaseController controller)
     {
         if (controller == null)
             return;
@@ -59,24 +59,24 @@ public class UIManager : BaseManager<UIManager>
         if (CheckOpenedView(controller.UIType))
             return;
 
-        await controller.BeforeEnterProcess();
+        controller.BeforeEnterProcess();
 
         controller.CreateView(viewCanvas.transform);
         controller.InitializeModel();
 
-        await controller.EnterProcess();
+        controller.EnterProcess();
     }
 
-    public async UniTask Exit(BaseController controller)
+    public void Exit(BaseController controller)
     {
         if (controller == null)
             return;
 
-        await controller.BeforeExitProcess();
+        controller.BeforeExitProcess();
 
         controller.DeleteView();
 
-        await controller.ExitProcess();
+        controller.ExitProcess();
 
         // 오픈된 UI 캐싱 삭제
         openedControllers.Remove(controller.UIType);
