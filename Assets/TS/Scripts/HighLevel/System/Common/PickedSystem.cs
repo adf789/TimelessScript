@@ -21,6 +21,7 @@ public partial class PickedSystem : SystemBase
         }
     }
 
+
     protected override void OnUpdate()
     {
         if (!TouchSubManager.Instance.CheckTouchDown())
