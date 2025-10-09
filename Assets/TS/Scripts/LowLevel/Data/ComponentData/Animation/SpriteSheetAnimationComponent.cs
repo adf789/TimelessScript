@@ -13,7 +13,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public int CurrentSpriteIndex;
     public int CurrentAnimationIndex;
     public int CurrentAnimationCount;
-    public int PassingFrame;
+    public float PassingTime;
     public bool IsTransitioning;
     public bool IsEndLoopOneTime;
     public bool HasStartAnimation;
@@ -33,7 +33,7 @@ public struct SpriteSheetAnimationComponent : IComponentData
         CurrentSpriteIndex = 0;
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;
-        PassingFrame = 0;
+        PassingTime = 0f;
         CurrentState = currentState;
         NextState = AnimationState.None;
         PrevPhase = AnimationPhase.Start;

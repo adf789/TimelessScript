@@ -12,6 +12,8 @@ public partial struct SpriteSheetAnimationSystem : ISystem
 
     public void OnUpdate(ref SystemState state)
     {
+        float deltaTime = state.World.Time.DeltaTime;
+
         foreach (var (authoring, renderer, anim) in
         SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
         RefRO<SpriteRendererComponent>,
@@ -24,7 +26,7 @@ public partial struct SpriteSheetAnimationSystem : ISystem
                 continue;
             }
 
-            SetAnimation(authoring.Value, ref anim.ValueRW);
+            SetAnimation(authoring.Value, ref anim.ValueRW, deltaTime);
             SetRenderer(authoring.Value, in renderer.ValueRO);
         }
 
@@ -43,10 +45,10 @@ public partial struct SpriteSheetAnimationSystem : ISystem
     }
 
     private void SetAnimation(SpriteSheetAnimationAuthoring authoring,
-    ref SpriteSheetAnimationComponent anim)
+    ref SpriteSheetAnimationComponent anim, float deltaTime)
     {
         // 현재 애니메이션 진행
-        if (!CheckAnimationFrame(authoring, ref anim))
+        if (!CheckAnimationFrame(authoring, ref anim, deltaTime))
             return;
 
         // 애니메이션 전환 요청 처리
@@ -74,7 +76,7 @@ public partial struct SpriteSheetAnimationSystem : ISystem
         authoring.SetLayer(renderer.Layer);
     }
 
-    private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
+    private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component, float deltaTime)
     {
         int frameDelay = component.CurrentPhase switch
         {
@@ -84,14 +86,17 @@ public partial struct SpriteSheetAnimationSystem : ISystem
             _ => authoring.GetFrameDelay(component.CurrentSpriteIndex, component.CurrentAnimationIndex)
         };
 
-        if (component.PassingFrame < frameDelay)
+        // 60 FPS 기준으로 프레임을 시간으로 변환
+        float frameDuration = frameDelay / 60.0f;
+
+        if (component.PassingTime < frameDuration)
         {
-            component.PassingFrame++;
+            component.PassingTime += deltaTime;
             return false;
         }
         else
         {
-            component.PassingFrame = 0;
+            component.PassingTime = 0f;
             return true;
         }
     }
@@ -221,7 +226,7 @@ public partial struct SpriteSheetAnimationSystem : ISystem
 
         component.CurrentPhase = phase;
         component.CurrentAnimationIndex = -1;
-        component.PassingFrame = 0;
+        component.PassingTime = 0f;
 
         switch (phase)
         {
