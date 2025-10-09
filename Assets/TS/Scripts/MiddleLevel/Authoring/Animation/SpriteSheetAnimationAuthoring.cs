@@ -3,8 +3,8 @@ using UnityEngine;
 using Unity.Entities;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Unity.Collections;
 
+[RequireComponent(typeof(SpriteRenderer))]
 public class SpriteSheetAnimationAuthoring : MonoBehaviour
 {
     /// <summary>
@@ -61,7 +61,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
 
     [SerializeField] private AnimationState defaultState;
     [SerializeField] private SpriteRenderer spriteRenderer = null;
-    [SerializeField] private Image spriteImage = null;
     [Header("이미지 크기")]
     [SerializeField] private Vector2 size;
 
@@ -84,6 +83,11 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             AddComponentObject(entity, authoring);
 
             AddComponent(entity, new SpriteSheetAnimationComponent(authoring.defaultState));
+            AddComponent(entity, new SpriteRendererComponent()
+            {
+                Layer = authoring.spriteRenderer.sortingOrder,
+                IsFlip = authoring.spriteRenderer.flipX
+            });
             AddComponent(entity, new ObjectTargetComponent());
         }
 
@@ -91,31 +95,17 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
 
     private void OnValidate()
     {
-        if (spriteRenderer != null || TryGetComponent(out spriteRenderer))
-        {
-            size = spriteRenderer.size;
-        }
-        else if (spriteImage != null || TryGetComponent(out spriteImage))
-        {
-            RectTransform rectTransform = transform as RectTransform;
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
 
-            if (rectTransform != null)
-                size = rectTransform.sizeDelta;
-        }
+        size = spriteRenderer.size;
     }
 
     public void Initialize()
     {
-        if (!spriteRenderer && !spriteImage)
+        if (!spriteRenderer)
         {
-            if (!spriteRenderer)
-            {
-                spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-            }
-            if (!spriteRenderer && !spriteImage)
-            {
-                spriteImage = GetComponentInChildren<Image>();
-            }
+            spriteRenderer = GetComponent<SpriteRenderer>();
         }
     }
 
@@ -266,12 +256,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         {
             spriteRenderer.flipX = isFlip;
         }
-        else if (spriteImage != null)
-        {
-            var rotation = spriteImage.transform.rotation.eulerAngles;
-            rotation.x = isFlip ? 180f : 0;
-            spriteImage.transform.rotation = Quaternion.Euler(rotation);
-        }
     }
 
     public void SetAnimationByIndex(AnimationState state, int animationIndex)
@@ -325,13 +309,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             if (size.x > 0 && size.y > 0)
                 spriteRenderer.size = size;
         }
-        else if (spriteImage != null)
-        {
-            spriteImage.sprite = sprite;
-
-            if (size.x > 0 && size.y > 0)
-                (transform as RectTransform).sizeDelta = size;
-        }
     }
 
     public void SetSize(Vector2 size)
@@ -339,10 +316,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         if (spriteRenderer != null)
         {
             spriteRenderer.size = size;
-        }
-        else if (spriteImage != null)
-        {
-            spriteImage.rectTransform.sizeDelta = size;
         }
     }
 
@@ -352,10 +325,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         {
             spriteRenderer.flipX = flipX;
             spriteRenderer.flipY = flipY;
-        }
-        else if (spriteImage != null)
-        {
-            spriteImage.rectTransform.localScale = new Vector3(flipX ? -1 : 1, flipY ? -1 : 1, 0);
         }
     }
 
@@ -372,13 +341,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
             Color color = spriteRenderer.color;
             color.a = alpha;
             spriteRenderer.color = color;
-        }
-
-        if (spriteImage != null)
-        {
-            Color color = spriteImage.color;
-            color.a = alpha;
-            spriteImage.color = color;
         }
     }
 
@@ -405,10 +367,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         {
             return spriteRenderer.size;
         }
-        else if (spriteImage != null && spriteImage.sprite != null)
-        {
-            return spriteImage.rectTransform.sizeDelta;
-        }
 
         return size;
     }
@@ -418,12 +376,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         if (spriteRenderer != null)
         {
             return (spriteRenderer.flipX, spriteRenderer.flipY);
-        }
-        else if (spriteImage != null)
-        {
-            Vector3 scale = spriteImage.rectTransform.localScale;
-
-            return (scale.x < 0, scale.y < 0);
         }
 
         return (false, false);

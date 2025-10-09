@@ -11,6 +11,8 @@ public partial struct BehaviorJob : IJobEntity
 {
     [NativeDisableParallelForRestriction]
     public ComponentLookup<SpriteSheetAnimationComponent> AnimationComponentLookup;
+    [NativeDisableParallelForRestriction]
+    public ComponentLookup<SpriteRendererComponent> RendererComponentLookup;
 
     [NativeDisableParallelForRestriction]
     public ComponentLookup<ObjectTargetComponent> ObjectTargetComponentLookup;
@@ -24,46 +26,52 @@ public partial struct BehaviorJob : IJobEntity
 
     public void Execute([EntityIndexInQuery] int entityInQueryIndex,
         Entity entity,
-    ref TSObjectComponent objectComponent,
-    ref TSActorComponent actorComponent,
-    ref PhysicsComponent physicsComponent,
-    in NavigationComponent navigationComponent,
-    [ReadOnly] DynamicBuffer<Child> children)
+    ref TSObjectComponent tsObject,
+    ref TSActorComponent tsActor,
+    ref PhysicsComponent physics,
+    in NavigationComponent navigation)
     {
         RefRW<LocalTransform> transform = TransformLookup.GetRefRW(entity);
-        RefRW<SpriteSheetAnimationComponent> animComponent = GetAnimation(entity, ref objectComponent, children);
+        RefRW<SpriteSheetAnimationComponent> animComponent = AnimationComponentLookup.GetRefRW(tsObject.RendererEntity);
+        RefRW<SpriteRendererComponent> rendererComponent = RendererComponentLookup.GetRefRW(tsObject.RendererEntity);
 
         if (!animComponent.IsValid)
             return;
 
         // 공중에서는 떨어지는 애니메이션 고정
-        if (!physicsComponent.IsGrounded)
+        if (!physics.IsGrounded)
         {
             animComponent.ValueRW.RequestTransition(AnimationState.Fall, AnimationTransitionType.SkipAllPhase);
             return;
         }
         // 착지했을 때
-        else if (physicsComponent.IsRandingAnimation && physicsComponent.IsGrounded)
+        else if (physics.IsRandingAnimation && physics.IsGrounded)
         {
             // 땅에 착지했을 때 애니메이션 수정
             animComponent.ValueRW.RequestTransition(AnimationState.Idle, AnimationTransitionType.SkipCurrentPhase);
 
-            physicsComponent.IsRandingAnimation = false;
+            physics.IsRandingAnimation = false;
 
             return;
         }
 
-        var moveState = actorComponent.Move.MoveState;
+        var moveState = tsActor.Move.MoveState;
 
         // 이동하는 경우
         if (moveState == MoveState.Move)
         {
             OnStartMoving(ref animComponent.ValueRW);
 
-            HandleMovement(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+            HandleMovement(ref transform.ValueRW, ref tsObject, ref tsActor, ref rendererComponent.ValueRW);
 
-            if (navigationComponent.IsActive && navigationComponent.State == NavigationState.Completed)
-                OnEndMoving(entityInQueryIndex, in entity, in transform.ValueRO, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+            if (navigation.IsActive && navigation.State == NavigationState.Completed)
+                OnEndMoving(entityInQueryIndex,
+                in entity,
+                in transform.ValueRO,
+                ref tsObject,
+                ref tsActor,
+                ref rendererComponent.ValueRW,
+                ref animComponent.ValueRW);
 
             return;
         }
@@ -72,9 +80,9 @@ public partial struct BehaviorJob : IJobEntity
         if (moveState == MoveState.ClimbUp
         || moveState == MoveState.ClimbDown)
         {
-            OnStartClimbing(in actorComponent, ref animComponent.ValueRW);
+            OnStartClimbing(in tsActor, ref animComponent.ValueRW);
 
-            HandleClimbing(ref transform.ValueRW, ref objectComponent, ref actorComponent, ref animComponent.ValueRW);
+            HandleClimbing(ref transform.ValueRW, ref tsObject, ref tsActor, ref animComponent.ValueRW);
 
             return;
         }
@@ -83,7 +91,7 @@ public partial struct BehaviorJob : IJobEntity
     private void HandleMovement(ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref TSActorComponent actorComponent,
-    ref SpriteSheetAnimationComponent anim)
+    ref SpriteRendererComponent renderer)
     {
         // 1. 현재 '루트(발)'의 위치를 계산합니다. (피벗 위치 + 오프셋)
         float2 currentRootPosition = transform.Position.xy;
@@ -92,7 +100,7 @@ public partial struct BehaviorJob : IJobEntity
         // 2. 목표 '루트' 위치를 가져옵니다.
         float2 moveRootPosition = actorComponent.Move.MovePosition;
 
-        anim.IsFlip = moveRootPosition.x < currentRootPosition.x;
+        renderer.IsFlip = moveRootPosition.x < currentRootPosition.x;
 
         // 3. 한 프레임에 이동할 최대 거리를 계산합니다.
         float maxDistanceDelta = Speed * DeltaTime;
@@ -190,6 +198,7 @@ public partial struct BehaviorJob : IJobEntity
         in LocalTransform transform,
     ref TSObjectComponent objectComponent,
     ref TSActorComponent actorComponent,
+    ref SpriteRendererComponent renderer,
     ref SpriteSheetAnimationComponent anim)
     {
         // 현재 오브젝트와 타겟의 위치를 가져옵니다.
@@ -200,7 +209,7 @@ public partial struct BehaviorJob : IJobEntity
         // 이동 목적지 리셋
         if (actorComponent.Move.TargetType == TSObjectType.Gimmick)
         {
-            anim.IsFlip = targetPosition.x < currentRootPosition.x;
+            renderer.IsFlip = targetPosition.x < currentRootPosition.x;
             anim.RequestTransition(AnimationState.Interact, AnimationTransitionType.SkipAllPhase);
 
             var interactComponent = new InteractComponent()
@@ -219,41 +228,5 @@ public partial struct BehaviorJob : IJobEntity
         actorComponent.Move.TargetType = TSObjectType.None;
         actorComponent.Move.MovePosition = currentRootPosition;
         actorComponent.Move.MoveState = MoveState.None;
-    }
-
-    private RefRW<SpriteSheetAnimationComponent> GetAnimation(
-        Entity entity,
-        ref TSObjectComponent objectComponent,
-        [ReadOnly] DynamicBuffer<Child> children)
-    {
-        if (objectComponent.AnimationEntity == Entity.Null)
-        {
-            // 자식 목록을 순회하여 원하는 컴포넌트를 가진 자식을 찾습니다.
-            foreach (var child in children)
-            {
-                var childEntity = child.Value;
-
-                // 자식 엔티티가 SpriteSheetAnimationComponent를 가지고 있는지 확인합니다.
-                if (!AnimationComponentLookup.HasComponent(childEntity))
-                    continue;
-
-                // 자식의 컴포넌트들을 가져옵니다.
-                objectComponent.AnimationEntity = childEntity;
-
-                // 엔티티 타겟을 캐싱함
-                var objectTargetComponent = ObjectTargetComponentLookup.GetRefRW(childEntity);
-
-                if (objectTargetComponent.IsValid)
-                    objectTargetComponent.ValueRW.Target = entity;
-
-                return AnimationComponentLookup.GetRefRW(childEntity);
-            }
-
-            return default;
-        }
-        else
-        {
-            return AnimationComponentLookup.GetRefRW(objectComponent.AnimationEntity);
-        }
     }
 }

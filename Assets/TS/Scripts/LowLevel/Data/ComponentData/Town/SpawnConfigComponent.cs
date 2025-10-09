@@ -7,6 +7,7 @@ public struct SpawnConfigComponent : IComponentData
     public Entity SpawnObjectPrefab;
     public TSObjectType ObjectType;
     public FixedString64Bytes Name;
+    public int LayerOffset;
     public int MaxSpawnCount;
     public int ReadySpawnCount;
     public int CurrentSpawnCount;

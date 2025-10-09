@@ -157,11 +157,11 @@ public partial class GamePreprocessingSystem : SystemBase
         {
             var tsObject = SystemAPI.GetComponentRW<TSObjectComponent>(entity);
 
-            if (tsObject.ValueRW.AnimationEntity != Entity.Null &&
-                SystemAPI.HasComponent<SpriteSheetAnimationComponent>(tsObject.ValueRW.AnimationEntity))
+            if (tsObject.ValueRW.RendererEntity != Entity.Null &&
+                SystemAPI.HasComponent<SpriteRendererComponent>(tsObject.ValueRW.RendererEntity))
             {
-                var animComponent = SystemAPI.GetComponentRO<SpriteSheetAnimationComponent>(tsObject.ValueRW.AnimationEntity);
-                availableLayers.Add(new AvailableLayerBuffer { Layer = animComponent.ValueRO.Layer });
+                var renderer = SystemAPI.GetComponentRO<SpriteRendererComponent>(tsObject.ValueRW.RendererEntity);
+                availableLayers.Add(new AvailableLayerBuffer { Layer = renderer.ValueRO.Layer });
             }
         }
 

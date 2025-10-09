@@ -10,7 +10,7 @@ public struct TSObjectComponent : IComponentData
     public TSObjectType ObjectType;
     public uint DataID;
     public float RootOffset;
-    public Entity AnimationEntity;
+    public Entity RendererEntity;
 
     public bool IsNull => Self == Entity.Null;
 }

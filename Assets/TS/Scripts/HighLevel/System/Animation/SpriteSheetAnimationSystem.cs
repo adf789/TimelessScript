@@ -1,6 +1,3 @@
-
-using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
@@ -10,14 +7,14 @@ public partial struct SpriteSheetAnimationSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         // 이 시스템은 SpriteSheetAnimationComponent가 있는 엔티티가 하나라도 있을 때만 업데이트됩니다.
-        state.RequireForUpdate<SpriteSheetAnimationComponent>();
+        state.RequireForUpdate<SpriteRendererComponent>();
     }
 
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (authoring, component) in
+        foreach (var (authoring, renderer, entity) in
         SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
-        RefRW<SpriteSheetAnimationComponent>>())
+        RefRO<SpriteRendererComponent>>().WithEntityAccess())
         {
             if (!authoring.Value.IsLoaded)
             {
@@ -26,8 +23,39 @@ public partial struct SpriteSheetAnimationSystem : ISystem
                 continue;
             }
 
-            SetAnimation(authoring.Value, ref component.ValueRW);
+            if (SystemAPI.HasComponent<SpriteSheetAnimationComponent>(entity))
+            {
+                var anim = SystemAPI.GetComponentRW<SpriteSheetAnimationComponent>(entity);
+                SetAnimation(authoring.Value, ref anim.ValueRW);
+            }
+
+            SetRenderer(authoring.Value, in renderer.ValueRO);
         }
+    }
+
+    private void SetAnimation(SpriteSheetAnimationAuthoring authoring,
+    ref SpriteSheetAnimationComponent anim)
+    {
+        // 현재 애니메이션 진행
+        if (!CheckAnimationFrame(authoring, ref anim))
+            return;
+
+        // 애니메이션 전환 요청 처리
+        if (anim.NextState != AnimationState.None
+        && anim.NextState != anim.CurrentState
+        && !anim.IsTransitioning)
+        {
+            ProcessAnimationTransition(authoring, ref anim);
+        }
+
+        ProcessCurrentAnimation(authoring, ref anim);
+    }
+
+    private void SetRenderer(SpriteSheetAnimationAuthoring authoring, in SpriteRendererComponent renderer)
+    {
+        // 컴포넌트 값에 맞춰서 렌더러 옵션 변경
+        authoring.SetFlip(renderer.IsFlip);
+        authoring.SetLayer(renderer.Layer);
     }
 
     private bool CheckAnimationFrame(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
@@ -50,27 +78,6 @@ public partial struct SpriteSheetAnimationSystem : ISystem
             component.PassingFrame = 0;
             return true;
         }
-    }
-
-    public void SetAnimation(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
-    {
-        // 현재 애니메이션 진행
-        if (!CheckAnimationFrame(authoring, ref component))
-            return;
-
-        authoring.SetFlip(component.IsFlip);
-
-        // 애니메이션 전환 요청 처리
-        if (component.NextState != AnimationState.None
-        && component.NextState != component.CurrentState
-        && !component.IsTransitioning)
-        {
-            ProcessAnimationTransition(authoring, ref component);
-        }
-
-        ProcessCurrentAnimation(authoring, ref component);
-
-        UpdateLayer(authoring, in component);
     }
 
     private void ProcessAnimationTransition(SpriteSheetAnimationAuthoring authoring, ref SpriteSheetAnimationComponent component)
@@ -139,11 +146,6 @@ public partial struct SpriteSheetAnimationSystem : ISystem
                 }
                 break;
         }
-    }
-
-    private void UpdateLayer(SpriteSheetAnimationAuthoring authoring, in SpriteSheetAnimationComponent component)
-    {
-        authoring.SetLayer(component.Layer);
     }
 
     private void SetStartAnimationCallback(ref SpriteSheetAnimationComponent component)

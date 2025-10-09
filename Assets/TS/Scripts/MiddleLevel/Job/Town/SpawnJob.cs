@@ -8,7 +8,6 @@ using Unity.Transforms;
 public partial struct SpawnJob : IJobEntity
 {
     [ReadOnly] public float currentTime;
-    [ReadOnly] public ComponentLookup<LocalTransform> transformLookup;
 
     public EntityCommandBuffer.ParallelWriter ecb;
 
@@ -28,7 +27,7 @@ public partial struct SpawnJob : IJobEntity
             return;
 
         // 스폰 가능한 위치 찾기
-        FindValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in transform, in collider, out float2 spawnPosition);
+        FindValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in transform, in collider, out float3 spawnPosition);
 
         // 스폰 요청 생성
         var spawnRequestEntity = ecb.CreateEntity(entityInQueryIndex);
@@ -39,6 +38,7 @@ public partial struct SpawnJob : IJobEntity
             ObjectType = spawnConfig.ObjectType, // Entity 오브젝트 타입
             Name = spawnConfig.Name,
             SpawnPosition = spawnPosition,
+            LayerOffset = spawnConfig.LayerOffset,
             IsActive = true
         });
 
@@ -54,7 +54,7 @@ public partial struct SpawnJob : IJobEntity
         float yOffset,
         in LocalTransform transform,
         in ColliderComponent collider,
-        out float2 spawnPosition)
+        out float3 spawnPosition)
     {
         float halfWidth = collider.Size.x * 0.5f;
         float halfHeight = collider.Size.y * 0.5f;
@@ -65,8 +65,8 @@ public partial struct SpawnJob : IJobEntity
                        (uint) entityIndex * 13 + 1;
 
         var random = new Unity.Mathematics.Random(seed);
-        float2 randomOffset = new float2(random.NextFloat(-halfWidth, halfWidth), halfHeight);
-        float2 candidatePosition = transform.Position.xy + randomOffset;
+        float3 randomOffset = new float3(random.NextFloat(-halfWidth, halfWidth), halfHeight, 0);
+        float3 candidatePosition = transform.Position.xyz + randomOffset;
 
         candidatePosition.y += yOffset;
 

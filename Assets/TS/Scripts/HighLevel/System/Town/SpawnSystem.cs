@@ -44,7 +44,6 @@ public partial struct SpawnSystem : ISystem
         var spawnJob = new SpawnJob
         {
             currentTime = currentTime,
-            transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
             ecb = ecb.AsParallelWriter()
         };
 
@@ -65,10 +64,11 @@ public partial struct SpawnSystem : ISystem
         state.Dependency = spawnExecutionJob.Schedule(state.Dependency);
 
         // 스폰된 오브젝트 애니메이션 연결
-        var linkAnimationJob = new LinkAnimationJob()
+        var linkAnimationJob = new LinkRendererJob()
         {
             linkedEntityGroupLookup = SystemAPI.GetBufferLookup<LinkedEntityGroup>(true),
-            animationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
+            rendererComponentLookup = SystemAPI.GetComponentLookup<SpriteRendererComponent>(false),
+            targetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
             ecb = ecb
         };
 

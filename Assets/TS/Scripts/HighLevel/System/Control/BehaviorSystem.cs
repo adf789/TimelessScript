@@ -26,6 +26,7 @@ public partial struct BehaviorSystem : ISystem
         var behaviorJob = new BehaviorJob()
         {
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
+            RendererComponentLookup = SystemAPI.GetComponentLookup<SpriteRendererComponent>(false),
             ObjectTargetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
             TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
             Ecb = ecb.AsParallelWriter(),

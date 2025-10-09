@@ -206,11 +206,10 @@ public partial struct ControlSystem : ISystem
                     // Gimmick의 위치와 반지름 정보 가져오기
                     var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(target.Self);
                     var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(target.Self);
-                    var gimmickPosition = targetPosition + gimmickCollider.Offset;
                     float gimmickRadius = gimmick.Radius;
 
                     // 원형의 중심 아래에 접하는 지형 찾기
-                    var groundResult = FindGroundBelowCircle(ref state, selfPosition, gimmickPosition, gimmickRadius);
+                    var groundResult = FindGroundBelowCircle(ref state, selfPosition, targetPosition, gimmickRadius);
 
                     if (groundResult.GroundEntity != Entity.Null)
                     {
@@ -221,7 +220,7 @@ public partial struct ControlSystem : ISystem
                         navigation.ValueRW.CurrentWaypointIndex = 0;
                         navigation.ValueRW.State = NavigationState.PathFinding;
 
-                        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {gimmickPosition}");
+                        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {targetPosition}");
                     }
                     else
                     {

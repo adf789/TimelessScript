@@ -342,6 +342,10 @@ MonoBehaviour:
   - guid: 099bafe355574c5419d20324e8b1526e
     assetPath: Assets/TS/Resources/SpriteSheet/TestCharcter/Character_Ladder_ClimbUpIdle.png
     displayName: Character_Ladder_ClimbUpIdle
+  - guid: 7810966f0f690954c87305933cabf2b0
+    assetPath: Assets/Cainos/Pixel Art Platformer - Village Props/Texture/TX Village
+      Props.png
+    displayName: TX Village Props
 --- !u!114 &4731222830723883561
 MonoBehaviour:
   m_ObjectHideFlags: 0

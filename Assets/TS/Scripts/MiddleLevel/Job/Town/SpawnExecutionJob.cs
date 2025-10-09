@@ -36,9 +36,7 @@ public partial struct SpawnExecutionJob : IJobEntity
         ecb.SetName(spawnedEntity, in name);
 
         // 스폰된 오브젝트의 위치 설정
-        float3 finalPosition = new float3(spawnRequest.SpawnPosition.x, spawnRequest.SpawnPosition.y, 0f);
-
-        ecb.SetComponent(spawnedEntity, LocalTransform.FromPosition(finalPosition));
+        ecb.SetComponent(spawnedEntity, LocalTransform.FromPosition(spawnRequest.SpawnPosition));
 
         switch (spawnRequest.ObjectType)
         {
@@ -91,7 +89,7 @@ public partial struct SpawnExecutionJob : IJobEntity
         // 설정된 레이어가 없으면 스폰된 엔티티 수로 결정
         if (layer == -1)
         {
-            layer = spawnConfig.ValueRW.CurrentSpawnCount;
+            layer = spawnConfig.ValueRW.CurrentSpawnCount + spawnConfig.ValueRW.LayerOffset;
         }
 
         ecb.AddComponent(spawnedEntity, new AnimationLinkerFlagComponent()

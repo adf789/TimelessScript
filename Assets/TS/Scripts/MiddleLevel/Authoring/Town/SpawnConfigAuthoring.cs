@@ -6,6 +6,7 @@ public class SpawnConfigAuthoring : MonoBehaviour
 {
     [Header("Spawn Configuration")]
     [SerializeField] private TSObjectAuthoring spawnObjectPrefab;
+    [SerializeField] private int layerOffset = 0;
     [SerializeField] private int maxSpawnCount = 10;
     [SerializeField] private float spawnCooldown = 2.0f;
     [SerializeField] private float minSpawnDistance = 1.0f;
@@ -25,6 +26,7 @@ public class SpawnConfigAuthoring : MonoBehaviour
                 SpawnObjectPrefab = spawnEntity,
                 Name = spawnName,
                 ObjectType = objectType,
+                LayerOffset = authoring.layerOffset,
                 MaxSpawnCount = authoring.maxSpawnCount,
                 ReadySpawnCount = 0,
                 CurrentSpawnCount = 0,

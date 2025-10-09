@@ -14,8 +14,6 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public int CurrentAnimationIndex;
     public int CurrentAnimationCount;
     public int PassingFrame;
-    public int Layer;
-    public bool IsFlip;
     public bool IsTransitioning;
     public bool IsEndLoopOneTime;
     public bool HasStartAnimation;
@@ -31,13 +29,11 @@ public struct SpriteSheetAnimationComponent : IComponentData
 
     public SpriteSheetAnimationComponent(AnimationState currentState)
     {
-        IsFlip = false;
         IsTransitioning = false;
         CurrentSpriteIndex = 0;
         CurrentAnimationIndex = -1;
         CurrentAnimationCount = 0;
         PassingFrame = 0;
-        Layer = 0;
         CurrentState = currentState;
         NextState = AnimationState.None;
         PrevPhase = AnimationPhase.Start;
@@ -107,10 +103,5 @@ public struct SpriteSheetAnimationComponent : IComponentData
         {
             return IsLastAnimation;
         }
-    }
-
-    public void SetLayer(int layer)
-    {
-        Layer = layer;
     }
 }
