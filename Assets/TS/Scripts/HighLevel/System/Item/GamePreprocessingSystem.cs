@@ -27,6 +27,14 @@ public partial class GamePreprocessingSystem : SystemBase
 
     protected override void OnUpdate()
     {
+        // FPS 계산 및 업데이트
+        float deltaTime = World.Time.DeltaTime;
+        if (deltaTime > 0)
+        {
+            float fps = 1.0f / deltaTime;
+            GameManager.Instance.UpdateFPS(fps);
+        }
+
         OnUpdateActorLifeCycle();
 
         OnUpdateColllectItems();
