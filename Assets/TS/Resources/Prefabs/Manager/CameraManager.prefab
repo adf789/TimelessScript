@@ -147,10 +147,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.MiddleLevel::PickingSupport
   touchDelay: 0.1
   pickingCamera: {fileID: 6063675442632334909}
+  pixelPerfectCamera: {fileID: 5880341917412959436}
   dragRange: {fileID: 9033749700006500435}
   zoomSpeed: 10
   minSize: 10
   maxSize: 25
+  pixelZoomSpeed: 10000
+  pixelMinSize: 17
+  pixelMaxSize: 30
 --- !u!114 &5880341917412959436
 MonoBehaviour:
   m_ObjectHideFlags: 0

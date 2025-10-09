@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
+using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Camera))]
 public class PickingSupport : MonoBehaviour
@@ -18,10 +18,18 @@ public class PickingSupport : MonoBehaviour
 
     [SerializeField, Header("터치 딜레이")] private float touchDelay = 0.1f;
     [SerializeField] private Camera pickingCamera;
+    [SerializeField] private PixelPerfectCamera pixelPerfectCamera;
     [SerializeField] private PickedSupport dragRange;
-    [SerializeField] private float zoomSpeed = 1.0f;
-    [SerializeField] private float minSize = 65.0f;
-    [SerializeField] private float maxSize = 130.0f;
+
+    [Header("Non-Pixel zoom")]
+    [SerializeField] private float zoomSpeed = 10.0f;
+    [SerializeField] private float minSize = 10.0f;
+    [SerializeField] private float maxSize = 25.0f;
+
+    [Header("Pixel zoom")]
+    [SerializeField] private float pixelZoomSpeed = 10000.0f;
+    [SerializeField] private float pixelMinSize = 10.0f;
+    [SerializeField] private float pixelMaxSize = 17.0f;
 
     private MouseInputSystem mouseInputSystem;
     private float prevPinchDistance;
@@ -30,11 +38,10 @@ public class PickingSupport : MonoBehaviour
 
     private readonly LinkedList<PickedSupport> pickObjects = new();
     private SortedSet<PickedSupport> prevOverlapObjects = new();
-    private Vector3 prevPosition;
+    private Vector2 prevPosition;
 
     private bool isPickStart;
     private bool isDragStart;
-    private bool isMobile;
     private const float DragThreshold = 5f;
 
     private bool pickingLock = false;
@@ -47,23 +54,17 @@ public class PickingSupport : MonoBehaviour
     {
         if (pickingCamera == null)
             pickingCamera = GetComponent<Camera>();
+
+        if (pixelPerfectCamera == null)
+            pixelPerfectCamera = pickingCamera.GetComponent<PixelPerfectCamera>();
     }
 
     private void Start()
     {
         InputSystemInit();
-        
+
         if (!pickingCamera.orthographic)
             enabled = false;
-    }
-
-    private void OnEnable()
-    {
-#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_STANDALONE_WIN
-        isMobile = false;
-#else
-        isMobile = true;
-#endif
     }
 
     private void OnDestroy()
@@ -73,10 +74,10 @@ public class PickingSupport : MonoBehaviour
 
     private void Update()
     {
-        if(!pickingLock)
+        if (!pickingLock)
             CheckPicking();
 
-        if (!pickingLock && !cameraZoomLock && CheckTouchWithinScreen())
+        if (!pickingLock && !cameraZoomLock && TouchSubManager.Instance.CheckTouchWithinScreen())
             ZoomMobile();
     }
 
@@ -84,16 +85,16 @@ public class PickingSupport : MonoBehaviour
     {
         pickingLock = isBool;
     }
-    
+
     public void SetCameraZoomLock(bool isBool)
     {
         cameraZoomLock = isBool;
     }
-    
+
     private void InputSystemInit()
     {
-        if (!isMobile)
-        { 
+        if (!TouchSubManager.Instance.IsMobile)
+        {
             mouseInputSystem = new MouseInputSystem();
             mouseInputSystem.Enable();
 
@@ -104,9 +105,9 @@ public class PickingSupport : MonoBehaviour
                 if (pickingLock || cameraZoomLock)
                     return;
 
-                if (!CheckTouchWithinScreen())
+                if (!TouchSubManager.Instance.CheckTouchWithinScreen())
                     return;
-                
+
                 scrollY = x.ReadValue<float>() * 0.02f;
                 ZoomPC();
             };
@@ -120,7 +121,8 @@ public class PickingSupport : MonoBehaviour
 
     private void CheckPicking()
     {
-        if (CheckTouchDown() && CheckTouchWithinScreen())
+        if (TouchSubManager.Instance.CheckTouchDown()
+        && TouchSubManager.Instance.CheckTouchWithinScreen())
         {
             if (touchTime + touchDelay > Time.realtimeSinceStartup)
                 return;
@@ -132,9 +134,9 @@ public class PickingSupport : MonoBehaviour
 
         if (!isPickStart) return;
 
-        if (CheckTouchUp())
+        if (TouchSubManager.Instance.CheckTouchUp())
             OnTouchStop();
-        else if (prevPosition != GetTouchPosition())
+        else if (prevPosition != TouchSubManager.Instance.GetTouchPositionVector())
             OnDrag();
     }
 
@@ -150,7 +152,7 @@ public class PickingSupport : MonoBehaviour
         }
 
         var pickingData = new PickingData(screenTouchPos, Vector3.zero);
-        prevPosition = GetTouchPosition();
+        prevPosition = TouchSubManager.Instance.GetTouchPosition();
 
         foreach (var pickObject in pickObjects)
             pickObject.OnEventPointDown(pickingData);
@@ -160,8 +162,8 @@ public class PickingSupport : MonoBehaviour
 
     private void OnDrag()
     {
-        Vector3 screenTouchPos = GetScreenTouchPosition();
-        Vector3 currentPos = GetTouchPosition();
+        Vector2 screenTouchPos = GetScreenTouchPosition();
+        Vector2 currentPos = TouchSubManager.Instance.GetTouchPosition();
         var pickingData = new PickingData(screenTouchPos, currentPos - prevPosition);
 
         foreach (var pickObject in pickObjects)
@@ -194,7 +196,7 @@ public class PickingSupport : MonoBehaviour
 
     private void OnTouchStop()
     {
-        Vector3 screenTouchPos = GetScreenTouchPosition();
+        Vector2 screenTouchPos = GetScreenTouchPosition();
         var upTargets = GetPickTargets(screenTouchPos);
         var pickingData = new PickingData(screenTouchPos, screenTouchPos - prevPosition);
         bool isCallClickEvent = false;
@@ -210,7 +212,7 @@ public class PickingSupport : MonoBehaviour
         ResetPickValues();
     }
 
-    private SortedSet<PickedSupport> GetPickTargets(Vector3 position)
+    private SortedSet<PickedSupport> GetPickTargets(Vector2 position)
     {
         var targets = new SortedSet<PickedSupport>();
         if (EventSystem.current.IsPointerOverGameObject()) return targets;
@@ -224,7 +226,7 @@ public class PickingSupport : MonoBehaviour
         return targets;
     }
 
-    private Vector3 GetScreenTouchPosition() => pickingCamera.ScreenToWorldPoint(GetTouchPosition());
+    private Vector2 GetScreenTouchPosition() => TouchSubManager.Instance.GetScreenTouchPosition(pickingCamera);
 
     private void ResetPickValues()
     {
@@ -235,52 +237,50 @@ public class PickingSupport : MonoBehaviour
         prevOverlapObjects.Clear();
     }
 
-    private bool CheckTouchDown() => !isMobile
-        ? Mouse.current != null &&
-          (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame)
-        : Touchscreen.current?.touches.Count > 0 && Touchscreen.current.touches[0].press.wasPressedThisFrame;
-
-    private bool CheckTouchUp() => !isMobile
-        ? Mouse.current != null && (Mouse.current.leftButton.wasReleasedThisFrame ||
-                                    Mouse.current.rightButton.wasReleasedThisFrame)
-        : Touchscreen.current?.touches.Count > 0 && Touchscreen.current.touches[0].press.wasReleasedThisFrame;
-
-    private Vector3 GetTouchPosition() => !isMobile
-        ? Mouse.current?.position.ReadValue() ?? Vector2.zero
-        : Touchscreen.current?.touches.Count > 0
-            ? Touchscreen.current.touches[0].position.ReadValue()
-            : Vector2.zero;
-
-    private bool CheckTouchWithinScreen()
-    {
-        Vector3 pos = GetTouchPosition();
-
-        return pos.x >= 0 && pos.x <= Screen.width && pos.y >= 0 && pos.y <= Screen.height;
-    }
-    
     private void ZoomPC()
     {
         pickObjects.AddLast(dragRange);
-      
-        Vector3 mouseWorldBeforeZoom = pickingCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
 
-        pickingCamera.orthographicSize = Mathf.Clamp(
-            pickingCamera.orthographicSize - scrollY * zoomSpeed,
-            minSize, maxSize);
+        // PixelPerfectCamera 임시 비활성화 (부드러운 줌을 위해)
+        bool wasPixelPerfectEnabled = false;
+        if (pixelPerfectCamera != null && pixelPerfectCamera.enabled)
+        {
+            wasPixelPerfectEnabled = true;
+            pixelPerfectCamera.enabled = false;
+        }
 
-        Vector3 mouseWorldAfterZoom = pickingCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        Vector3 mouseWorldBeforeZoom = TouchSubManager.Instance.GetScreenTouchPosition(pickingCamera);
+
+        if (pixelPerfectCamera == null)
+        {
+            pickingCamera.orthographicSize = Mathf.Clamp(
+                pickingCamera.orthographicSize - scrollY * GetZoomSpeed() * Time.deltaTime,
+                GetMinZoom(), GetMaxZoom());
+        }
+        else
+        {
+            pixelPerfectCamera.assetsPPU = (int) Mathf.Clamp(
+                pixelPerfectCamera.assetsPPU - scrollY * GetZoomSpeed() * Time.deltaTime,
+                GetMinZoom(), GetMaxZoom());
+        }
+
+        Vector3 mouseWorldAfterZoom = TouchSubManager.Instance.GetScreenTouchPosition(pickingCamera);
         Vector3 camOffset = mouseWorldBeforeZoom - mouseWorldAfterZoom;
         pickingCamera.transform.position += camOffset;
-        
+
+        // PixelPerfectCamera 재활성화
+        if (wasPixelPerfectEnabled && pixelPerfectCamera != null)
+            pixelPerfectCamera.enabled = true;
+
         pickObjects.Clear();
     }
 
     private void ZoomMobile()
     {
-        if (!isMobile)
+        if (!TouchSubManager.Instance.IsMobile)
             return;
 
-// 현재 활성화된 터치만 필터링
+        // 현재 활성화된 터치만 필터링
         var activeTouches = UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches;
         if (activeTouches.Count < 2)
             return;
@@ -294,7 +294,7 @@ public class PickingSupport : MonoBehaviour
 
         float currentDist = Vector2.Distance(p1, p2);
 
-// 터치 시작 시 초기 거리 기록
+        // 터치 시작 시 초기 거리 기록
         if (t1.phase == UnityEngine.InputSystem.TouchPhase.Began ||
             t2.phase == UnityEngine.InputSystem.TouchPhase.Began)
         {
@@ -305,15 +305,51 @@ public class PickingSupport : MonoBehaviour
         float delta = currentDist - prevPinchDistance;
         prevPinchDistance = currentDist;
 
+        // PixelPerfectCamera 임시 비활성화 (부드러운 줌을 위해)
+        bool wasPixelPerfectEnabled = false;
+        if (pixelPerfectCamera != null && pixelPerfectCamera.enabled)
+        {
+            wasPixelPerfectEnabled = true;
+            pixelPerfectCamera.enabled = false;
+        }
+
         Vector3 worldBeforeZoom = pickingCamera.ScreenToWorldPoint(pinchCenter);
 
-        pickingCamera.orthographicSize = Mathf.Clamp(
-            pickingCamera.orthographicSize - delta * zoomSpeed * Time.deltaTime,
-            minSize, maxSize);
+        if (pixelPerfectCamera == null)
+        {
+            pickingCamera.orthographicSize = Mathf.Clamp(
+                pickingCamera.orthographicSize - delta * GetZoomSpeed() * Time.deltaTime,
+                GetMinZoom(), GetMaxZoom());
+        }
+        else
+        {
+            pixelPerfectCamera.assetsPPU = (int) Mathf.Clamp(
+                pixelPerfectCamera.assetsPPU - delta * GetZoomSpeed() * Time.deltaTime,
+                GetMinZoom(), GetMaxZoom());
+        }
 
         Vector3 worldAfterZoom = pickingCamera.ScreenToWorldPoint(pinchCenter);
         Vector3 camOffset = worldBeforeZoom - worldAfterZoom;
         pickingCamera.transform.position += camOffset;
+
+        // PixelPerfectCamera 재활성화
+        if (wasPixelPerfectEnabled && pixelPerfectCamera != null)
+            pixelPerfectCamera.enabled = true;
     }
-#endregion Coding rule : Function
+
+    private float GetZoomSpeed()
+    {
+        return pixelPerfectCamera == null ? zoomSpeed : pixelZoomSpeed;
+    }
+
+    private float GetMinZoom()
+    {
+        return pixelPerfectCamera == null ? minSize : pixelMinSize;
+    }
+
+    private float GetMaxZoom()
+    {
+        return pixelPerfectCamera == null ? maxSize : pixelMaxSize;
+    }
+    #endregion Coding rule : Function
 }

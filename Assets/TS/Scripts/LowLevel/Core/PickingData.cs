@@ -11,15 +11,15 @@ public struct PickingData
     //============================================================
 
     #region Coding rule : Property
-    public Vector3 CurrentPosition { get; private set; }
-    public Vector3 DeltaPosition { get; private set; }
+    public Vector2 CurrentPosition { get; private set; }
+    public Vector2 DeltaPosition { get; private set; }
     #endregion Coding rule : Property
 
     #region Coding rule : Value
     #endregion Coding rule : Value
 
     #region Coding rule : Function
-    public PickingData(Vector3 currentPosition, Vector3 deltaPosition)
+    public PickingData(Vector2 currentPosition, Vector2 deltaPosition)
     {
         CurrentPosition = currentPosition;
         DeltaPosition = deltaPosition;

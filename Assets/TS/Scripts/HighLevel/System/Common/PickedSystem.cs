@@ -23,7 +23,7 @@ public partial class PickedSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        if (!CheckTouchDown())
+        if (!TouchSubManager.Instance.CheckTouchDown())
             return;
 
         float2 touchPosition = GetTouchPosition();
@@ -62,18 +62,10 @@ public partial class PickedSystem : SystemBase
         }
     }
 
-    private bool CheckTouchDown()
-    {
-        return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-    }
-
     private float2 GetTouchPosition()
     {
-        if (Mouse.current == null) return float2.zero;
-        if (Camera.main == null) return float2.zero;
+        var position = TouchSubManager.Instance.GetScreenTouchPosition(Camera.main);
 
-        var screenPos = Mouse.current.position.ReadValue();
-        var worldPos = Camera.main.ScreenToWorldPoint(new float3(screenPos.x, screenPos.y, 0));
-        return new float2(worldPos.x, worldPos.y);
+        return new float2(position.x, position.y);
     }
 }

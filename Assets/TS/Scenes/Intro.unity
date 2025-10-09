@@ -137,7 +137,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1100246149445140831, guid: c7574953e509e7c429841b477d18a3e7, type: 3}
       propertyPath: orthographic size
-      value: 9.6
+      value: 1.8
       objectReference: {fileID: 0}
     - target: {fileID: 1538281441328750067, guid: c7574953e509e7c429841b477d18a3e7, type: 3}
       propertyPath: m_AdditionalShaderChannelsFlag
@@ -201,7 +201,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6532113092549632472, guid: c7574953e509e7c429841b477d18a3e7, type: 3}
       propertyPath: orthographic size
-      value: 9.6
+      value: 1.8
       objectReference: {fileID: 0}
     - target: {fileID: 6715603728077149995, guid: c7574953e509e7c429841b477d18a3e7, type: 3}
       propertyPath: m_TargetGraphic
@@ -217,7 +217,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8340294928188985847, guid: c7574953e509e7c429841b477d18a3e7, type: 3}
       propertyPath: orthographic size
-      value: 9.6
+      value: 1.8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
