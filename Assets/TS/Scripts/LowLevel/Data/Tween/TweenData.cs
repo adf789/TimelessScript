@@ -20,7 +20,6 @@ namespace TS.LowLevel
 
         [Header("Runtime")]
         public float elapsed;
-        public bool isPlaying;
         public bool isReversing;
 
         public static TweenData Default => new TweenData
@@ -34,7 +33,6 @@ namespace TS.LowLevel
             startValue = Vector3.zero,
             endValue = Vector3.zero,
             elapsed = 0f,
-            isPlaying = false,
             isReversing = false
         };
     }

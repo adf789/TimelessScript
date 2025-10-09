@@ -6,12 +6,15 @@ using UnityEngine;
 public class RewardEffectSupport : MonoBehaviour
 {
     [SerializeField] private TextMeshPro countText;
+    [SerializeField] private SimpleTweenManage tween;
 
     public void Show(int count)
     {
         countText.SetText(count.ToString());
 
         gameObject.SetActive(true);
+
+        tween.StartTween();
 
         WaitInactive().Forget();
     }

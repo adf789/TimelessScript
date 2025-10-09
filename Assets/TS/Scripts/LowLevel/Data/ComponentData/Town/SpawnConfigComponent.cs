@@ -11,6 +11,7 @@ public struct SpawnConfigComponent : IComponentData
     public int MaxSpawnCount;
     public int ReadySpawnCount;
     public int CurrentSpawnCount;
+    public float LifeTime;
     public float SpawnCooldown;
     public float NextSpawnTime;
     public float MinSpawnDistance;

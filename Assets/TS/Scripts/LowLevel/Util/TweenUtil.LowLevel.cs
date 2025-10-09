@@ -1,9 +1,9 @@
 using UnityEngine;
 using TS.LowLevel;
 
-namespace TS.MiddleLevel
+namespace Utility
 {
-    public static class TweenSupport
+    public static class Tween
     {
         public static float Evaluate(float t, EasingType easingType)
         {

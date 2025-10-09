@@ -53,16 +53,16 @@ public partial class GamePreprocessingSystem : SystemBase
                 var entity = spawnedEntities[i].SpawnedEntity;
 
                 if (!SystemAPI.HasComponent<TSActorComponent>(entity))
-                    return;
+                    continue;
 
                 var actor = SystemAPI.GetComponentRW<TSActorComponent>(entity);
 
-                // 액터 생명시간 체크
-                if (!CheckLifeOn(deltaTime, ref actor.ValueRW))
-                    return;
-
-                // 시간이 모두 지나면 얻은 아이템들 인벤토리로 획득
+                // 얻은 아이템들 인벤토리로 획득
                 CollectingItemByInteract(entity, ref actor.ValueRW, in ecb);
+
+                // 액터 생명시간 체크
+                if (!CheckEndLifeTime(deltaTime, spawnConfig.LifeTime, ref actor.ValueRW))
+                    continue;
 
                 // 엔티티 삭제 시 재활용 가능한 컴포넌트 값 반환
                 ReturningResources(in entity, in actor.ValueRW, ref availableLayers);
@@ -91,14 +91,14 @@ public partial class GamePreprocessingSystem : SystemBase
         collectItems.Clear();
     }
 
-    private bool CheckLifeOn(float deltaTime, ref TSActorComponent actor)
+    private bool CheckEndLifeTime(float deltaTime, float lifeTime, ref TSActorComponent actor)
     {
         actor.LifePassingTime += deltaTime;
 
-        if (actor.LifePassingTime < actor.LifeTime)
-            return false;
+        if (lifeTime > 0 && actor.LifePassingTime >= lifeTime)
+            return true;
 
-        return true;
+        return false;
     }
 
     private void CollectingItemByInteract(Entity entity, ref TSActorComponent actorComponent, in EntityCommandBuffer ecb)
@@ -139,11 +139,14 @@ public partial class GamePreprocessingSystem : SystemBase
             }
         }
 
-        ObserverSubManager.Instance.NotifyObserver(new RewardEffectParam()
+        if (totalCount > 0)
         {
-            Position = transform.Position.xy,
-            RewardCount = (int) totalCount
-        });
+            ObserverSubManager.Instance.NotifyObserver(new RewardEffectParam()
+            {
+                Position = transform.Position.xy,
+                RewardCount = (int) totalCount
+            });
+        }
 
         interactBuffer.Clear();
     }

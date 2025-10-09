@@ -7,8 +7,6 @@ public class TSActorAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Actor;
 
-    [SerializeField] private float lifeTime = 10f;
-
     private class Baker : Baker<TSActorAuthoring>
     {
         public override void Bake(TSActorAuthoring authoring)
@@ -25,7 +23,6 @@ public class TSActorAuthoring : TSObjectAuthoring
 
             AddComponent(entity, new TSActorComponent()
             {
-                LifeTime = authoring.lifeTime,
                 LifePassingTime = 0,
                 Move = new MoveAction()
                 {
