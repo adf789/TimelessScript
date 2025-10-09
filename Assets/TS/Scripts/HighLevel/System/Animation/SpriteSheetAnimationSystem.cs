@@ -12,9 +12,10 @@ public partial struct SpriteSheetAnimationSystem : ISystem
 
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (authoring, renderer, entity) in
+        foreach (var (authoring, renderer, anim) in
         SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
-        RefRO<SpriteRendererComponent>>().WithEntityAccess())
+        RefRO<SpriteRendererComponent>,
+        RefRW<SpriteSheetAnimationComponent>>())
         {
             if (!authoring.Value.IsLoaded)
             {
@@ -23,10 +24,18 @@ public partial struct SpriteSheetAnimationSystem : ISystem
                 continue;
             }
 
-            if (SystemAPI.HasComponent<SpriteSheetAnimationComponent>(entity))
+            SetAnimation(authoring.Value, ref anim.ValueRW);
+            SetRenderer(authoring.Value, in renderer.ValueRO);
+        }
+
+        foreach (var (authoring, renderer) in
+        SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteRendererAuthoring>,
+        RefRO<SpriteRendererComponent>>())
+        {
+            if (!authoring.Value.IsInitialized)
             {
-                var anim = SystemAPI.GetComponentRW<SpriteSheetAnimationComponent>(entity);
-                SetAnimation(authoring.Value, ref anim.ValueRW);
+                authoring.Value.Initialize();
+                continue;
             }
 
             SetRenderer(authoring.Value, in renderer.ValueRO);
@@ -52,6 +61,13 @@ public partial struct SpriteSheetAnimationSystem : ISystem
     }
 
     private void SetRenderer(SpriteSheetAnimationAuthoring authoring, in SpriteRendererComponent renderer)
+    {
+        // 컴포넌트 값에 맞춰서 렌더러 옵션 변경
+        authoring.SetFlip(renderer.IsFlip);
+        authoring.SetLayer(renderer.Layer);
+    }
+
+    private void SetRenderer(SpriteRendererAuthoring authoring, in SpriteRendererComponent renderer)
     {
         // 컴포넌트 값에 맞춰서 렌더러 옵션 변경
         authoring.SetFlip(renderer.IsFlip);

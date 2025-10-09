@@ -250,14 +250,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         return true;
     }
 
-    public void SetFlip(bool isFlip)
-    {
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.flipX = isFlip;
-        }
-    }
-
     public void SetAnimationByIndex(AnimationState state, int animationIndex)
     {
         if (loadedSprites == null)
@@ -319,12 +311,11 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         }
     }
 
-    public void SetFlip(bool flipX, bool flipY)
+    public void SetFlip(bool isFlip)
     {
         if (spriteRenderer != null)
         {
-            spriteRenderer.flipX = flipX;
-            spriteRenderer.flipY = flipY;
+            spriteRenderer.flipX = isFlip;
         }
     }
 

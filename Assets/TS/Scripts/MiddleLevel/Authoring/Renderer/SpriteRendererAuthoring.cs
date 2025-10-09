@@ -5,6 +5,8 @@ using Unity.Entities;
 [RequireComponent(typeof(SpriteRenderer))]
 public class SpriteRendererAuthoring : MonoBehaviour
 {
+    public bool IsInitialized => spriteRenderer;
+
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     private class Baker : Baker<SpriteRendererAuthoring>
@@ -35,7 +37,39 @@ public class SpriteRendererAuthoring : MonoBehaviour
 
     public void Initialize()
     {
-        if (spriteRenderer == null)
+        if (!IsInitialized)
             spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    public void SetFlip(bool isFlip)
+    {
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = isFlip;
+        }
+    }
+
+    public void SetSize(Vector2 size)
+    {
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.size = size;
+        }
+    }
+
+    public void SetLayer(int layer)
+    {
+        if (spriteRenderer != null)
+            spriteRenderer.sortingOrder = layer;
+    }
+
+    public void SetAlpha(float alpha)
+    {
+        if (spriteRenderer != null)
+        {
+            Color color = spriteRenderer.color;
+            color.a = alpha;
+            spriteRenderer.color = color;
+        }
     }
 }
