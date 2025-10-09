@@ -78,7 +78,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 7877556333376774110}
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
@@ -351,7 +351,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 579.8, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8445833316167341296
 CanvasRenderer:
@@ -381,7 +381,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Touch
+  m_text: TOUCH
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7063ed9dfcad6a045bde60584c3509c9, type: 2}
   m_sharedMaterial: {fileID: -7648627517673507153, guid: 7063ed9dfcad6a045bde60584c3509c9, type: 2}
@@ -408,8 +408,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 90
+  m_fontSizeBase: 90
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18

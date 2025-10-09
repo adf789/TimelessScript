@@ -4,7 +4,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasRenderer))]
 public class ButtonTargetSupport : Graphic
 {
-    protected override void OnValidate()
+    protected void OnValidate()
     {
         raycastTarget = true;
     }
