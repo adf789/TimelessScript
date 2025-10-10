@@ -671,8 +671,8 @@ MonoBehaviour:
   lifeTime: 0
   layerOffset: 0
   maxSpawnCount: 9999
-  spawnCooldown: 2
-  minSpawnDistance: 1
+  spawnCooldown: 1
+  minSpawnDistance: 2
 --- !u!114 &1736684050
 MonoBehaviour:
   m_ObjectHideFlags: 0

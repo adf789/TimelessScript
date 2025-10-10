@@ -10,7 +10,7 @@ public class ObjectPoolSupport : MonoBehaviour
     private List<GameObject> loadedObjects = null;
     private GameObject prefab = null;
 
-    public async UniTask<GameObject> LoadAsync()
+    public async UniTask<GameObject> LoadAsync(System.Action<GameObject> onEventSpawn = null)
     {
         if (string.IsNullOrEmpty(guid))
             return null;
@@ -21,10 +21,24 @@ public class ObjectPoolSupport : MonoBehaviour
         }
         else
         {
-            foreach (var obj in loadedObjects)
+            for (int i = 0; i < loadedObjects.Count; i++)
             {
+                var obj = loadedObjects[i];
+
+                if (obj == null)
+                {
+                    loadedObjects.RemoveAt(i--);
+                    continue;
+                }
+
                 if (!obj.activeSelf)
+                {
+                    obj.SetActive(true);
+
+                    onEventSpawn?.Invoke(obj);
+
                     return obj;
+                }
             }
         }
 
@@ -43,6 +57,8 @@ public class ObjectPoolSupport : MonoBehaviour
         loadedObjects[^1].transform.localPosition = Vector3.zero;
 
         loadedObjects[^1].SetActive(true);
+
+        onEventSpawn?.Invoke(loadedObjects[^1]);
 
         return loadedObjects[^1];
     }

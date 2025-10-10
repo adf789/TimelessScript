@@ -7,10 +7,10 @@ using UnityEditor.SceneManagement;
 using System;
 using System.Linq;
 
-[CustomEditor(typeof(SpriteSheetAnimationAuthoring))]
-public class SpriteSheetAnimationAuthoringInspector : Editor
+[CustomEditor(typeof(SpriteSheetAnimationSupport))]
+public class SpriteSheetAnimationSupportInspector : Editor
 {
-    private SpriteSheetAnimationAuthoring inspectorTarget;
+    private SpriteSheetAnimationSupport inspectorTarget;
 
     #region Property
     public bool IsPlayingTestAnimation { get => playingSpriteSheetIndex != -1; }
@@ -63,7 +63,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void OnEnable()
     {
-        inspectorTarget = (SpriteSheetAnimationAuthoring) target;
+        inspectorTarget = (SpriteSheetAnimationSupport) target;
 
         defaultState = serializedObject.FindProperty("defaultState");
         spriteRenderer = serializedObject.FindProperty("spriteRenderer");
@@ -315,7 +315,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                 // 개수가 늘어난 것
                 while (count > inspectorTarget.spriteSheets.Count)
                 {
-                    inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node());
+                    inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationSupport.Node());
                     dataFolders.Add(false);
                     defaultValues.Add(defaultValues.Count == 0);
                     startAnimFolders.Add(false);
@@ -411,9 +411,9 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
                         if (inspectorTarget.spriteSheets.Count < int.MaxValue)
                         {
                             if (inspectorTarget.spriteSheets.Count == 0)
-                                inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node());
+                                inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationSupport.Node());
                             else
-                                inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationAuthoring.Node(inspectorTarget.spriteSheets[^1]));
+                                inspectorTarget.spriteSheets.Add(new SpriteSheetAnimationSupport.Node(inspectorTarget.spriteSheets[^1]));
 
                             count = inspectorTarget.spriteSheets.Count;
                             dataFolders.Add(true);
@@ -466,7 +466,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawKey(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
@@ -480,7 +480,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawToggleValue(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUI.BeginChangeCheck();
         {
@@ -514,7 +514,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawFrameDelay(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUILayout.Space(5);
 
@@ -553,7 +553,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawMain(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUILayout.Space(5);
 
@@ -605,7 +605,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawStartEndAnimations(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUILayout.Space(10);
 
@@ -639,7 +639,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawStartAnimation(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         string guidToPath = AssetDatabase.GUIDToAssetPath(data.StartAnimationGuid);
         Sprite[] loadedSprites = null;
@@ -680,7 +680,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawEndAnimation(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         string guidToPath = AssetDatabase.GUIDToAssetPath(data.EndAnimationGuid);
         Sprite[] loadedSprites = null;
@@ -721,7 +721,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawStartFrameDelay(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
@@ -752,7 +752,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawEndFrameDelay(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUI.BeginChangeCheck();
         GUILayout.BeginHorizontal();
@@ -815,7 +815,7 @@ public class SpriteSheetAnimationAuthoringInspector : Editor
 
     private void DrawPlayButtons(int i)
     {
-        SpriteSheetAnimationAuthoring.Node data = inspectorTarget.spriteSheets[i];
+        SpriteSheetAnimationSupport.Node data = inspectorTarget.spriteSheets[i];
 
         EditorGUILayout.Space(5);
 
