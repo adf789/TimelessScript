@@ -28,6 +28,15 @@ public enum AnimationPhase
     End
 }
 
+public enum AnimationFlagType
+{
+    Start = 0,
+    Complete,
+    End,
+
+    Max
+}
+
 public static partial class ToString
 {
     public static FixedString64Bytes ToFixedString(this AnimationState state)

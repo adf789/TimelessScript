@@ -27,17 +27,21 @@ public partial class GamePreprocessingSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        // FPS 계산 및 업데이트
-        float deltaTime = World.Time.DeltaTime;
-        if (deltaTime > 0)
-        {
-            float fps = 1.0f / deltaTime;
-            GameManager.Instance.UpdateFPS(fps);
-        }
+        OnUpdateFPS();
 
         OnUpdateActorLifeCycle();
 
         OnUpdateColllectItems();
+    }
+
+    private void OnUpdateFPS()
+    {
+        float deltaTime = World.Time.DeltaTime;
+        if (deltaTime > 0)
+        {
+            float fps = 1.0f / deltaTime;
+            GameManager.Instance.AnalysisData.SetFPS(fps);
+        }
     }
 
     private void OnUpdateActorLifeCycle()
@@ -54,6 +58,9 @@ public partial class GamePreprocessingSystem : SystemBase
         ref DynamicBuffer<AvailableLayerBuffer> availableLayers,
         ref SpawnConfigComponent spawnConfig) =>
         {
+            if (spawnConfig.ObjectType == TSObjectType.Actor)
+                GameManager.Instance.AnalysisData.SetSpawnCount(spawnConfig.CurrentSpawnCount);
+
             for (int i = 0; i < spawnedEntities.Length; i++)
             {
                 var entity = spawnedEntities[i].SpawnedEntity;

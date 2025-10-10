@@ -7,10 +7,11 @@ using UnityEngine;
 public class LobbyView : BaseView<LobbyViewModel>
 {
     [SerializeField] private TextMeshProUGUI fps;
+    [SerializeField] private TextMeshProUGUI spawnCount;
     [SerializeField] private CurrencyUnit currencyUnit;
     public override void Show()
     {
-        ShowFPS().Forget();
+        ShowAnalysis().Forget();
     }
 
     void OnDisable()
@@ -24,13 +25,14 @@ public class LobbyView : BaseView<LobbyViewModel>
         currencyUnit.Show();
     }
 
-    public async UniTask ShowFPS()
+    public async UniTask ShowAnalysis()
     {
         while (true)
         {
-            var fpsResult = Model.OnEventFpsGet();
+            var analysisData = Model.OnEventAnalysisGet();
 
-            fps.SetText($"FPS: {(int) fpsResult.Item1} / {(int) fpsResult.Item2}");
+            fps.SetText($"FPS: {(int) analysisData.CurrentFPS} / {(int) analysisData.AverageFPS}");
+            spawnCount.SetText($"SpawnCount: {analysisData.SpawnCount}");
 
             await UniTask.Delay(IntDefine.TIME_MILLISECONDS_ONE, cancellationToken: TokenPool.Get(GetHashCode()));
         }

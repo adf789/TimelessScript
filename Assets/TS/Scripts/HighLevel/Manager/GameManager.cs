@@ -18,12 +18,10 @@ public class GameManager : BaseManager<GameManager>
     [SerializeField]
     private bool isLimitDragY = true;
 
-    [Header("FPS")]
-    public float CurrentFPS { get; set; }
-    public float AverageFPS { get; private set; }
+    [Header("Analysis")]
+    public AnalysisData AnalysisData;
 
     private Bounds towerBounds;
-    private const float fpsSmoothingFactor = 0.1f;
 
     private void Awake()
     {
@@ -41,12 +39,6 @@ public class GameManager : BaseManager<GameManager>
     public void TestCode()
     {
         FlowManager.Instance.ChangeFlow(GameState.Loading).Forget();
-    }
-
-    public void UpdateFPS(float fps)
-    {
-        CurrentFPS = fps;
-        AverageFPS = AverageFPS == 0 ? fps : AverageFPS * (1f - fpsSmoothingFactor) + fps * fpsSmoothingFactor;
     }
 
     public void OnDrag(PickingData data)

@@ -6,7 +6,7 @@ public class LobbyViewController : BaseController<LobbyView, LobbyViewModel>
     public override void BeforeEnterProcess()
     {
         GetModel().SetEventShowInventory(OnEventShowInventory);
-        GetModel().SetEventFpsGet(OnEventFpsGet);
+        GetModel().SetEventAnalysisGet(OnEventAnalysisGet);
 
         ObserverSubManager.Instance.AddObserver<ShowCurrencyParam>(OnShowCurrency);
     }
@@ -35,13 +35,7 @@ public class LobbyViewController : BaseController<LobbyView, LobbyViewModel>
         inventoryPopup.Enter();
     }
 
-    private (float, float) OnEventFpsGet()
-    {
-        float fps = GameManager.Instance.CurrentFPS;
-        float avsFps = GameManager.Instance.AverageFPS;
-
-        return (fps, avsFps);
-    }
+    private AnalysisData OnEventAnalysisGet() => GameManager.Instance.AnalysisData;
 
     private void ShowCurrency()
     {

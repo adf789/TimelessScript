@@ -1,6 +1,4 @@
 using Unity.Entities;
-using Unity.Collections;
-using UnityEngine;
 
 /// <summary>
 /// 애니메이션 완료 이벤트를 처리하는 시스템
@@ -16,52 +14,81 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         // 애니메이션 완료 이벤트 처리 (Main Thread에서 실행)
-        foreach (var (animComponent, entity)
+        foreach (var (anim, entity)
         in SystemAPI.Query<RefRW<SpriteSheetAnimationComponent>>().WithEntityAccess())
         {
             // 애니메이션이 시작한 경우
-            if (animComponent.ValueRO.AnimationStarted)
-            {
-                HandleAnimationStarted(entity, ref animComponent.ValueRW, ref state);
+            OnAnimationStarted(entity, ref anim.ValueRW, ref state);
 
-                animComponent.ValueRW.AnimationStarted = false;
-                animComponent.ValueRW.StartedAnimationState = AnimationState.None;
-            }
+            // 애니메이션의 한 루프가 종료한 경우
+            OnAnimationCompleted(entity, ref anim.ValueRW, ref state);
 
             // 애니메이션이 종료한 경우
-            if (animComponent.ValueRO.AnimationCompleted)
-            {
-                HandleAnimationCompleted(entity, ref animComponent.ValueRW, ref state);
-
-                animComponent.ValueRW.AnimationCompleted = false;
-                animComponent.ValueRW.CompletedAnimationState = AnimationState.None;
-            }
+            OnAnimationEnded(entity, ref anim.ValueRW, ref state);
         }
     }
 
-    private void HandleAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    /// <summary>
+    /// 애니메이션이 시작될 때 콜백
+    /// </summary>
+    private void OnAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent anim, ref SystemState state)
     {
-        switch (animComponent.StartedAnimationState)
+        var flag = anim.GetFlag(AnimationFlagType.Start);
+
+        if (!flag.IsOn)
+            return;
+
+        HandleAnimationStarted(ref state, entity, flag.State);
+
+        anim.SetFlagReset(AnimationFlagType.Start);
+    }
+
+    /// <summary>
+    /// 애니메이션 하나의 루프가 종료될 때 콜백
+    /// </summary>
+    private void OnAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent anim, ref SystemState state)
+    {
+        var flag = anim.GetFlag(AnimationFlagType.Complete);
+
+        if (!flag.IsOn)
+            return;
+
+        HandleAnimationCompleted(ref state, entity, flag.State);
+
+        anim.SetFlagReset(AnimationFlagType.Complete);
+    }
+
+    /// <summary>
+    /// 애니메이션이 모두 종료될 때 콜백
+    /// </summary>
+    private void OnAnimationEnded(Entity entity, ref SpriteSheetAnimationComponent anim, ref SystemState state)
+    {
+        var flag = anim.GetFlag(AnimationFlagType.End);
+
+        if (!flag.IsOn)
+            return;
+
+        HandleAnimationEnded(ref state, entity, flag.State);
+
+        anim.SetFlagReset(AnimationFlagType.End);
+    }
+
+    private void HandleAnimationStarted(ref SystemState state, Entity entity, AnimationState animationState)
+    {
+        switch (animationState)
         {
-            case AnimationState.None:
-            case AnimationState.Idle:
+            default:
+                // 기본 처리 로직
                 break;
+        }
+    }
 
+    private void HandleAnimationCompleted(ref SystemState state, Entity entity, AnimationState animationState)
+    {
+        switch (animationState)
+        {
             case AnimationState.Interact:
-                HandleInteractAnimationStarted(entity, ref animComponent, ref state);
-                break;
-
-            case AnimationState.Ladder_ClimbUp:
-            case AnimationState.Ladder_ClimbDown:
-                HandleClimbAnimationStarted(entity, ref animComponent, ref state);
-                break;
-
-            case AnimationState.Fall:
-                HandleFallAnimationStarted(entity, ref animComponent, ref state);
-                break;
-
-            case AnimationState.Walking:
-                HandleWalkAnimationStarted(entity, ref animComponent, ref state);
+                HandleInteractAnimationCompleted(ref state, entity);
                 break;
 
             default:
@@ -70,29 +97,12 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         }
     }
 
-    private void HandleAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleAnimationEnded(ref SystemState state, Entity entity, AnimationState animationState)
     {
-        switch (animComponent.CompletedAnimationState)
+        switch (animationState)
         {
-            case AnimationState.None:
-            case AnimationState.Idle:
-                break;
-
             case AnimationState.Interact:
-                HandleInteractAnimationCompleted(entity, ref animComponent, ref state);
-                break;
-
-            case AnimationState.Ladder_ClimbUp:
-            case AnimationState.Ladder_ClimbDown:
-                HandleClimbAnimationCompleted(entity, ref animComponent, ref state);
-                break;
-
-            case AnimationState.Fall:
-                HandleFallAnimationCompleted(entity, ref animComponent, ref state);
-                break;
-
-            case AnimationState.Walking:
-                HandleWalkAnimationCompleted(entity, ref animComponent, ref state);
+                HandleInteractAnimationEnded(ref state, entity);
                 break;
 
             default:
@@ -101,35 +111,36 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         }
     }
 
-    private void HandleInteractAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleInteractAnimationCompleted(ref SystemState state, Entity entity)
     {
+        // 엔티티 타겟을 가져옴
         if (!SystemAPI.HasComponent<ObjectTargetComponent>(entity))
             return;
 
-        var objectTargetComponent = SystemAPI.GetComponent<ObjectTargetComponent>(entity);
-        var objectTarget = objectTargetComponent.Target;
+        var objectTarget = SystemAPI.GetComponent<ObjectTargetComponent>(entity);
 
-        if (objectTarget == Entity.Null)
+        if (!SystemAPI.HasComponent<InteractComponent>(objectTarget.Target))
             return;
 
-        if (!SystemAPI.HasComponent<InteractComponent>(objectTarget))
-            return;
+        // 상호작용 정보를 가져옴
+        var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTarget.Target);
 
-        var interactComponent = SystemAPI.GetComponent<InteractComponent>(objectTarget);
+        // 상호작용 버퍼 가져옴
         DynamicBuffer<InteractBuffer> interactBuffer;
 
-        if (!SystemAPI.HasBuffer<InteractBuffer>(objectTarget))
+        if (!SystemAPI.HasBuffer<InteractBuffer>(objectTarget.Target))
         {
             var ecbSystem = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var ecb = ecbSystem.CreateCommandBuffer(state.World.Unmanaged);
 
-            interactBuffer = ecb.AddBuffer<InteractBuffer>(objectTarget);
+            interactBuffer = ecb.AddBuffer<InteractBuffer>(objectTarget.Target);
         }
         else
         {
-            interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(objectTarget);
+            interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(objectTarget.Target);
         }
 
+        // 상호작용 등록
         interactBuffer.Add(new InteractBuffer()
         {
             DataID = interactComponent.DataID,
@@ -137,25 +148,7 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         });
     }
 
-    private void HandleClimbAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
-    {
-        // 사다리 애니메이션이 시작할 때의 로직
-        // 예: 물리 상태 복원, 특정 효과 재생 등
-    }
-
-    private void HandleFallAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
-    {
-        // 낙하 애니메이션이 시작할 때의 로직
-        // 예: 착지 효과, 데미지 계산 등
-    }
-
-    private void HandleWalkAnimationStarted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
-    {
-        // 낙하 애니메이션이 시작할 때의 로직
-        // 예: 착지 효과, 데미지 계산 등
-    }
-
-    private void HandleInteractAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
+    private void HandleInteractAnimationEnded(ref SystemState state, Entity entity)
     {
         if (!SystemAPI.HasComponent<ObjectTargetComponent>(entity))
             return;
@@ -169,23 +162,5 @@ public partial struct AnimationCallbackHandlerSystem : ISystem
         var ecb = ecbSystem.CreateCommandBuffer(state.World.Unmanaged);
 
         ecb.RemoveComponent<InteractBuffer>(objectTargetComponent.Target);
-    }
-
-    private void HandleClimbAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
-    {
-        // 사다리 애니메이션이 끝났을 때의 로직
-        // 예: 물리 상태 복원, 특정 효과 재생 등
-    }
-
-    private void HandleFallAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
-    {
-        // 낙하 애니메이션이 끝났을 때의 로직
-        // 예: 착지 효과, 데미지 계산 등
-    }
-
-    private void HandleWalkAnimationCompleted(Entity entity, ref SpriteSheetAnimationComponent animComponent, ref SystemState state)
-    {
-        // 낙하 애니메이션이 끝났을 때의 로직
-        // 예: 착지 효과, 데미지 계산 등
     }
 }

@@ -1,8 +1,5 @@
 
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
-using UnityEngine;
 
 public struct SpriteSheetAnimationComponent : IComponentData
 {
@@ -20,10 +17,11 @@ public struct SpriteSheetAnimationComponent : IComponentData
     public bool HasEndAnimation;
     public bool ShouldTransitionToEnd;
     public AnimationTransitionType TransitionType;
-    public bool AnimationStarted;
-    public AnimationState StartedAnimationState;
-    public bool AnimationCompleted;
-    public AnimationState CompletedAnimationState;
+
+    // 애니메이션 플래그
+    private AnimationFlag startFlag;
+    private AnimationFlag completeFlag;
+    private AnimationFlag endFlag;
 
     public bool IsLastAnimation => CurrentAnimationIndex == CurrentAnimationCount - 1;
 
@@ -43,10 +41,10 @@ public struct SpriteSheetAnimationComponent : IComponentData
         ShouldTransitionToEnd = false;
         IsEndLoopOneTime = false;
         TransitionType = AnimationTransitionType.None;
-        AnimationStarted = false;
-        StartedAnimationState = AnimationState.None;
-        AnimationCompleted = false;
-        CompletedAnimationState = AnimationState.None;
+
+        startFlag = new AnimationFlag();
+        completeFlag = new AnimationFlag();
+        endFlag = new AnimationFlag();
     }
 
     public int NextAnimationIndex()
@@ -103,5 +101,70 @@ public struct SpriteSheetAnimationComponent : IComponentData
         {
             return IsLastAnimation;
         }
+    }
+
+    public void SetFlag(AnimationState state, AnimationFlagType flagType, bool isOn)
+    {
+        switch (flagType)
+        {
+            case AnimationFlagType.Start:
+                {
+                    startFlag.State = state;
+                    startFlag.IsOn = isOn;
+                }
+                break;
+
+            case AnimationFlagType.Complete:
+                {
+                    completeFlag.State = state;
+                    completeFlag.IsOn = isOn;
+                }
+                break;
+
+            case AnimationFlagType.End:
+                {
+                    endFlag.State = state;
+                    endFlag.IsOn = isOn;
+                }
+                break;
+        }
+    }
+
+    public void SetFlagReset(AnimationFlagType flagType)
+    {
+        switch (flagType)
+        {
+            case AnimationFlagType.Start:
+                {
+                    startFlag.State = AnimationState.None;
+                    startFlag.IsOn = false;
+                }
+                break;
+
+            case AnimationFlagType.Complete:
+                {
+                    completeFlag.State = AnimationState.None;
+                    completeFlag.IsOn = false;
+                }
+                break;
+
+            case AnimationFlagType.End:
+                {
+                    endFlag.State = AnimationState.None;
+                    endFlag.IsOn = false;
+                }
+                break;
+        }
+    }
+
+    public AnimationFlag GetFlag(AnimationFlagType flagType)
+    {
+        return flagType switch
+        {
+            AnimationFlagType.Start => startFlag,
+            AnimationFlagType.Complete => completeFlag,
+            AnimationFlagType.End => endFlag,
+            _ => default,
+        };
     }
 }
