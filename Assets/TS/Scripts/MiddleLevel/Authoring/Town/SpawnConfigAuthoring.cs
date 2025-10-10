@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Entities;
-using Unity.Mathematics;
 
 public class SpawnConfigAuthoring : MonoBehaviour
 {
@@ -38,14 +37,14 @@ public class SpawnConfigAuthoring : MonoBehaviour
                 PositionYOffset = -authoring.spawnObjectPrefab.GetRootOffset()
             });
 
-            // SpawnAreaComponent 추가
-            var worldPosition = authoring.transform.position;
-
             // 스폰된 엔티티들을 추적하기 위한 버퍼 추가
             AddBuffer<SpawnedEntityBuffer>(entity);
 
             // 재사용 가능한 Layer를 관리하기 위한 버퍼 추가
             AddBuffer<AvailableLayerBuffer>(entity);
+
+            // 재사용 가능한 Layer를 관리하기 위한 버퍼 추가
+            AddBuffer<AvailableActorBuffer>(entity);
         }
     }
 }

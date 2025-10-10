@@ -11,9 +11,9 @@ public partial struct SpawnExecutionJob : IJobEntity
     [ReadOnly] public float currentTime;
     public EntityCommandBuffer ecb;
     [NativeDisableUnsafePtrRestriction]
-    public RefRW<RecycleComponent> recycleComponent;
     [ReadOnly] public BufferLookup<LinkedEntityGroup> linkedEntityGroupLookup;
     public BufferLookup<AvailableLayerBuffer> availableLayerLookup;
+    public BufferLookup<AvailableActorBuffer> availableActorLookup;
     public ComponentLookup<SpawnConfigComponent> spawnConfigLookup;
 
     public void Execute(
@@ -34,7 +34,7 @@ public partial struct SpawnExecutionJob : IJobEntity
 
         for (int i = 0; i < spawnCount; i++)
         {
-            // 스폰 오브젝트 인스턴스 생성 (하위 오브젝트들도 함께 생성됨)
+            // 스폰 오브젝트 인스턴스 생성 (하위 오브 젝트들도 함께 생성됨)
             var spawnedEntity = ecb.Instantiate(spawnRequest.SpawnObject);
             FixedString64Bytes name = $"Spawned {spawnRequest.Name} {spawnedEntity.Index}";
 
@@ -47,9 +47,11 @@ public partial struct SpawnExecutionJob : IJobEntity
             {
                 case TSObjectType.Actor:
                     {
-                        if (recycleComponent.ValueRW.GetActorCount() > 0)
+                        var availableActors = availableActorLookup[spawnRequest.Spawner];
+                        if (availableActors.Length > 0)
                         {
-                            var actorComponent = recycleComponent.ValueRW.GetActor();
+                            var actorComponent = availableActors[0].Actor;
+                            availableActors.RemoveAt(0);
 
                             actorComponent.LifePassingTime = 0;
 

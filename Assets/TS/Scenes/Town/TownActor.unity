@@ -668,10 +668,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 3268465435861632508, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  lifeTime: 0
+  lifeTime: 20
   layerOffset: 0
-  maxSpawnCount: 9999
-  spawnCooldown: 1
+  maxSpawnCount: 20
+  spawnCooldown: 2
   minSpawnDistance: 2
 --- !u!114 &1736684050
 MonoBehaviour:

@@ -5,27 +5,27 @@ using Unity.Entities;
 /// 특정 애니메이션이 끝났을 때 수행할 로직을 여기에 구현
 /// </summary>
 [UpdateInGroup(typeof(PresentationSystemGroup))]
-[UpdateAfter(typeof(SpriteSheetAnimationSystem))]
-public partial struct AnimationCallbackHandlerSystem : ISystem
+[UpdateAfter(typeof(AnimationSystem))]
+public partial struct AnimationCallbackSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     => state.RequireForUpdate<SpriteSheetAnimationComponent>();
 
     public void OnUpdate(ref SystemState state)
     {
-        // 애니메이션 완료 이벤트 처리 (Main Thread에서 실행)
-        foreach (var (anim, entity)
-        in SystemAPI.Query<RefRW<SpriteSheetAnimationComponent>>().WithEntityAccess())
-        {
-            // 애니메이션이 시작한 경우
-            OnAnimationStarted(entity, ref anim.ValueRW, ref state);
+        // // 애니메이션 완료 이벤트 처리 (Main Thread에서 실행)
+        // foreach (var (anim, entity)
+        // in SystemAPI.Query<RefRW<SpriteSheetAnimationComponent>>().WithEntityAccess())
+        // {
+        //     // 애니메이션이 시작한 경우
+        //     OnAnimationStarted(entity, ref anim.ValueRW, ref state);
 
-            // 애니메이션의 한 루프가 종료한 경우
-            OnAnimationCompleted(entity, ref anim.ValueRW, ref state);
+        //     // 애니메이션의 한 루프가 종료한 경우
+        //     OnAnimationCompleted(entity, ref anim.ValueRW, ref state);
 
-            // 애니메이션이 종료한 경우
-            OnAnimationEnded(entity, ref anim.ValueRW, ref state);
-        }
+        //     // 애니메이션이 종료한 경우
+        //     OnAnimationEnded(entity, ref anim.ValueRW, ref state);
+        // }
     }
 
     /// <summary>

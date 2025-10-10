@@ -3,10 +3,8 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateAfter(typeof(CollisionSystem))]
 [BurstCompile]
 public partial class PickedSystem : SystemBase
 {

@@ -12,17 +12,7 @@ public partial class GamePreprocessingSystem : SystemBase
 
     protected override void OnCreate()
     {
-        if (!SystemAPI.HasSingleton<RecycleComponent>())
-        {
-            var entity = EntityManager.CreateEntity(typeof(RecycleComponent));
-
-            EntityManager.SetComponentData(entity, new RecycleComponent
-            {
-                RemoveActors = new NativeQueue<TSActorComponent>(Allocator.Persistent)
-            });
-        }
-
-        RequireForUpdate<RecycleComponent>();
+        RequireForUpdate<SpawnConfigComponent>();
     }
 
     protected override void OnUpdate()
@@ -46,7 +36,6 @@ public partial class GamePreprocessingSystem : SystemBase
 
     private void OnUpdateActorLifeCycle()
     {
-        var recycle = SystemAPI.GetSingletonRW<RecycleComponent>();
         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
         float deltaTime = World.Time.DeltaTime;
 
@@ -56,6 +45,7 @@ public partial class GamePreprocessingSystem : SystemBase
         .ForEach((Entity spawner,
         ref DynamicBuffer<SpawnedEntityBuffer> spawnedEntities,
         ref DynamicBuffer<AvailableLayerBuffer> availableLayers,
+        ref DynamicBuffer<AvailableActorBuffer> availableActors,
         ref SpawnConfigComponent spawnConfig) =>
         {
             if (spawnConfig.ObjectType == TSObjectType.Actor)
@@ -78,7 +68,7 @@ public partial class GamePreprocessingSystem : SystemBase
                     continue;
 
                 // 엔티티 삭제 시 재활용 가능한 컴포넌트 값 반환
-                ReturningResources(in entity, in actor.ValueRW, ref availableLayers);
+                ReturningResources(in entity, in actor.ValueRW, ref availableLayers, ref availableActors);
 
                 // 엔티티 삭제
                 ecb.DestroyEntity(entity);
@@ -166,7 +156,8 @@ public partial class GamePreprocessingSystem : SystemBase
 
     private void ReturningResources(in Entity entity,
     in TSActorComponent actor,
-    ref DynamicBuffer<AvailableLayerBuffer> availableLayers)
+    ref DynamicBuffer<AvailableLayerBuffer> availableLayers,
+    ref DynamicBuffer<AvailableActorBuffer> availableActors)
     {
         // 존재하지 않는 Entity이면 layer를 큐에 반환하고 버퍼에서 제거
         if (SystemAPI.HasComponent<TSObjectComponent>(entity))
@@ -182,8 +173,6 @@ public partial class GamePreprocessingSystem : SystemBase
         }
 
         // 컴포넌트 값 재사용
-        var recycle = SystemAPI.GetSingletonRW<RecycleComponent>();
-
-        recycle.ValueRW.AddActor(actor);
+        availableActors.Add(new AvailableActorBuffer(actor));
     }
 }

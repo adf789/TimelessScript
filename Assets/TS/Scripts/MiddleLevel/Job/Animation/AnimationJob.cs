@@ -1,49 +1,28 @@
+
+using Unity.Burst;
 using Unity.Entities;
+using Unity.Transforms;
 using UnityEngine;
 
-[UpdateInGroup(typeof(PresentationSystemGroup))]
-public partial struct SpriteSheetAnimationSystem : ISystem
+[BurstCompile]
+public partial struct AnimationJob : IJobEntity
 {
-    public void OnCreate(ref SystemState state)
-    {
-        // 이 시스템은 SpriteSheetAnimationComponent가 있는 엔티티가 하나라도 있을 때만 업데이트됩니다.
-        state.RequireForUpdate<SpriteRendererComponent>();
-    }
+    public float DeltaTime;
 
-    public void OnUpdate(ref SystemState state)
+    public void Execute(Entity entity,
+    ref SpriteRendererComponent renderer,
+    ref SpriteSheetAnimationComponent anim,
+    SpriteSheetAnimationAuthoring authoring)
     {
-        float deltaTime = state.World.Time.DeltaTime;
-
-        // 애니메이션 처리 및 렌더링 옵션 적용
-        foreach (var (authoring, renderer, anim) in
-        SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteSheetAnimationAuthoring>,
-        RefRO<SpriteRendererComponent>,
-        RefRW<SpriteSheetAnimationComponent>>())
+        if (!authoring.IsLoaded)
         {
-            if (!authoring.Value.IsLoaded)
-            {
-                authoring.Value.Initialize();
-                authoring.Value.LoadAnimations();
-                continue;
-            }
-
-            SetAnimation(authoring.Value, ref anim.ValueRW, deltaTime);
-            SetRenderer(authoring.Value, in renderer.ValueRO);
+            authoring.Initialize();
+            authoring.LoadAnimations();
+            return;
         }
 
-        // 렌더링 옵션 적용
-        foreach (var (authoring, renderer) in
-        SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<SpriteRendererAuthoring>,
-        RefRO<SpriteRendererComponent>>())
-        {
-            if (!authoring.Value.IsInitialized)
-            {
-                authoring.Value.Initialize();
-                continue;
-            }
-
-            SetRenderer(authoring.Value, in renderer.ValueRO);
-        }
+        SetAnimation(authoring, ref anim, DeltaTime);
+        SetRenderer(authoring, in renderer);
     }
 
     private void SetAnimation(SpriteSheetAnimationAuthoring authoring,
@@ -65,13 +44,6 @@ public partial struct SpriteSheetAnimationSystem : ISystem
     }
 
     private void SetRenderer(SpriteSheetAnimationAuthoring authoring, in SpriteRendererComponent renderer)
-    {
-        // 컴포넌트 값에 맞춰서 렌더러 옵션 변경
-        authoring.SetFlip(renderer.IsFlip);
-        authoring.SetLayer(renderer.Layer);
-    }
-
-    private void SetRenderer(SpriteRendererAuthoring authoring, in SpriteRendererComponent renderer)
     {
         // 컴포넌트 값에 맞춰서 렌더러 옵션 변경
         authoring.SetFlip(renderer.IsFlip);
