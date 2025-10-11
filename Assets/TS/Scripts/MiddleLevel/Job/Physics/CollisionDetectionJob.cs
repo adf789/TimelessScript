@@ -21,35 +21,9 @@ public partial struct CollisionDetectionJob : IJob
 
     public void Execute()
     {
-        // 모든 entity의 충돌 버퍼 초기화
-        for (int i = 0; i < allEntities.Length; i++)
-        {
-            var entity = allEntities[i];
-            if (collisionBufferLookup.HasBuffer(entity))
-            {
-                var buffer = collisionBufferLookup[entity];
-                buffer.Clear();
-            }
-
-            if (collisionInfoLookup.HasComponent(entity))
-            {
-                var info = collisionInfoLookup[entity];
-                info.HasCollision = false;
-                info.CollidedEntity = Entity.Null;
-                collisionInfoLookup[entity] = info;
-            }
-        }
-
-        if (useSpacialHashing)
-        {
-            // Spatial Hashing을 사용한 충돌 검사
-            ExecuteWithSpatialHashing();
-        }
-        else
-        {
-            // 브루트 포스 충돌 검사
-            ExecuteBruteForce();
-        }
+        // 초기화는 ClearCollisionBuffersJob에서 병렬로 처리됨
+        // 이 Job은 Spatial Hashing 전용으로 사용됨
+        ExecuteWithSpatialHashing();
     }
 
     private void ExecuteWithSpatialHashing()

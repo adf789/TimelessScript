@@ -32,6 +32,8 @@ public class GameManager : BaseManager<GameManager>
     {
         SetDragRange();
 
+        Application.runInBackground = true;
+
         FlowManager.Instance.ChangeFlow(GameState.Intro).Forget();
     }
 
