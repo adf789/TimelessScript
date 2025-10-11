@@ -33,6 +33,8 @@ public class TSActorAuthoring : TSObjectAuthoring
                     MoveState = MoveState.None
                 },
             });
+
+            AddBuffer<InteractBuffer>(entity);
         }
     }
 }

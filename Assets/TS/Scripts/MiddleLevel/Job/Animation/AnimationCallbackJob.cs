@@ -7,11 +7,14 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct AnimationCallbackJob : IJobEntity
 {
+    [ReadOnly]
     public ComponentLookup<ObjectTargetComponent> ObjectTargetCLookup;
+
+    [ReadOnly]
     public ComponentLookup<InteractComponent> InteractCLookup;
+
     [NativeDisableParallelForRestriction]
     public BufferLookup<InteractBuffer> InteractBLookup;
-    public EntityCommandBuffer.ParallelWriter Ecb;
 
     public void Execute(
 [EntityIndexInQuery] int entityIndexInQuery,
@@ -101,10 +104,6 @@ public partial struct AnimationCallbackJob : IJobEntity
     {
         switch (animationState)
         {
-            case AnimationState.Interact:
-                HandleInteractAnimationEnded(entityIndexInQuery, entity);
-                break;
-
             default:
                 // 기본 처리 로직
                 break;
@@ -126,35 +125,16 @@ public partial struct AnimationCallbackJob : IJobEntity
         var interactComponent = InteractCLookup[objectTarget.Target];
 
         // 상호작용 버퍼 가져옴
-        DynamicBuffer<InteractBuffer> interactBuffer;
-
-        if (!InteractBLookup.HasBuffer(objectTarget.Target))
+        if (InteractBLookup.HasBuffer(objectTarget.Target))
         {
-            interactBuffer = Ecb.AddBuffer<InteractBuffer>(entityIndexInQuery, objectTarget.Target);
+            DynamicBuffer<InteractBuffer> interactBuffer = InteractBLookup[objectTarget.Target];
+
+            // 상호작용 등록
+            interactBuffer.Add(new InteractBuffer()
+            {
+                DataID = interactComponent.DataID,
+                DataType = interactComponent.DataType,
+            });
         }
-        else
-        {
-            interactBuffer = InteractBLookup[objectTarget.Target];
-        }
-
-        // 상호작용 등록
-        interactBuffer.Add(new InteractBuffer()
-        {
-            DataID = interactComponent.DataID,
-            DataType = interactComponent.DataType,
-        });
-    }
-
-    private void HandleInteractAnimationEnded(int entityIndexInQuery, Entity entity)
-    {
-        if (!ObjectTargetCLookup.HasComponent(entity))
-            return;
-
-        var objectTarget = ObjectTargetCLookup[entity];
-
-        if (objectTarget.Target == Entity.Null)
-            return;
-
-        Ecb.RemoveComponent<InteractBuffer>(entityIndexInQuery, objectTarget.Target);
     }
 }
