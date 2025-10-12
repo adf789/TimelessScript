@@ -209,37 +209,6 @@ MonoBehaviour:
     IsEndCustomDelay: 0
     StartCustomFrameDelay: 
     EndCustomFrameDelay: 
---- !u!1 &4422742858844270500
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7488242015394640608}
-  m_Layer: 0
-  m_Name: Root
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7488242015394640608
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4422742858844270500}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.395, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4448617964647131482}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7497076683051236044
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,7 +244,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7790838629798168360}
-  - {fileID: 7488242015394640608}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4019544190974294588
@@ -309,8 +277,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
   layer: 1
-  size: {x: 0.52, y: 1.03}
-  offset: {x: 0, y: 0.25}
+  size: {x: 0.43, y: 0.97}
+  offset: {x: 0, y: 0.03}
   isTrigger: 0
 --- !u!114 &4772863480542143071
 MonoBehaviour:
@@ -350,4 +318,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d30f4accc8ffcbb4c97fe98c1b2523f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSActorAuthoring
-  root: {fileID: 7488242015394640608}

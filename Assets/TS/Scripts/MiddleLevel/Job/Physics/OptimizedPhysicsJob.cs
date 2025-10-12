@@ -18,12 +18,12 @@ using System.Runtime.CompilerServices;
               FloatPrecision = FloatPrecision.Low)]
 public partial struct OptimizedPhysicsJob : IJobEntity
 {
-    [ReadOnly] public float deltaTime;
-    [ReadOnly] public NativeArray<Entity> groundEntities;
-    [ReadOnly] public NativeArray<ColliderBoundsComponent> groundBounds;
-    [ReadOnly] public ComponentLookup<TSGroundComponent> groundLookup;
-    [ReadOnly] public ComponentLookup<TSObjectComponent> objectLookup;
-    [ReadOnly] public ComponentLookup<ColliderComponent> colliderLookup;
+    [ReadOnly] public float DeltaTime;
+    [ReadOnly] public NativeArray<Entity> GroundEntities;
+    [ReadOnly] public NativeArray<ColliderBoundsComponent> GroundBounds;
+    [ReadOnly] public ComponentLookup<TSGroundComponent> GroundLookup;
+    [ReadOnly] public ComponentLookup<TSObjectComponent> ObjectLookup;
+    [ReadOnly] public ComponentLookup<ColliderComponent> ColliderLookup;
 
     public void Execute(
         Entity actorEntity,
@@ -36,11 +36,11 @@ public partial struct OptimizedPhysicsJob : IJobEntity
         if (physics.IsStatic)
             return;
 
-        // 1. Bounds 업데이트
-        UpdateBounds(ref bounds, transform.Position.xy, collider);
+        // 1. 물리 시뮬레이션 (중력, 속도)
+        ApplyPhysics(ref physics, ref transform, DeltaTime);
 
-        // 2. 물리 시뮬레이션 (중력, 속도)
-        ApplyPhysics(ref physics, ref transform, deltaTime);
+        // 2. Bounds 업데이트
+        UpdateBounds(ref bounds, transform.Position.xy, collider);
 
         // 3. 충돌 검사 및 응답 (Actor vs Ground)
         ResolveCollisions(actorEntity, ref physics, ref transform, ref bounds, collider);
@@ -84,50 +84,42 @@ public partial struct OptimizedPhysicsJob : IJobEntity
         if (actorCollider.IsTrigger)
             return;
 
-        physics.IsGrounded = false;
-        bool isInLadder = false;
+        if (physics.IsGrounded)
+            return;
 
         // Actor vs Ground 충돌만 검사
-        for (int i = 0; i < groundEntities.Length; i++)
+        for (int i = 0; i < GroundEntities.Length; i++)
         {
-            Entity groundEntity = groundEntities[i];
-            ColliderBoundsComponent groundBound = groundBounds[i];
+            Entity groundEntity = GroundEntities[i];
+            ColliderBoundsComponent groundBound = GroundBounds[i];
 
             // Bounds 체크
             if (!BoundsIntersect(actorBounds, groundBound))
                 continue;
 
             // Collider 정보 가져오기
-            if (!colliderLookup.HasComponent(groundEntity))
+            if (!ColliderLookup.HasComponent(groundEntity))
                 continue;
 
-            ColliderComponent groundCollider = colliderLookup[groundEntity];
+            ColliderComponent groundCollider = ColliderLookup[groundEntity];
 
             // 레이어 체크
             if (!CheckActorGroundLayer(actorCollider.Layer, groundCollider.Layer))
                 continue;
 
             // Ladder 영역 확인
-            if (groundCollider.IsTrigger && objectLookup.HasComponent(groundEntity))
-            {
-                TSObjectComponent obj = objectLookup[groundEntity];
-                if (obj.ObjectType == TSObjectType.Ladder)
-                {
-                    isInLadder = true;
-                    continue; // Ladder는 Trigger이므로 충돌 응답 스킵
-                }
-            }
-
-            // 트리거는 응답 안함
             if (groundCollider.IsTrigger)
-                continue;
+            {
+                // 오브젝트 컴포넌트는 무조건 있어야 함. 없으면 에러 처리
+                TSObjectComponent obj = ObjectLookup[groundEntity];
 
-            // Ground 충돌인지 확인
-            bool isGround = groundLookup.HasComponent(groundEntity);
+                // 사다리의 경우
+                if (obj.ObjectType == TSObjectType.Ladder)
+                    continue; // Ladder는 Trigger이므로 충돌 응답 스킵
 
-            // Ladder 영역에서 Ground 충돌 무시
-            if (isInLadder && isGround)
+                // 트리거는 응답 안함
                 continue;
+            }
 
             // 충돌 응답
             float2 separation = GetSeparationVector(actorBounds, groundBound);
@@ -144,12 +136,14 @@ public partial struct OptimizedPhysicsJob : IJobEntity
                 physics.Velocity.y = 0;
 
                 // 착지 판정 (아래로 분리되는 경우)
-                if (separation.y > 0 && isGround)
+                if (separation.y > 0)
                 {
                     physics.IsGrounded = true;
 
                     if (!physics.IsPrevGrounded)
                         physics.IsRandingAnimation = true;
+
+                    break;
                 }
             }
             else

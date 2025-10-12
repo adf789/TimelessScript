@@ -23,6 +23,8 @@ public partial class PhysicsPerformanceMonitor : SystemBase
     {
         physicsMarker = new ProfilerMarker("Physics.Performance");
         lastUpdateTime = SystemAPI.Time.ElapsedTime;
+
+        RequireForUpdate<TSGroundComponent>();
     }
 
     protected override void OnUpdate()
@@ -52,8 +54,7 @@ public partial class PhysicsPerformanceMonitor : SystemBase
                 .Run();
 
             Entities
-                .WithAll<ColliderComponent>()
-                .WithAny<TSGroundComponent, TSObjectComponent>()
+                .WithAll<ColliderComponent, TSGroundComponent>()
                 .ForEach((Entity entity) => { groundCount++; })
                 .WithoutBurst()
                 .Run();

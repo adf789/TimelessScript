@@ -305,9 +305,17 @@ PrefabInstance:
       value: Ground (2)
       objectReference: {fileID: 0}
     - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: layerOffset
       value: 9800
       objectReference: {fileID: 0}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: spawnParent
+      value: 
+      objectReference: {fileID: 164978728}
     - target: {fileID: 7020263473415740244, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: m_Size.x
       value: 20
@@ -361,37 +369,6 @@ Transform:
   - {fileID: 230242091}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &445661224
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 445661225}
-  m_Layer: 0
-  m_Name: Actors
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &445661225
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 445661224}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 617529932}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &617529931
 GameObject:
   m_ObjectHideFlags: 0
@@ -421,7 +398,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 445661225}
   - {fileID: 164978729}
   - {fileID: 1736684048}
   m_Father: {fileID: 0}
@@ -493,6 +469,14 @@ PrefabInstance:
     - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: layerOffset
       value: 10000
+      objectReference: {fileID: 0}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: spawnParent
+      value: 
+      objectReference: {fileID: 164978728}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: maxSpawnCount
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -665,7 +649,7 @@ Transform:
   m_GameObject: {fileID: 1736684047}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.1, y: 4.9, z: 0}
+  m_LocalPosition: {x: -3.1, y: 3.76, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -684,9 +668,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 3268465435861632508, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  lifeTime: 0
+  lifeTime: 30
   layerOffset: 0
-  maxSpawnCount: 9999
+  maxSpawnCount: 30
   spawnCooldown: 2
   minSpawnDistance: 2
 --- !u!114 &1736684050
@@ -701,7 +685,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSGroundAuthoring
-  root: {fileID: 0}
   bounciness: 0.3
   friction: 0.8
   groundType: 0
@@ -718,9 +701,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
   layer: 0
-  size: {x: 5, y: 1}
+  size: {x: 5, y: 0}
   offset: {x: 0, y: 0}
-  isTrigger: 1
+  isTrigger: 0
 --- !u!1001 &1879290923
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -883,9 +866,17 @@ PrefabInstance:
       value: Ground (1)
       objectReference: {fileID: 0}
     - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: layerOffset
       value: 9900
       objectReference: {fileID: 0}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: spawnParent
+      value: 
+      objectReference: {fileID: 164978728}
     - target: {fileID: 7020263473415740244, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: m_Size.x
       value: 20

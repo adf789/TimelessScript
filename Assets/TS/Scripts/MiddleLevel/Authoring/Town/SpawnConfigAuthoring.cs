@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Entities;
+using Unity.Collections;
 
 public class SpawnConfigAuthoring : MonoBehaviour
 {
@@ -15,17 +16,15 @@ public class SpawnConfigAuthoring : MonoBehaviour
     {
         public override void Bake(SpawnConfigAuthoring authoring)
         {
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
-            string spawnName = authoring.spawnObjectPrefab != null ? authoring.spawnObjectPrefab.name : authoring.name;
+            var entity = GetEntity(TransformUsageFlags.None);
             var spawnEntity = GetEntity(authoring.spawnObjectPrefab.gameObject, TransformUsageFlags.Dynamic);
-            var objectType = authoring.spawnObjectPrefab.Type;
 
             // SpawnConfigComponent 추가
             AddComponent(entity, new SpawnConfigComponent
             {
                 SpawnObjectPrefab = spawnEntity,
-                Name = spawnName,
-                ObjectType = objectType,
+                Name = authoring.GetSpawnName(),
+                ObjectType = authoring.spawnObjectPrefab.Type,
                 LayerOffset = authoring.layerOffset,
                 MaxSpawnCount = authoring.maxSpawnCount,
                 ReadySpawnCount = 0,
@@ -34,7 +33,7 @@ public class SpawnConfigAuthoring : MonoBehaviour
                 SpawnCooldown = authoring.spawnCooldown,
                 NextSpawnTime = 0f,
                 MinSpawnDistance = authoring.minSpawnDistance,
-                PositionYOffset = -authoring.spawnObjectPrefab.GetRootOffset()
+                PositionYOffset = authoring.spawnObjectPrefab.GetRootOffset()
             });
 
             // 스폰된 엔티티들을 추적하기 위한 버퍼 추가
@@ -46,5 +45,10 @@ public class SpawnConfigAuthoring : MonoBehaviour
             // 재사용 가능한 Layer를 관리하기 위한 버퍼 추가
             AddBuffer<AvailableActorBuffer>(entity);
         }
+    }
+
+    public FixedString64Bytes GetSpawnName()
+    {
+        return spawnObjectPrefab != null ? spawnObjectPrefab.name : name;
     }
 }

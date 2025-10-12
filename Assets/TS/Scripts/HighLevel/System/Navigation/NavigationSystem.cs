@@ -129,7 +129,7 @@ public partial struct NavigationSystem : ISystem
         var transform = state.EntityManager.GetComponentData<LocalTransform>(entity);
         var tsObject = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
         var position = transform.Position.xy;
-        position.y += tsObject.RootOffset;
+        position.y -= tsObject.RootOffset;
         return position;
     }
 

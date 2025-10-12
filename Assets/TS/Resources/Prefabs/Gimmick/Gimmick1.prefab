@@ -29,12 +29,11 @@ Transform:
   m_GameObject: {fileID: 853595635999183450}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 19.18, y: 4.44, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8163630450329106993}
-  - {fileID: 3971888583458909171}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3397996780441163628
@@ -96,40 +95,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f91e6c2c2bbb07f4f913091d01f8e62c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSGimmickAuthoring
-  root: {fileID: 3971888583458909171}
   gimmickID: 200001
   radius: 0.41
---- !u!1 &8785457166557062792
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3971888583458909171}
-  m_Layer: 0
-  m_Name: Root
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3971888583458909171
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8785457166557062792}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.253, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5526500853505737115}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4056129256683206653
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -198,6 +165,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 5107223593376727308}
   m_SourcePrefab: {fileID: 100100000, guid: c5f8f079905bce04f945cd8ff4ba545a, type: 3}
+--- !u!212 &8163630450329106992 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 5260572382779035085, guid: c5f8f079905bce04f945cd8ff4ba545a, type: 3}
+  m_PrefabInstance: {fileID: 4056129256683206653}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8163630450329106993 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5260572382779035084, guid: c5f8f079905bce04f945cd8ff4ba545a, type: 3}
@@ -220,4 +192,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d12f5ce249e86d45b344e9042c5b2fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpriteRendererAuthoring
-  spriteRenderer: {fileID: 0}
+  spriteRenderer: {fileID: 8163630450329106992}

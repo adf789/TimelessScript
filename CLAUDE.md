@@ -152,19 +152,10 @@ Environment: Windows + VSCode integrated terminal + Claude Code CLI
 
 ## Communication Style & User Interaction
 
-### User Input Visibility
-Always make user input clearly visible in responses using this format with yellow highlighting:
-
-**Required Format:**
-```diff
-📝 사용자 입력:
-+ 사용자가 입력한 내용
-```
-
 ### Quick CLAUDE.md Update Commands
 When user wants to customize Claude Code behavior, they can use this trigger phrase:
 
-- **"앞으로도 적용되게 해줘"** - Make temporary changes permanent in CLAUDE.md
+- **"앞으로도 적용해줘"** or **"앞으로도 적용되게 해줘"** - Make temporary changes permanent in CLAUDE.md
 
 This phrase will trigger automatic CLAUDE.md updates to preserve user preferences.
 

@@ -7,14 +7,14 @@ public class TSObjectAuthoring : MonoBehaviour
 {
     public virtual TSObjectType Type => TSObjectType.None;
 
-    [SerializeField] protected Transform root;
-
     public float GetRootOffset()
     {
-        if (!root)
+        var collider = GetComponent<ColliderAuthoring>();
+
+        if (!collider)
             return 0f;
 
-        return root.localPosition.y;
+        return -collider.offset.y + collider.size.y * 0.5f;
     }
 
     public float2 GetRootPosition()

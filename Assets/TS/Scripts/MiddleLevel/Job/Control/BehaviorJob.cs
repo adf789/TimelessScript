@@ -31,6 +31,9 @@ public partial struct BehaviorJob : IJobEntity
     ref PhysicsComponent physics,
     in NavigationComponent navigation)
     {
+        if (tsObject.RendererEntity == Entity.Null)
+            return;
+
         RefRW<LocalTransform> transform = TransformLookup.GetRefRW(entity);
         RefRW<SpriteSheetAnimationComponent> animComponent = AnimationComponentLookup.GetRefRW(tsObject.RendererEntity);
         RefRW<SpriteRendererComponent> rendererComponent = RendererComponentLookup.GetRefRW(tsObject.RendererEntity);
@@ -84,6 +87,15 @@ public partial struct BehaviorJob : IJobEntity
 
             HandleClimbing(ref transform.ValueRW, ref tsObject, ref tsActor, ref animComponent.ValueRW);
 
+            if (navigation.IsActive && navigation.State == NavigationState.Completed)
+                OnEndMoving(entityInQueryIndex,
+                in entity,
+                in transform.ValueRO,
+                ref tsObject,
+                ref tsActor,
+                ref rendererComponent.ValueRW,
+                ref animComponent.ValueRW);
+
             return;
         }
     }
@@ -95,7 +107,7 @@ public partial struct BehaviorJob : IJobEntity
     {
         // 1. 현재 '루트(발)'의 위치를 계산합니다. (피벗 위치 + 오프셋)
         float2 currentRootPosition = transform.Position.xy;
-        currentRootPosition.y += objectComponent.RootOffset;
+        currentRootPosition.y -= objectComponent.RootOffset;
 
         // 2. 목표 '루트' 위치를 가져옵니다.
         float2 moveRootPosition = actorComponent.Move.MovePosition;
@@ -110,14 +122,10 @@ public partial struct BehaviorJob : IJobEntity
 
         // 5. 새로 계산된 '루트' 위치를 엔티티의 '피벗' 위치로 다시 변환합니다. (루트 위치 - 오프셋)
         float2 newTransformPosition = newRootPosition;
-        newTransformPosition.y -= objectComponent.RootOffset;
+        newTransformPosition.y += objectComponent.RootOffset;
 
         // 6. 최종 '피벗' 위치를 LocalTransform에 적용합니다. Z축 값은 유지합니다.
         transform.Position = new float3(newTransformPosition.x, newTransformPosition.y, transform.Position.z);
-
-        // 도착지 위치 비교
-        currentRootPosition = transform.Position.xy;
-        currentRootPosition.y += objectComponent.RootOffset;
     }
 
     private void HandleClimbing(ref LocalTransform transform,
@@ -127,7 +135,7 @@ public partial struct BehaviorJob : IJobEntity
     {
         // 현재 위치와 목표 위치 계산
         float2 currentRootPosition = transform.Position.xy;
-        currentRootPosition.y += objectComponent.RootOffset;
+        currentRootPosition.y -= objectComponent.RootOffset;
 
         float2 targetRootPosition = actorComponent.Move.MovePosition;
 
@@ -138,13 +146,13 @@ public partial struct BehaviorJob : IJobEntity
 
         // Transform 위치 업데이트
         float2 newTransformPosition = newRootPosition;
-        newTransformPosition.y -= objectComponent.RootOffset;
+        newTransformPosition.y += objectComponent.RootOffset;
 
         transform.Position = new float3(newTransformPosition.x, newTransformPosition.y, transform.Position.z);
 
         // 도착 확인
         currentRootPosition = transform.Position.xy;
-        currentRootPosition.y += objectComponent.RootOffset;
+        currentRootPosition.y -= objectComponent.RootOffset;
 
         float remainingDistance = math.distance(currentRootPosition, targetRootPosition);
 
@@ -152,13 +160,8 @@ public partial struct BehaviorJob : IJobEntity
         {
             // 정확한 목표 위치로 스냅
             float2 exactTransformPos = targetRootPosition;
-            exactTransformPos.y -= objectComponent.RootOffset;
+            exactTransformPos.y += objectComponent.RootOffset;
             transform.Position = new float3(exactTransformPos.x, exactTransformPos.y, transform.Position.z);
-
-            // 사다리 이동 완료 시 Idle 애니메이션으로 전환 (자연스러운 전환을 위해 Start 애니메이션 사용)
-            animComponent.RequestTransition(AnimationState.Idle);
-            actorComponent.Move.MoveState = MoveState.None;
-            actorComponent.Move.MovePosition = targetRootPosition;
         }
     }
 
