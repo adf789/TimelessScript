@@ -45,7 +45,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::LadderAuthoring
-  root: {fileID: 0}
   topConnectedGround: {fileID: 0}
   bottomConnectedGround: {fileID: 0}
 --- !u!1001 &3817771883861810123

@@ -6,6 +6,7 @@ public class ObjectPoolSupport : MonoBehaviour
 {
     public int LoadedCount => loadedObjects != null ? loadedObjects.Count : 0;
     [SerializeField] private string guid;
+    [SerializeField] private Transform parent;
 
     private List<GameObject> loadedObjects = null;
     private GameObject prefab = null;
@@ -52,7 +53,7 @@ public class ObjectPoolSupport : MonoBehaviour
         }
 
         // 새 오브젝트 생성
-        loadedObjects.Add(Instantiate(prefab, transform));
+        loadedObjects.Add(Instantiate(prefab, parent != null ? parent : transform));
 
         loadedObjects[^1].transform.localPosition = Vector3.zero;
 

@@ -9,11 +9,13 @@ public class ObjectPoolSupportInspector : Editor
     private ObjectPoolSupport inspectorTarget;
     private GameObject gameObject;
     private SerializedProperty guidProperty;
+    private SerializedProperty parentProperty;
 
     private void OnEnable()
     {
         inspectorTarget = (ObjectPoolSupport) target;
         guidProperty = serializedObject.FindProperty("guid");
+        parentProperty = serializedObject.FindProperty("parent");
 
         gameObject = LoadObject(guidProperty.stringValue);
     }
@@ -22,8 +24,13 @@ public class ObjectPoolSupportInspector : Editor
     {
         EditorGUI.BeginChangeCheck();
         {
-            gameObject = (GameObject) EditorGUILayout.ObjectField(gameObject, typeof(GameObject));
-            EditorGUILayout.LabelField("GUID", guidProperty.stringValue);
+            gameObject = (GameObject) EditorGUILayout.ObjectField("Target", gameObject, typeof(GameObject));
+            EditorGUILayout.PropertyField(parentProperty);
+
+            if (gameObject != null)
+                EditorGUILayout.LabelField("GUID", guidProperty.stringValue);
+            else
+                EditorGUILayout.LabelField("타겟 없음");
         }
         if (EditorGUI.EndChangeCheck())
         {
