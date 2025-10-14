@@ -3,7 +3,10 @@
     "allow": [
       "Bash(dotnet nuget locals:*)",
       "Bash(dotnet restore:*)",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(del:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
