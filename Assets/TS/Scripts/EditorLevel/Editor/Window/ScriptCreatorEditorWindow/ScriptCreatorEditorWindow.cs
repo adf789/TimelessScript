@@ -25,7 +25,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private Dictionary<CreateScriptType, BaseScriptCreator> creators = null;
     private static ScriptCreatorEditorWindow instance;
 
-    [MenuItem("Tools/Create Script %e")] // Ctrl + E 단축키 설정
+    [MenuItem("TS/Create Script %e")] // Ctrl + E 단축키 설정
     public static void ShowWindow()
     {
         var window = GetWindow<ScriptCreatorEditorWindow>("Unity Script Creator");

@@ -68,7 +68,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private ViewMode currentViewMode = ViewMode.Combined;
 
-    [MenuItem("Tools/Resource Manager %&r")]
+    [MenuItem("TS/Resources Manage/Resource Manager %&r")]
     public static void OpenWindow()
     {
         var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");
@@ -80,7 +80,7 @@ public class ResourceManageEditorWindow : EditorWindow
     [MenuItem("CONTEXT/ResourcesPath/Open in Window")]
     public static void OpenWindowWithManager(MenuCommand command)
     {
-        var manager = (ResourcesPath)command.context;
+        var manager = (ResourcesPath) command.context;
         var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");
         window.minSize = new Vector2(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
         window.SetSelectedManager(manager);
@@ -224,7 +224,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
         // View mode selection
         EditorGUI.BeginChangeCheck();
-        currentViewMode = (ViewMode)EditorGUILayout.EnumPopup(currentViewMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
+        currentViewMode = (ViewMode) EditorGUILayout.EnumPopup(currentViewMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
         if (EditorGUI.EndChangeCheck())
         {
             Repaint();

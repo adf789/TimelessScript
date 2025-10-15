@@ -52,11 +52,11 @@ public class EditorScriptCreator : BaseScriptCreator
     public override void DrawCustomOptions()
     {
         EditorGUILayout.LabelField("옵션 설정", EditorStyles.boldLabel);
-        
+
         EditorGUILayout.BeginVertical("helpbox");
         {
-            selectedScriptType = (EditorScriptType)EditorGUILayout.EnumPopup("에디터 스크립트 타입 선택", selectedScriptType);
-            
+            selectedScriptType = (EditorScriptType) EditorGUILayout.EnumPopup("에디터 스크립트 타입 선택", selectedScriptType);
+
             // 에디터 스크립트 타입에 따른 설명 제공
             string description = selectedScriptType switch
             {
@@ -64,7 +64,7 @@ public class EditorScriptCreator : BaseScriptCreator
                 EditorScriptType.Inspector => "Inspector: 커스텀 인스펙터 UI 제작",
                 _ => ""
             };
-            
+
             if (!string.IsNullOrEmpty(description))
             {
                 EditorGUILayout.HelpBox(description, MessageType.Info);
@@ -72,13 +72,13 @@ public class EditorScriptCreator : BaseScriptCreator
         }
         EditorGUILayout.EndVertical();
     }
-    
+
     public override List<string> GetFinalPaths(string addPath, string assetName)
     {
         var paths = new List<string>();
-        
+
         string path = string.Format(StringDefine.PATH_SCRIPT, $"EditorLevel/Editor/{selectedScriptType}");
-        
+
         switch (selectedScriptType)
         {
             case EditorScriptType.Window:
@@ -93,18 +93,18 @@ public class EditorScriptCreator : BaseScriptCreator
                 paths.Add($"{path.Replace("\\", "/")}{assetName}Inspector.cs");
                 break;
         }
-        
+
         return paths;
     }
-    
+
     public override void DrawPathPreview(string addPath, string assetName)
     {
         EditorGUILayout.LabelField("생성 경로 미리보기", EditorStyles.boldLabel);
-        
+
         EditorGUILayout.BeginVertical("helpbox");
         {
             var finalPaths = GetFinalPaths(addPath, assetName);
-            
+
             if (finalPaths.Count == 0)
             {
                 EditorGUILayout.HelpBox("생성될 파일이 없습니다.", MessageType.Info);
@@ -113,26 +113,26 @@ public class EditorScriptCreator : BaseScriptCreator
             {
                 EditorGUILayout.LabelField($"{selectedScriptType} 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
-                
+
                 foreach (string path in finalPaths)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
                         string normalizedPath = path.Replace("\\", "/");
-                        
+
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
                         EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
-                        
+
                         // 에디터 타입별 라벨 스타일
                         GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
                         if (selectedScriptType == EditorScriptType.Window)
                             labelStyle.normal.textColor = Color.blue;
                         else if (selectedScriptType == EditorScriptType.Inspector)
                             labelStyle.normal.textColor = Color.red;
-                        
+
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
-                        
+
                         // Ping 버튼
                         string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
@@ -142,13 +142,13 @@ public class EditorScriptCreator : BaseScriptCreator
                     }
                     EditorGUILayout.EndHorizontal();
                 }
-                
+
                 EditorGUILayout.Space();
                 EditorGUILayout.HelpBox("📁 버튼을 클릭하면 해당 폴더로 이동합니다.", MessageType.Info);
             }
         }
         EditorGUILayout.EndVertical();
-        
+
         EditorGUILayout.Space();
     }
 
@@ -161,14 +161,14 @@ using UnityEngine;
 public class {name}Window : EditorWindow
 {{
     // 단축키 예시:
-    // [MenuItem(""Tools/My Tool %t"")]           // Ctrl+T
-    // [MenuItem(""Tools/My Tool #t"")]           // Shift+T
-    // [MenuItem(""Tools/My Tool %#t"")]          // Ctrl+Shift+T
-    // [MenuItem(""Tools/My Tool %&t"")]          // Ctrl+Alt+T
-    // [MenuItem(""Tools/My Tool &q"")]           // Alt+Q
-    // [MenuItem(""Tools/My Tool F5"")]           // F5 키
-    // [MenuItem(""Tools/My Tool %F1"")]          // Ctrl+F1
-    [MenuItem(""Tools/{name}Window"")]
+    // [MenuItem(""TS/My Tool %t"")]           // Ctrl+T
+    // [MenuItem(""TS/My Tool #t"")]           // Shift+T
+    // [MenuItem(""TS/My Tool %#t"")]          // Ctrl+Shift+T
+    // [MenuItem(""TS/My Tool %&t"")]          // Ctrl+Alt+T
+    // [MenuItem(""TS/My Tool &q"")]           // Alt+Q
+    // [MenuItem(""TS/My Tool F5"")]           // F5 키
+    // [MenuItem(""TS/My Tool %F1"")]          // Ctrl+F1
+    [MenuItem(""TS/{name}Window"")]
     public static void OpenWindow()
     {{
         var window = GetWindow<{name}Window>(""{name}"");

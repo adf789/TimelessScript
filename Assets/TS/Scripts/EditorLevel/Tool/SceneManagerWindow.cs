@@ -9,7 +9,7 @@ using System.Linq;
 
 public class SceneManagerWindow : EditorWindow
 {
-    [MenuItem("Tools/Scene Manager %&s")]
+    [MenuItem("TS/Resources Manage/Scene Manager %&s")]
     public static void ShowWindow()
     {
         GetWindow<SceneManagerWindow>("Scene Manager");
@@ -56,7 +56,7 @@ public class SceneManagerWindow : EditorWindow
         EditorGUILayout.LabelField("Play Mode Start Scene:", GUILayout.Width(150));
 
         EditorGUI.BeginChangeCheck();
-        playModeStartScene = (SceneAsset)EditorGUILayout.ObjectField(
+        playModeStartScene = (SceneAsset) EditorGUILayout.ObjectField(
             playModeStartScene,
             typeof(SceneAsset),
             false

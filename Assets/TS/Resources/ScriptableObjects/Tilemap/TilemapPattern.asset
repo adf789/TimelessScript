@@ -19,11 +19,24 @@ MonoBehaviour:
   GridSize: {x: 50, y: 50}
   TileSize: {x: 1, y: 1}
   TilemapPrefab:
-    m_AssetGUID: 
+    m_AssetGUID: adc2087ca96785c449e008188386ce26
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  SubScene:
+    Id:
+      GlobalId:
+        SceneObjectIdentifier0: 102900000
+        SceneObjectIdentifier1: 0
+        AssetGUID:
+          Value:
+            x: 3376936702
+            y: 1156528071
+            z: 4213555642
+            w: 2204986069
+        IdentifierType: 1
+      GenerationType: 4
   LoadPriority: 50
   UnloadDistance: 100
   PreloadDistance: 150

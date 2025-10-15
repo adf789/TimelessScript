@@ -661,7 +661,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dragSpeed: 0.03
-  _dragRange: {fileID: 0}
+  _dragRange: {fileID: 2063329127576903750}
   _dragPadding: {x: 0, y: 0, z: 0, w: 0}
   _isLimitDragX: 1
   _isLimitDragY: 1

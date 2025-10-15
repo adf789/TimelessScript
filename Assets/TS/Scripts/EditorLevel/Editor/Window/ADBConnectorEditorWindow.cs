@@ -12,7 +12,7 @@ public class ADBConnectorEditor : EditorWindow
     private string statusMessage = "";
     private bool showHelp = true;
 
-    [MenuItem("Tools/ADB Connector")]
+    [MenuItem("TS/ADB Connector")]
     public static void ShowWindow()
     {
         GetWindow<ADBConnectorEditor>("ADB Connector");

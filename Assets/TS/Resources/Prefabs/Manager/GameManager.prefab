@@ -93,7 +93,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e366938a1312f604c96eaacc852883cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HighLevel::TS.HighLevel.Manager.TilemapStreamingManager
-  patternRegistry: {fileID: 0}
+  patternRegistry: {fileID: 11400000, guid: 92ee9a66da269db4b856a3366d7dde89, type: 2}
   targetCamera: {fileID: 8340294928188985847}
   maxLoadedPatterns: 9
   updateInterval: 0.5

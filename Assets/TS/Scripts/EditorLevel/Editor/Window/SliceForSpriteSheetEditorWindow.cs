@@ -5,10 +5,10 @@ using UnityEngine;
 
 public class SliceForSpriteSheetWindow : EditorWindow
 {
-    [MenuItem("Tools/Slice Sprite", false, 0)]
+    [MenuItem("TS/Resources Manage/Slice Sprite", false, 0)]
     public static void ShowWindow()
     {
-        SliceForSpriteSheetWindow window = (SliceForSpriteSheetWindow)GetWindow(typeof(SliceForSpriteSheetWindow));
+        SliceForSpriteSheetWindow window = (SliceForSpriteSheetWindow) GetWindow(typeof(SliceForSpriteSheetWindow));
         window.titleContent.text = "SliceForSpriteSheetWindow";
     }
 
@@ -41,7 +41,7 @@ public class SliceForSpriteSheetWindow : EditorWindow
             SetArrayCount(ref columns, count);
             SetArrayCount(ref rows, count);
 
-            textures[i] = (Texture2D)EditorGUILayout.ObjectField("Texture", textures[i], typeof(Texture2D), false);
+            textures[i] = (Texture2D) EditorGUILayout.ObjectField("Texture", textures[i], typeof(Texture2D), false);
             columns[i] = EditorGUILayout.IntField("Columns", columns[i]);
             rows[i] = EditorGUILayout.IntField("Rows", rows[i]);
 
@@ -59,7 +59,7 @@ public class SliceForSpriteSheetWindow : EditorWindow
 
     private void SetArrayCount<T>(ref T[] array, int count)
     {
-        if(array == null)
+        if (array == null)
         {
             array = new T[count];
             return;
@@ -116,7 +116,7 @@ public class SliceForSpriteSheetWindow : EditorWindow
                 {
                     name = texture.name + "_part" + (y * column + x),
                     rect = new Rect(x * width, texture.height - (y + 1) * height, width, height),
-                    alignment = (int)SpriteAlignment.Center
+                    alignment = (int) SpriteAlignment.Center
                 };
                 metaDataList.Add(metaData);
             }

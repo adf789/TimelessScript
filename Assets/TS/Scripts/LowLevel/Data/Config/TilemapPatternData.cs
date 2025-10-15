@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using System.Collections.Generic;
+using Unity.Entities.Serialization;
 
 namespace TS.LowLevel.Data.Config
 {
@@ -36,6 +37,9 @@ namespace TS.LowLevel.Data.Config
         [Header("Addressable Reference")]
         [Tooltip("타일맵 프리팹 Addressable 참조")]
         public AssetReference TilemapPrefab;
+
+        [Tooltip("씬 엔티티 Addressable 참조")]
+        public EntitySceneReference SubScene;
 
         [Header("Streaming Settings")]
         [Tooltip("로딩 우선순위 (높을수록 먼저 로드)")]

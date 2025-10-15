@@ -4,7 +4,7 @@ using UnityEditor;
 
 public class SpawnSystemValidator : EditorWindow
 {
-    [MenuItem("Tools/Spawn System/Validator")]
+    [MenuItem("TS/Spawn System/Validator")]
     public static void ShowWindow()
     {
         GetWindow<SpawnSystemValidator>("Spawn System Validator");

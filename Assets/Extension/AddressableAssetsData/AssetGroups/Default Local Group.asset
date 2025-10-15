@@ -14,7 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Default Local Group
   m_GUID: 5608806d7f4b9774fad49cdaca92e971
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: adc2087ca96785c449e008188386ce26
+    m_Address: Assets/TS/AddressableResources/Tilemap/Tilemap.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef6f749c7c73fe44ab1c52bf5da6d638
+    m_Address: Assets/TS/AddressableResources/SubScene/Town/TownActor.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: e3f5b860eb3bf594da45ffeb68fc8cd9, type: 2}
   m_SchemaSet:

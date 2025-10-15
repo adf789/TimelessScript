@@ -33,6 +33,10 @@ public abstract class BaseFlow : ScriptableObject
             return;
 
         await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+
+        // 로드된 씬 활성화
+        scene = SceneManager.GetSceneByName(sceneName);
+        SceneManager.SetActiveScene(scene);
     }
 
     protected async UniTask CloseScene()

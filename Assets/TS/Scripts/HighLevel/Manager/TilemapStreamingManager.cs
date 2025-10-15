@@ -3,54 +3,73 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
-using System.Linq;
 using TS.LowLevel.Data.Config;
+using Unity.Scenes;
+using Unity.Entities;
 
 namespace TS.HighLevel.Manager
 {
     /// <summary>
     /// 타일맵 패턴 스트리밍 매니저
-    /// Addressables 기반 동적 로딩/언로딩 시스템 (카메라 기반)
+    /// 포트 기반 동적 로딩/언로딩 시스템 (카메라 기반)
     /// </summary>
     public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
+        #region Constants
+
+        private const float CAMERA_ZOOM_THRESHOLD = 0.1f;
+        private const float DEFAULT_CAMERA_BOUNDS_SIZE = 100f;
+        private const float CAMERA_SIZE_MULTIPLIER = 2f;
+        private const float DEBUG_CAMERA_SPHERE_RADIUS = 3f;
+
+        #endregion
+
+        #region Inspector Fields
+
         [Header("Registry")]
         [SerializeField] private TilemapPatternRegistry patternRegistry;
 
         [Header("Camera Reference")]
-        [SerializeField] private Camera targetCamera; // 추적할 카메라 (Orthographic)
+        [SerializeField] private Camera targetCamera;
 
         [Header("Streaming Settings")]
-        [SerializeField] private int maxLoadedPatterns = 9; // 3x3 그리드 최대
-        [SerializeField] private float updateInterval = 0.5f; // 업데이트 주기 (초)
-        [SerializeField] private bool enableAutoStreaming = true; // 자동 스트리밍 활성화
-        [SerializeField] private float loadBufferSize = 20f; // 카메라 가시 영역 외곽 버퍼 (로드 여유 공간)
+        [SerializeField] private int maxLoadedPatterns = 9;
+        [SerializeField] private float updateInterval = 0.5f;
+        [SerializeField] private bool enableAutoStreaming = true;
+        [SerializeField] private float loadBufferSize = 20f;
+        [SerializeField] private float unloadMargin = 10f; // 언로드 여유 거리 (히스테리시스)
 
         [Header("Performance")]
-        [SerializeField] private int maxConcurrentLoads = 3; // 동시 로딩 최대 수
-        [SerializeField] private bool usePriority = true; // 우선순위 기반 로딩
+        [SerializeField] private int maxConcurrentLoads = 3;
 
         [Header("Debug")]
         [SerializeField] private bool showDebugInfo = true;
         [SerializeField] private Color debugColor = Color.green;
-        [SerializeField] private bool showCameraBounds = true; // 카메라 영역 표시
+        [SerializeField] private bool showCameraBounds = true;
 
-        // 로드된 패턴 캐시
-        private Dictionary<string, LoadedPattern> _loadedPatterns = new Dictionary<string, LoadedPattern>();
+        #endregion
 
-        // 로딩 대기열
-        private Queue<LoadRequest> _loadQueue = new Queue<LoadRequest>();
-        private HashSet<string> _loadingKeys = new HashSet<string>(); // 현재 로딩 중인 키
+        #region Private Fields
+
+        // 패턴 캐시
+        private readonly Dictionary<string, LoadedPattern> _loadedPatterns = new Dictionary<string, LoadedPattern>();
+        private readonly Dictionary<string, PatternHistory> _unloadedPatternHistory = new Dictionary<string, PatternHistory>();
+
+        // 로딩 관리
+        private readonly Queue<LoadRequest> _loadQueue = new Queue<LoadRequest>();
+        private readonly HashSet<string> _loadingKeys = new HashSet<string>();
 
         // 카메라 추적
         private Vector3 _cameraPosition;
-        private float _lastCameraSize; // 이전 카메라 크기 (줌 변경 감지)
+        private float _lastCameraSize;
         private float _lastUpdateTime;
 
         // 초기화 상태
-        private bool _isInitialized = false;
+        private bool _isInitialized;
 
-        #region Lifecycle
+        #endregion
+
+        #region Unity Lifecycle
 
         private void Start()
         {
@@ -59,41 +78,23 @@ namespace TS.HighLevel.Manager
 
         private void Update()
         {
-            if (!_isInitialized || !enableAutoStreaming) return;
+            if (!_isInitialized || !enableAutoStreaming || !ValidateCamera()) return;
 
-            // 카메라 검증
-            if (targetCamera == null)
+            UpdateCameraState();
+
+            if (HasCameraZoomChanged())
             {
-                targetCamera = Camera.main;
-                if (targetCamera == null) return;
+                OnCameraZoomChanged();
             }
 
-            // 카메라 위치 업데이트
-            _cameraPosition = targetCamera.transform.position;
-
-            // 줌 변경 감지 (Orthographic size 변경)
-            if (targetCamera.orthographic && Mathf.Abs(targetCamera.orthographicSize - _lastCameraSize) > 0.1f)
+            if (ShouldUpdate())
             {
-                _lastCameraSize = targetCamera.orthographicSize;
-                if (showDebugInfo)
-                    Debug.Log($"[TilemapStreamingManager] Camera zoom changed: {_lastCameraSize}");
-
-                // 줌 변경 시 즉시 스트리밍 업데이트
-                UpdateStreamingByCameraView().Forget();
-            }
-
-            // 주기적 업데이트
-            if (Time.time - _lastUpdateTime >= updateInterval)
-            {
-                UpdateStreamingByCameraView().Forget();
-                ProcessLoadQueue().Forget();
-                _lastUpdateTime = Time.time;
+                PerformPeriodicUpdate();
             }
         }
 
         private void OnDestroy()
         {
-            // 모든 패턴 언로드
             UnloadAllPatterns().Forget();
         }
 
@@ -101,59 +102,54 @@ namespace TS.HighLevel.Manager
 
         #region Initialization
 
-        /// <summary>
-        /// 매니저 초기화
-        /// </summary>
         public void Initialize()
         {
             if (_isInitialized) return;
 
-            // 레지스트리 검증
-            if (patternRegistry == null)
-            {
-                Debug.LogError("[TilemapStreamingManager] PatternRegistry is not assigned!");
-                return;
-            }
+            if (!ValidateRegistry()) return;
+            if (!InitializeCamera()) return;
 
-            // 카메라 참조 설정
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-                if (targetCamera == null)
-                {
-                    Debug.LogWarning("[TilemapStreamingManager] No camera assigned or found. Auto-streaming disabled.");
-                    enableAutoStreaming = false;
-                }
-            }
-
-            // Orthographic 검증
-            if (targetCamera != null && !targetCamera.orthographic)
-            {
-                Debug.LogWarning("[TilemapStreamingManager] Camera is not Orthographic! Streaming may not work correctly.");
-            }
-
-            // 카메라 초기 상태 저장
-            if (targetCamera != null)
-            {
-                _cameraPosition = targetCamera.transform.position;
-                _lastCameraSize = targetCamera.orthographicSize;
-            }
-
-            // 레지스트리 초기화
             patternRegistry.Initialize();
 
             _isInitialized = true;
             _lastUpdateTime = Time.time;
 
-            if (showDebugInfo)
-            {
-                Debug.Log($"[TilemapStreamingManager] Initialized. Camera: {targetCamera?.name}, MaxPatterns: {maxLoadedPatterns}, UpdateInterval: {updateInterval}s");
-            }
+            LogDebug($"Initialized. Camera: {targetCamera?.name}, MaxPatterns: {maxLoadedPatterns}, UpdateInterval: {updateInterval}s");
         }
 
-        /// <summary>
-        /// 카메라 참조 설정 (외부에서 호출 가능)
-        /// </summary>
+        private bool ValidateRegistry()
+        {
+            if (patternRegistry != null) return true;
+
+            Debug.LogError("[TilemapStreamingManager] PatternRegistry is not assigned!");
+            return false;
+        }
+
+        private bool InitializeCamera()
+        {
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
+
+            if (targetCamera == null)
+            {
+                Debug.LogWarning("[TilemapStreamingManager] No camera found. Auto-streaming disabled.");
+                enableAutoStreaming = false;
+                return false;
+            }
+
+            if (!targetCamera.orthographic)
+            {
+                Debug.LogWarning("[TilemapStreamingManager] Camera is not Orthographic! Streaming may not work correctly.");
+            }
+
+            SetCameraPosition(targetCamera.transform.position);
+            SetCameraSize(targetCamera.orthographicSize);
+
+            return true;
+        }
+
         public void SetCamera(Camera camera)
         {
             if (camera == null)
@@ -168,20 +164,61 @@ namespace TS.HighLevel.Manager
             }
 
             targetCamera = camera;
-            _cameraPosition = camera.transform.position;
-            _lastCameraSize = camera.orthographicSize;
+            SetCameraPosition(camera.transform.position);
+            SetCameraSize(camera.orthographicSize);
 
-            if (showDebugInfo)
-                Debug.Log($"[TilemapStreamingManager] Camera set: {camera.name}");
+            LogDebug($"Camera set: {camera.name}");
+        }
+
+        public void SetCameraPosition(Vector2 position) => _cameraPosition = position;
+        public void SetCameraSize(float size) => _lastCameraSize = size;
+
+        #endregion
+
+        #region Camera Update
+
+        private bool ValidateCamera()
+        {
+            if (targetCamera != null) return true;
+
+            targetCamera = Camera.main;
+            return targetCamera != null;
+        }
+
+        private void UpdateCameraState()
+        {
+            SetCameraPosition(targetCamera.transform.position);
+        }
+
+        private bool HasCameraZoomChanged()
+        {
+            return targetCamera.orthographic &&
+                   Mathf.Abs(targetCamera.orthographicSize - _lastCameraSize) > CAMERA_ZOOM_THRESHOLD;
+        }
+
+        private void OnCameraZoomChanged()
+        {
+            SetCameraSize(targetCamera.orthographicSize);
+            LogDebug($"Camera zoom changed: {_lastCameraSize}");
+            UpdateStreamingByCameraView().Forget();
+        }
+
+        private bool ShouldUpdate()
+        {
+            return Time.time - _lastUpdateTime >= updateInterval;
+        }
+
+        private void PerformPeriodicUpdate()
+        {
+            UpdateStreamingByCameraView().Forget();
+            ProcessLoadQueue().Forget();
+            _lastUpdateTime = Time.time;
         }
 
         #endregion
 
-        #region Pattern Loading
+        #region Pattern Loading - Public API
 
-        /// <summary>
-        /// 초기 패턴 로드 (단일 시작 패턴)
-        /// </summary>
         public async UniTask<GameObject> LoadInitialPattern(string patternID, Vector2Int gridPosition = default)
         {
             if (!_isInitialized)
@@ -190,24 +227,15 @@ namespace TS.HighLevel.Manager
                 return null;
             }
 
-            if (showDebugInfo)
-            {
-                Debug.Log($"[TilemapStreamingManager] Loading initial pattern: {patternID} at {gridPosition}");
-            }
+            LogDebug($"Loading initial pattern: {patternID} at {gridPosition}");
 
             var instance = await LoadPattern(patternID, gridPosition);
 
-            if (showDebugInfo)
-            {
-                Debug.Log($"[TilemapStreamingManager] Initial pattern loaded: {patternID}");
-            }
+            LogDebug($"Initial pattern loaded: {patternID}");
 
             return instance;
         }
 
-        /// <summary>
-        /// 노드 기반 패턴 로드
-        /// </summary>
         public async UniTask<GameObject> LoadPatternNode(LowLevel.Data.Runtime.TilemapPatternNode node)
         {
             if (node == null)
@@ -218,51 +246,26 @@ namespace TS.HighLevel.Manager
 
             if (node.IsLoaded && node.LoadedInstance != null)
             {
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[TilemapStreamingManager] Node already loaded: {node.PatternID}");
-                }
+                LogDebug($"Node already loaded: {node.PatternID}");
                 return node.LoadedInstance;
             }
 
-            // 패턴 로드
             var instance = await LoadPattern(node.PatternID, node.WorldGridPosition);
 
             if (instance != null)
             {
                 node.IsLoaded = true;
                 node.LoadedInstance = instance;
-
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[TilemapStreamingManager] Node loaded: {node.PatternID} at {node.WorldGridPosition}");
-                }
+                LogDebug($"Node loaded: {node.PatternID} at {node.WorldGridPosition}");
             }
 
             return instance;
         }
 
-        /// <summary>
-        /// 노드 언로드
-        /// </summary>
-        public async UniTask UnloadPatternNode(LowLevel.Data.Runtime.TilemapPatternNode node)
-        {
-            if (node == null) return;
+        #endregion
 
-            await UnloadPattern(node.PatternID, node.WorldGridPosition);
+        #region Pattern Loading - Core
 
-            node.IsLoaded = false;
-            node.LoadedInstance = null;
-
-            if (showDebugInfo)
-            {
-                Debug.Log($"[TilemapStreamingManager] Node unloaded: {node.PatternID}");
-            }
-        }
-
-        /// <summary>
-        /// 패턴 로드
-        /// </summary>
         public async UniTask<GameObject> LoadPattern(string patternID, Vector2Int gridOffset)
         {
             if (!_isInitialized)
@@ -273,93 +276,103 @@ namespace TS.HighLevel.Manager
 
             var key = GetPatternKey(patternID, gridOffset);
 
-            // 이미 로드된 패턴 체크
-            if (_loadedPatterns.ContainsKey(key))
+            // 중복 로드 체크
+            if (TryGetLoadedPattern(key, out var existingInstance))
             {
-                if (showDebugInfo)
-                {
-                    Debug.LogWarning($"[TilemapStreamingManager] Pattern already loaded: {key}");
-                }
-                return _loadedPatterns[key].TilemapInstance;
+                return existingInstance;
             }
 
-            // 현재 로딩 중인지 체크
+            // 로딩 중 체크
+            if (IsPatternLoading(key))
+            {
+                return await WaitForPatternLoad(key);
+            }
+
+            // 용량 체크
+            await EnsureLoadCapacity();
+
+            // 패턴 데이터 검증
+            var patternData = patternRegistry.GetPattern(patternID);
+            if (!ValidatePatternData(patternData, patternID))
+            {
+                return null;
+            }
+
+            // 로딩 실행
+            return await LoadPatternInternal(key, patternID, gridOffset, patternData);
+        }
+
+        private bool TryGetLoadedPattern(string key, out GameObject instance)
+        {
+            if (_loadedPatterns.TryGetValue(key, out var loaded))
+            {
+                LogDebug($"Pattern already loaded: {key}");
+                instance = loaded.TilemapInstance;
+                return true;
+            }
+
+            instance = null;
+            return false;
+        }
+
+        private bool IsPatternLoading(string key)
+        {
             if (_loadingKeys.Contains(key))
             {
-                if (showDebugInfo)
-                {
-                    Debug.LogWarning($"[TilemapStreamingManager] Pattern is currently loading: {key}");
-                }
-                // 로딩 완료 대기
-                await UniTask.WaitUntil(() => _loadedPatterns.ContainsKey(key) || !_loadingKeys.Contains(key));
-                return _loadedPatterns.ContainsKey(key) ? _loadedPatterns[key].TilemapInstance : null;
+                LogDebug($"Pattern is currently loading: {key}");
+                return true;
             }
+            return false;
+        }
 
-            // 최대 로드 수 체크
+        private async UniTask<GameObject> WaitForPatternLoad(string key)
+        {
+            await UniTask.WaitUntil(() => _loadedPatterns.ContainsKey(key) || !_loadingKeys.Contains(key));
+            return _loadedPatterns.TryGetValue(key, out var loaded) ? loaded.TilemapInstance : null;
+        }
+
+        private async UniTask EnsureLoadCapacity()
+        {
             if (_loadedPatterns.Count >= maxLoadedPatterns)
             {
                 Debug.LogWarning($"[TilemapStreamingManager] Max loaded patterns reached ({maxLoadedPatterns}). Unloading distant patterns...");
                 await UnloadDistantPatterns(_cameraPosition, 1);
             }
+        }
 
-            // 패턴 데이터 가져오기
-            var patternData = patternRegistry.GetPattern(patternID);
+        private bool ValidatePatternData(TilemapPatternData patternData, string patternID)
+        {
             if (patternData == null)
             {
                 Debug.LogError($"[TilemapStreamingManager] Pattern not found: {patternID}");
-                return null;
+                return false;
             }
 
-            // Addressable 참조 검증
             if (patternData.TilemapPrefab == null || !patternData.TilemapPrefab.RuntimeKeyIsValid())
             {
                 Debug.LogError($"[TilemapStreamingManager] Invalid Addressable reference for pattern: {patternID}");
-                return null;
+                return false;
             }
 
-            // 로딩 시작 표시
+            return true;
+        }
+
+        private async UniTask<GameObject> LoadPatternInternal(string key, string patternID, Vector2Int gridOffset, TilemapPatternData patternData)
+        {
             _loadingKeys.Add(key);
 
             try
             {
-                // Addressables로 프리팹 인스턴스화
-                var handle = Addressables.InstantiateAsync(patternData.TilemapPrefab);
-                var instance = await handle.Task;
-
+                var instance = await InstantiateTilemap(patternData, gridOffset, key);
                 if (instance == null)
                 {
-                    Debug.LogError($"[TilemapStreamingManager] Failed to instantiate pattern: {patternID}");
                     _loadingKeys.Remove(key);
                     return null;
                 }
 
-                // 월드 위치 계산 및 설정
-                var worldOffset = new Vector3(
-                    gridOffset.x * patternData.WorldSize.x,
-                    gridOffset.y * patternData.WorldSize.y,
-                    0
-                );
-                instance.transform.position = worldOffset;
-                instance.name = $"TilemapPattern_{key}";
+                var subSceneEntity = await LoadSubScene(patternData, patternID);
 
-                // 로드된 패턴 등록
-                var loadedPattern = new LoadedPattern
-                {
-                    PatternID = patternID,
-                    GridOffset = gridOffset,
-                    PatternData = patternData,
-                    TilemapInstance = instance,
-                    Handle = handle,
-                    LoadTime = Time.time
-                };
-
-                _loadedPatterns[key] = loadedPattern;
-                _loadingKeys.Remove(key);
-
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[TilemapStreamingManager] Pattern loaded: {key} at {worldOffset}");
-                }
+                RegisterLoadedPattern(key, patternID, gridOffset, patternData, instance, subSceneEntity);
 
                 return instance;
             }
@@ -371,40 +384,103 @@ namespace TS.HighLevel.Manager
             }
         }
 
+        private async UniTask<GameObject> InstantiateTilemap(TilemapPatternData patternData, Vector2Int gridOffset, string key)
+        {
+            var tileMapHandle = Addressables.InstantiateAsync(patternData.TilemapPrefab);
+            var instance = await tileMapHandle.Task;
+
+            if (instance == null)
+            {
+                Debug.LogError($"[TilemapStreamingManager] Failed to instantiate pattern");
+                return null;
+            }
+
+            instance.transform.position = CalculateWorldPosition(patternData, gridOffset);
+            instance.name = $"TilemapPattern_{key}";
+
+            return instance;
+        }
+
+        private async UniTask<Entity> LoadSubScene(TilemapPatternData patternData, string patternID)
+        {
+            if (!patternData.SubScene.IsReferenceValid)
+            {
+                LogDebug($"No SubScene reference for pattern: {patternID}");
+                return Entity.Null;
+            }
+
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated)
+            {
+                Debug.LogWarning($"[TilemapStreamingManager] World not available for SubScene loading: {patternID}");
+                return Entity.Null;
+            }
+
+            var subSceneEntity = SceneSystem.LoadSceneAsync(
+                world.Unmanaged,
+                patternData.SubScene,
+                new SceneSystem.LoadParameters { Flags = SceneLoadFlags.LoadAdditive }
+            );
+
+            LogDebug($"SubScene loaded for pattern: {patternID} (Entity: {subSceneEntity})");
+
+            return subSceneEntity;
+        }
+
+        private void RegisterLoadedPattern(string key, string patternID, Vector2Int gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
+        {
+            var loadedPattern = new LoadedPattern
+            {
+                PatternID = patternID,
+                GridOffset = gridOffset,
+                PatternData = patternData,
+                TilemapInstance = instance,
+                SubSceneEntity = subSceneEntity,
+                LoadTime = Time.time
+            };
+
+            _loadedPatterns[key] = loadedPattern;
+            _loadingKeys.Remove(key);
+            _unloadedPatternHistory.Remove(key);
+
+            LogDebug($"Pattern loaded: {key}");
+        }
+
         #endregion
 
         #region Pattern Unloading
 
-        /// <summary>
-        /// 패턴 언로드
-        /// </summary>
+        public async UniTask UnloadPatternNode(LowLevel.Data.Runtime.TilemapPatternNode node)
+        {
+            if (node == null) return;
+
+            await UnloadPattern(node.PatternID, node.WorldGridPosition);
+
+            node.IsLoaded = false;
+            node.LoadedInstance = null;
+
+            LogDebug($"Node unloaded: {node.PatternID}");
+        }
+
         public async UniTask UnloadPattern(string patternID, Vector2Int gridOffset)
         {
             var key = GetPatternKey(patternID, gridOffset);
 
             if (!_loadedPatterns.TryGetValue(key, out var loaded))
             {
-                if (showDebugInfo)
-                {
-                    Debug.LogWarning($"[TilemapStreamingManager] Pattern not loaded: {key}");
-                }
+                LogDebug($"Pattern not loaded: {key}");
                 return;
             }
 
             try
             {
-                // GameObject 제거
-                if (loaded.TilemapInstance != null)
-                {
-                    Addressables.ReleaseInstance(loaded.Handle);
-                }
+                await UnloadSubScene(loaded, key);
+                UnloadTilemap(loaded);
+                SaveToHistory(loaded, key);
 
                 _loadedPatterns.Remove(key);
 
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[TilemapStreamingManager] Pattern unloaded: {key}");
-                }
+                LogDebug($"Pattern unloaded and saved to history: {key}");
             }
             catch (System.Exception ex)
             {
@@ -414,36 +490,62 @@ namespace TS.HighLevel.Manager
             await UniTask.Yield();
         }
 
-        /// <summary>
-        /// 모든 패턴 언로드
-        /// </summary>
+        private async UniTask UnloadSubScene(LoadedPattern loaded, string key)
+        {
+            if (loaded.SubSceneEntity == Entity.Null) return;
+
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world == null || !world.IsCreated) return;
+
+            SceneSystem.UnloadScene(
+                world.Unmanaged,
+                loaded.SubSceneEntity,
+                SceneSystem.UnloadParameters.DestroyMetaEntities
+            );
+
+            LogDebug($"SubScene unloaded for pattern: {key} (Entity: {loaded.SubSceneEntity})");
+        }
+
+        private void UnloadTilemap(LoadedPattern loaded)
+        {
+            if (loaded.TilemapInstance != null)
+            {
+                Object.Destroy(loaded.TilemapInstance);
+            }
+        }
+
+        private void SaveToHistory(LoadedPattern loaded, string key)
+        {
+            _unloadedPatternHistory[key] = new PatternHistory
+            {
+                PatternID = loaded.PatternID,
+                GridOffset = loaded.GridOffset,
+                UnloadTime = Time.time
+            };
+        }
+
         public async UniTask UnloadAllPatterns()
         {
-            var keys = _loadedPatterns.Keys.ToList();
+            var patternsToUnload = new List<(string patternID, Vector2Int gridOffset)>();
 
-            foreach (var key in keys)
+            foreach (var loaded in _loadedPatterns.Values)
             {
-                var loaded = _loadedPatterns[key];
-                await UnloadPattern(loaded.PatternID, loaded.GridOffset);
+                patternsToUnload.Add((loaded.PatternID, loaded.GridOffset));
+            }
+
+            foreach (var (patternID, gridOffset) in patternsToUnload)
+            {
+                await UnloadPattern(patternID, gridOffset);
             }
 
             _loadedPatterns.Clear();
 
-            if (showDebugInfo)
-            {
-                Debug.Log("[TilemapStreamingManager] All patterns unloaded");
-            }
+            LogDebug("All patterns unloaded");
         }
 
-        /// <summary>
-        /// 거리 기반 먼 패턴 언로드
-        /// </summary>
-        public async UniTask UnloadDistantPatterns(Vector3 playerPosition, int countToUnload = 1)
+        public async UniTask UnloadDistantPatterns(Vector3 position, int countToUnload = 1)
         {
-            var distantPatterns = _loadedPatterns.Values
-                .OrderByDescending(p => GetDistanceToPattern(p, playerPosition))
-                .Take(countToUnload)
-                .ToList();
+            var distantPatterns = FindDistantPatterns(position, countToUnload);
 
             foreach (var pattern in distantPatterns)
             {
@@ -451,72 +553,215 @@ namespace TS.HighLevel.Manager
             }
         }
 
+        private List<LoadedPattern> FindDistantPatterns(Vector3 position, int count)
+        {
+            var patterns = new List<LoadedPattern>(_loadedPatterns.Values);
+            patterns.Sort((a, b) =>
+            {
+                var distA = GetDistanceToPattern(a, position);
+                var distB = GetDistanceToPattern(b, position);
+                return distB.CompareTo(distA);
+            });
+
+            var result = new List<LoadedPattern>();
+            for (int i = 0; i < count && i < patterns.Count; i++)
+            {
+                result.Add(patterns[i]);
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region Auto Streaming
 
         /// <summary>
-        /// 카메라 가시 영역 기반 자동 스트리밍
+        /// 카메라 가시 영역 기반 자동 스트리밍 (히스테리시스 적용)
+        /// 로드 범위: 카메라 + loadBufferSize
+        /// 언로드 범위: 카메라 + loadBufferSize + unloadMargin
+        /// 이를 통해 경계에서 로드/언로드 반복을 방지
         /// </summary>
         public async UniTask UpdateStreamingByCameraView()
         {
             if (!_isInitialized || targetCamera == null) return;
 
-            _cameraPosition = targetCamera.transform.position;
+            SetCameraPosition(targetCamera.transform.position);
 
-            // 카메라 가시 영역 계산 (Orthographic)
-            var cameraBounds = GetCameraBounds();
+            var loadBounds = GetCameraBounds();
+            var unloadBounds = GetCameraUnloadBounds();
 
-            // 언로드할 패턴 찾기 (카메라 가시 영역 + 버퍼 벗어난 패턴)
-            var toUnload = _loadedPatterns.Values
-                .Where(p => ShouldUnloadByCamera(p, cameraBounds))
-                .ToList();
+            await LoadPatternsInCameraView(loadBounds);
+            await UnloadPatternsOutsideCameraView(unloadBounds);
+        }
 
-            // 언로드 실행
-            foreach (var pattern in toUnload)
+        private async UniTask LoadPatternsInCameraView(Bounds cameraBounds)
+        {
+            // 로드된 패턴이 없으면 히스토리에서 복구
+            if (_loadedPatterns.Count == 0)
+            {
+                await LoadPatternFromHistory(cameraBounds);
+                return;
+            }
+
+            var patternsToLoad = FindNeighborPatternsToLoad(cameraBounds);
+
+            foreach (var (patternID, offset) in patternsToLoad)
+            {
+                await LoadPattern(patternID, offset);
+            }
+
+            if (patternsToLoad.Count > 0)
+            {
+                LogDebug($"Auto-loaded {patternsToLoad.Count} neighbor patterns in camera view");
+            }
+        }
+
+        private List<(string patternID, Vector2Int offset)> FindNeighborPatternsToLoad(Bounds cameraBounds)
+        {
+            var result = new List<(string, Vector2Int)>();
+            var check = new HashSet<string>();
+
+            foreach (var loaded in _loadedPatterns.Values)
+            {
+                foreach (var connection in loaded.PatternData.Connections)
+                {
+                    if (!connection.IsActive || string.IsNullOrEmpty(connection.LinkedPatternID))
+                        continue;
+
+                    var neighborOffset = CalculateNeighborOffset(loaded.GridOffset, connection.Direction);
+                    var key = GetPatternKey(connection.LinkedPatternID, neighborOffset);
+
+                    if (check.Contains(key) || IsPatternLoaded(connection.LinkedPatternID, neighborOffset))
+                        continue;
+
+                    check.Add(key);
+
+                    var pattern = patternRegistry.GetPattern(connection.LinkedPatternID);
+                    if (pattern == null)
+                    {
+                        LogDebug($"Linked pattern not found in registry: {connection.LinkedPatternID}");
+                        continue;
+                    }
+
+                    var patternCenter = CalculatePatternCenter(pattern, neighborOffset);
+                    if (cameraBounds.Contains(patternCenter))
+                    {
+                        result.Add((connection.LinkedPatternID, neighborOffset));
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private async UniTask UnloadPatternsOutsideCameraView(Bounds cameraBounds)
+        {
+            var patternsToUnload = new List<LoadedPattern>();
+
+            foreach (var loaded in _loadedPatterns.Values)
+            {
+                if (ShouldUnloadByCamera(loaded, cameraBounds))
+                {
+                    patternsToUnload.Add(loaded);
+                }
+            }
+
+            foreach (var pattern in patternsToUnload)
             {
                 await UnloadPattern(pattern.PatternID, pattern.GridOffset);
             }
 
-            if (showDebugInfo && toUnload.Count > 0)
+            if (patternsToUnload.Count > 0)
             {
-                Debug.Log($"[TilemapStreamingManager] Auto-unloaded {toUnload.Count} patterns outside camera view");
+                LogDebug($"Auto-unloaded {patternsToUnload.Count} patterns outside camera view");
             }
         }
 
-        /// <summary>
-        /// 카메라 가시 영역 계산 (Orthographic Camera)
-        /// </summary>
-        private Bounds GetCameraBounds()
+        #endregion
+
+        #region History Recovery
+
+        private async UniTask LoadPatternFromHistory(Bounds cameraBounds)
         {
-            if (targetCamera == null || !targetCamera.orthographic)
-                return new Bounds(_cameraPosition, Vector3.one * 100f);
+            if (_unloadedPatternHistory.Count == 0)
+            {
+                await LoadInitialPatternFallback(cameraBounds);
+                return;
+            }
 
-            // Orthographic 카메라의 가시 영역 크기 계산
-            float height = targetCamera.orthographicSize * 2f;
-            float width = height * targetCamera.aspect;
+            var closestHistory = FindClosestHistoryInBounds(cameraBounds);
 
-            // 버퍼 추가
-            var size = new Vector3(width + loadBufferSize * 2f, height + loadBufferSize * 2f, 0f);
-
-            return new Bounds(_cameraPosition, size);
+            if (closestHistory != null)
+            {
+                LogDebug($"Loading pattern from history: {closestHistory.PatternID} at {closestHistory.GridOffset}");
+                await LoadPattern(closestHistory.PatternID, closestHistory.GridOffset);
+            }
+            else
+            {
+                await LoadInitialPatternFallback(cameraBounds);
+            }
         }
 
-        /// <summary>
-        /// 카메라 위치 반환 (외부 접근용)
-        /// </summary>
-        public Vector3 GetCameraPosition()
+        private PatternHistory FindClosestHistoryInBounds(Bounds cameraBounds)
         {
-            return _cameraPosition;
+            PatternHistory closest = null;
+            float closestDistance = float.MaxValue;
+
+            foreach (var history in _unloadedPatternHistory.Values)
+            {
+                var pattern = patternRegistry.GetPattern(history.PatternID);
+                if (pattern == null) continue;
+
+                var patternCenter = CalculatePatternCenter(pattern, history.GridOffset);
+
+                if (cameraBounds.Contains(patternCenter))
+                {
+                    float distance = Vector3.Distance(_cameraPosition, patternCenter);
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closest = history;
+                    }
+                }
+            }
+
+            return closest;
+        }
+
+        private async UniTask LoadInitialPatternFallback(Bounds cameraBounds)
+        {
+            if (string.IsNullOrEmpty(patternRegistry.InitialPatternID))
+            {
+                LogDebug("No initial pattern defined and no history available.");
+                return;
+            }
+
+            // InitialPattern이 카메라 범위 내에 있는지 확인
+            var initialPattern = patternRegistry.GetPattern(patternRegistry.InitialPatternID);
+            if (initialPattern == null)
+            {
+                LogDebug($"Initial pattern not found in registry: {patternRegistry.InitialPatternID}");
+                return;
+            }
+
+            var initialPatternCenter = CalculatePatternCenter(initialPattern, Vector2Int.zero);
+
+            if (cameraBounds.Contains(initialPatternCenter))
+            {
+                LogDebug($"Loading fallback initial pattern: {patternRegistry.InitialPatternID}");
+                await LoadPattern(patternRegistry.InitialPatternID, Vector2Int.zero);
+            }
+            else
+            {
+                LogDebug($"Initial pattern is outside camera bounds ({initialPatternCenter}). Skipping load.");
+            }
         }
 
         #endregion
 
         #region Queue Processing
 
-        /// <summary>
-        /// 로딩 대기열 처리
-        /// </summary>
         private async UniTask ProcessLoadQueue()
         {
             if (_loadQueue.Count == 0) return;
@@ -531,171 +776,204 @@ namespace TS.HighLevel.Manager
             }
         }
 
-        /// <summary>
-        /// 로딩 요청 큐에 추가
-        /// </summary>
         public void EnqueueLoadRequest(string patternID, Vector2Int gridOffset, int priority = 50)
         {
-            var request = new LoadRequest
+            _loadQueue.Enqueue(new LoadRequest
             {
                 PatternID = patternID,
                 GridOffset = gridOffset,
                 Priority = priority,
                 RequestTime = Time.time
-            };
-
-            _loadQueue.Enqueue(request);
+            });
         }
 
         #endregion
 
-        #region Helper Methods
+        #region Calculation Helpers
+
+        private Vector2Int CalculateNeighborOffset(Vector2Int currentOffset, PatternDirection direction)
+        {
+            return direction switch
+            {
+                PatternDirection.TopLeft => new Vector2Int(currentOffset.x - 1, currentOffset.y + 1),
+                PatternDirection.TopRight => new Vector2Int(currentOffset.x + 1, currentOffset.y + 1),
+                PatternDirection.Left => new Vector2Int(currentOffset.x - 1, currentOffset.y),
+                PatternDirection.Right => new Vector2Int(currentOffset.x + 1, currentOffset.y),
+                PatternDirection.BottomLeft => new Vector2Int(currentOffset.x - 1, currentOffset.y - 1),
+                PatternDirection.BottomRight => new Vector2Int(currentOffset.x + 1, currentOffset.y - 1),
+                _ => currentOffset
+            };
+        }
+
+        private Vector3 CalculatePatternCenter(TilemapPatternData pattern, Vector2Int gridOffset)
+        {
+            return new Vector3(
+                gridOffset.x * pattern.WorldSize.x + pattern.WorldSize.x * 0.5f,
+                gridOffset.y * pattern.WorldSize.y + pattern.WorldSize.y * 0.5f,
+                0
+            );
+        }
+
+        private Vector3 CalculateWorldPosition(TilemapPatternData pattern, Vector2Int gridOffset)
+        {
+            return new Vector3(
+                gridOffset.x * pattern.WorldSize.x,
+                gridOffset.y * pattern.WorldSize.y,
+                0
+            );
+        }
 
         /// <summary>
-        /// 패턴 키 생성 (PatternID_GridX_GridY)
+        /// 로드 범위 계산 (카메라 + loadBufferSize)
         /// </summary>
+        private Bounds GetCameraBounds()
+        {
+            return GetCameraBoundsWithBuffer(loadBufferSize);
+        }
+
+        /// <summary>
+        /// 언로드 범위 계산 (카메라 + loadBufferSize + unloadMargin)
+        /// 히스테리시스를 통해 경계에서 떨림 방지
+        /// </summary>
+        private Bounds GetCameraUnloadBounds()
+        {
+            return GetCameraBoundsWithBuffer(loadBufferSize + unloadMargin);
+        }
+
+        private Bounds GetCameraBoundsWithBuffer(float bufferSize)
+        {
+            if (targetCamera == null || !targetCamera.orthographic)
+                return new Bounds(_cameraPosition, Vector3.one * DEFAULT_CAMERA_BOUNDS_SIZE);
+
+            float height = targetCamera.orthographicSize * CAMERA_SIZE_MULTIPLIER;
+            float width = height * targetCamera.aspect;
+            var size = new Vector3(width + bufferSize * CAMERA_SIZE_MULTIPLIER, height + bufferSize * CAMERA_SIZE_MULTIPLIER, 0f);
+
+            return new Bounds(_cameraPosition, size);
+        }
+
+        private float GetDistanceToPattern(LoadedPattern pattern, Vector3 position)
+        {
+            var patternCenter = CalculatePatternCenter(pattern.PatternData, pattern.GridOffset);
+            return Vector3.Distance(position, patternCenter);
+        }
+
+        private bool ShouldUnloadByCamera(LoadedPattern pattern, Bounds cameraBounds)
+        {
+            var patternCenter = CalculatePatternCenter(pattern.PatternData, pattern.GridOffset);
+            return !cameraBounds.Contains(patternCenter);
+        }
+
+        #endregion
+
+        #region Utility
+
         private string GetPatternKey(string patternID, Vector2Int offset)
         {
             return $"{patternID}_{offset.x}_{offset.y}";
         }
 
-        /// <summary>
-        /// 패턴까지의 거리 계산
-        /// </summary>
-        private float GetDistanceToPattern(LoadedPattern pattern, Vector3 position)
-        {
-            var patternCenter = new Vector3(
-                pattern.GridOffset.x * pattern.PatternData.WorldSize.x + pattern.PatternData.WorldSize.x * 0.5f,
-                pattern.GridOffset.y * pattern.PatternData.WorldSize.y + pattern.PatternData.WorldSize.y * 0.5f,
-                0
-            );
-
-            return Vector3.Distance(position, patternCenter);
-        }
-
-        /// <summary>
-        /// 패턴 중심 위치 계산
-        /// </summary>
-        private Vector3 GetPatternCenter(LoadedPattern pattern)
-        {
-            return new Vector3(
-                pattern.GridOffset.x * pattern.PatternData.WorldSize.x + pattern.PatternData.WorldSize.x * 0.5f,
-                pattern.GridOffset.y * pattern.PatternData.WorldSize.y + pattern.PatternData.WorldSize.y * 0.5f,
-                0
-            );
-        }
-
-        /// <summary>
-        /// 카메라 가시 영역 기반 언로드 여부 확인
-        /// </summary>
-        private bool ShouldUnloadByCamera(LoadedPattern pattern, Bounds cameraBounds)
-        {
-            var patternCenter = GetPatternCenter(pattern);
-
-            // 패턴 중심이 카메라 가시 영역(버퍼 포함) 밖에 있으면 언로드
-            return !cameraBounds.Contains(patternCenter);
-        }
-
-        /// <summary>
-        /// 패턴을 언로드해야 하는지 확인 (거리 기반 - 호환성 유지)
-        /// </summary>
-        private bool ShouldUnload(LoadedPattern pattern, Vector3 position)
-        {
-            var distance = GetDistanceToPattern(pattern, position);
-            return distance > pattern.PatternData.UnloadDistance;
-        }
-
-        #endregion
-
-        #region Debug & Utility
-
-        /// <summary>
-        /// 현재 로드된 패턴 수
-        /// </summary>
+        public Vector3 GetCameraPosition() => _cameraPosition;
         public int LoadedPatternCount => _loadedPatterns.Count;
 
-        /// <summary>
-        /// 로드된 모든 패턴 키 목록
-        /// </summary>
         public List<string> GetLoadedPatternKeys()
         {
             return new List<string>(_loadedPatterns.Keys);
         }
 
-        /// <summary>
-        /// 패턴이 로드되었는지 확인
-        /// </summary>
         public bool IsPatternLoaded(string patternID, Vector2Int gridOffset)
         {
             var key = GetPatternKey(patternID, gridOffset);
             return _loadedPatterns.ContainsKey(key);
         }
 
+        private void LogDebug(string message)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log($"[TilemapStreamingManager] {message}");
+            }
+        }
+
+        #endregion
+
+        #region Debug Visualization
+
         private void OnDrawGizmos()
         {
             if (!showDebugInfo || !_isInitialized) return;
 
-            // 로드된 패턴 경계 그리기
+            DrawLoadedPatternBounds();
+            DrawCameraPosition();
+            DrawCameraBounds();
+        }
+
+        private void DrawLoadedPatternBounds()
+        {
             Gizmos.color = debugColor;
             foreach (var loaded in _loadedPatterns.Values)
             {
-                var center = new Vector3(
-                    loaded.GridOffset.x * loaded.PatternData.WorldSize.x + loaded.PatternData.WorldSize.x * 0.5f,
-                    loaded.GridOffset.y * loaded.PatternData.WorldSize.y + loaded.PatternData.WorldSize.y * 0.5f,
-                    0
-                );
-
+                var center = CalculatePatternCenter(loaded.PatternData, loaded.GridOffset);
                 var size = new Vector3(loaded.PatternData.WorldSize.x, loaded.PatternData.WorldSize.y, 0);
                 Gizmos.DrawWireCube(center, size);
             }
+        }
 
-            // 카메라 위치 표시
+        private void DrawCameraPosition()
+        {
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(_cameraPosition, 3f);
+            Gizmos.DrawWireSphere(_cameraPosition, DEBUG_CAMERA_SPHERE_RADIUS);
+        }
 
-            // 카메라 가시 영역 표시
-            if (showCameraBounds && targetCamera != null && targetCamera.orthographic)
-            {
-                var cameraBounds = GetCameraBounds();
+        private void DrawCameraBounds()
+        {
+            if (!showCameraBounds || targetCamera == null || !targetCamera.orthographic) return;
 
-                // 내부 가시 영역 (버퍼 제외)
-                Gizmos.color = new Color(0f, 1f, 1f, 0.5f); // Cyan
-                float height = targetCamera.orthographicSize * 2f;
-                float width = height * targetCamera.aspect;
-                Gizmos.DrawWireCube(_cameraPosition, new Vector3(width, height, 0f));
+            float height = targetCamera.orthographicSize * CAMERA_SIZE_MULTIPLIER;
+            float width = height * targetCamera.aspect;
 
-                // 버퍼 포함 영역
-                Gizmos.color = new Color(1f, 1f, 0f, 0.3f); // Yellow
-                Gizmos.DrawWireCube(cameraBounds.center, cameraBounds.size);
-            }
+            // 내부 가시 영역 (버퍼 제외)
+            Gizmos.color = new Color(0f, 1f, 1f, 0.5f);
+            Gizmos.DrawWireCube(_cameraPosition, new Vector3(width, height, 0f));
+
+            // 로드 범위 (버퍼 포함)
+            var loadBounds = GetCameraBounds();
+            Gizmos.color = new Color(0f, 1f, 0f, 0.3f); // 녹색
+            Gizmos.DrawWireCube(loadBounds.center, loadBounds.size);
+
+            // 언로드 범위 (버퍼 + 마진 포함)
+            var unloadBounds = GetCameraUnloadBounds();
+            Gizmos.color = new Color(1f, 0.5f, 0f, 0.2f); // 주황색
+            Gizmos.DrawWireCube(unloadBounds.center, unloadBounds.size);
         }
 
         #endregion
 
         #region Nested Classes
 
-        /// <summary>
-        /// 로드된 패턴 정보
-        /// </summary>
         private class LoadedPattern
         {
             public string PatternID;
             public Vector2Int GridOffset;
             public TilemapPatternData PatternData;
             public GameObject TilemapInstance;
-            public AsyncOperationHandle<GameObject> Handle;
+            public Entity SubSceneEntity;
             public float LoadTime;
         }
 
-        /// <summary>
-        /// 로딩 요청 정보
-        /// </summary>
         private struct LoadRequest
         {
             public string PatternID;
             public Vector2Int GridOffset;
             public int Priority;
             public float RequestTime;
+        }
+
+        private class PatternHistory
+        {
+            public string PatternID;
+            public Vector2Int GridOffset;
+            public float UnloadTime;
         }
 
         #endregion

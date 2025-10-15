@@ -44,7 +44,7 @@ namespace EditorLevel.Processor
     /// </summary>
     public static class GraphicRaycastTargetMenu
     {
-        [MenuItem("Tools/UI/Disable All RaycastTargets")]
+        [MenuItem("TS/UI/Disable All RaycastTargets")]
         public static void DisableAllRaycastTargets()
         {
             var graphics = Object.FindObjectsOfType<Graphic>(true);
@@ -65,7 +65,7 @@ namespace EditorLevel.Processor
             EditorUtility.DisplayDialog("Complete", $"Disabled RaycastTarget on {count} Graphic components", "OK");
         }
 
-        [MenuItem("Tools/UI/Disable Selected RaycastTargets")]
+        [MenuItem("TS/UI/Disable Selected RaycastTargets")]
         public static void DisableSelectedRaycastTargets()
         {
             var selectedObjects = Selection.gameObjects;
