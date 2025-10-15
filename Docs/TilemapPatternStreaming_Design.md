@@ -1,8 +1,8 @@
 # 타일맵 패턴 스트리밍 시스템 설계 문서
 
 **작성일**: 2025-10-14
-**버전**: 1.1
-**상태**: Phase 2 구현 완료
+**버전**: 1.4
+**상태**: Phase 5 구현 완료 (프로시저럴 맵 생성)
 
 ---
 
@@ -298,76 +298,547 @@ private void OnDrawGizmos()
 - 로딩 실패 시 예외 처리
 - 로그 레벨별 디버깅 지원
 
-### Phase 3: FlowManager 통합 (예정) ⏳
+### Phase 3: FlowManager 통합 (완료) ✅
 
 **목표**: 기존 게임 플로우에 타일맵 시스템 통합
 
-**구현 계획**:
-- `LoadingFlow.cs` 수정
-- SubScene 로딩과 타일맵 로딩 동기화
-- 초기 패턴 로드 구현
+**구현 완료**:
+- ✅ `LoadingFlow.cs` 수정
+- ✅ `TownFlow.cs` (HomeFlow) 수정
+- ✅ SubScene 로딩과 타일맵 로딩 동기화
+- ✅ 초기 패턴 로드 구현
+- ✅ Flow 전환 시 패턴 자동 관리
 
-**주요 변경사항**:
+**파일 위치**:
+```
+Assets/TS/Scripts/HighLevel/Flow/
+├── LoadingFlow.cs (업데이트 - 98 lines)
+└── HomeFlow.cs (TownFlow, 업데이트 - 88 lines)
+```
+
+**구현된 주요 기능**:
+
+#### 1. LoadingFlow 통합
 ```csharp
-// LoadingFlow.cs
-protected override async UniTask OnEnter()
+[Header("Tilemap Settings")]
+[SerializeField] private bool loadTilemapPatterns = true;
+[SerializeField] private string tilemapSubSceneName = "";
+
+public override async UniTask Enter()
 {
-    // 1. SubScene 로드
-    await LoadSubScene(targetSceneName);
+    // 1. Scene 로드
+    await OpenScene();
 
-    // 2. 타일맵 패턴 로드 (NEW!)
-    await TilemapStreamingManager.Instance.LoadInitialPatterns(targetSceneName);
+    // 2. Tilemap 패턴 로드 (옵션)
+    if (loadTilemapPatterns)
+    {
+        await LoadTilemapPatterns();
+    }
 
-    // 3. 기타 초기화
-    await InitializeGameSystems();
+    // 3. UI 오픈
+    OpenUI();
+}
 
-    // 4. 완료
-    FlowManager.Instance.ChangeFlow<GameFlow>();
+private async UniTask LoadTilemapPatterns()
+{
+    // TilemapStreamingManager 초기화 확인
+    if (TilemapStreamingManager.Instance == null)
+    {
+        Debug.LogWarning("[LoadingFlow] TilemapStreamingManager is not initialized.");
+        return;
+    }
+
+    // SubScene 이름 결정 (설정값 우선, 없으면 State 이름 사용)
+    string subSceneName = string.IsNullOrEmpty(tilemapSubSceneName)
+        ? State.ToString()
+        : tilemapSubSceneName;
+
+    // 초기 패턴 로드
+    await TilemapStreamingManager.Instance.LoadInitialPatterns(subSceneName);
 }
 ```
 
-### Phase 4: 에디터 도구 (예정) ⏳
+#### 2. TownFlow 통합
+```csharp
+// TownFlow도 LoadingFlow와 동일한 구조로 통합됨
+// GameState.Town에 맞는 타일맵 패턴 로드
+```
+
+#### 3. Flow 전환 프로세스
+```
+FlowManager.ChangeFlow(newState)
+    ↓
+1. LoadingFlow.Enter()
+   - Scene 로드
+   - 타일맵 패턴 로드 (Loading용)
+   - UI 오픈
+    ↓
+2. PreviousFlow.Exit()
+   - 타일맵 패턴 언로드 (이전 Flow)
+   - UI 닫기
+   - Scene 언로드
+    ↓
+3. NewFlow.Enter()
+   - Scene 로드
+   - 타일맵 패턴 로드 (새 Flow용)
+   - UI 오픈
+    ↓
+4. LoadingFlow.Exit()
+   - 타일맵 패턴 언로드 (Loading용)
+   - UI 닫기
+   - Scene 언로드
+```
+
+#### 4. 설정 옵션
+```csharp
+// Inspector에서 설정 가능
+- loadTilemapPatterns: true/false (타일맵 로딩 활성화)
+- tilemapSubSceneName: "" (비어있으면 State 이름 사용)
+```
+
+**에러 처리**:
+- TilemapStreamingManager 미초기화 시 Warning 로그 출력
+- 패턴 로드 실패 시 예외 catch 및 Error 로그
+- 크래시 방지 및 안전한 fallback
+
+**로그 출력 예시**:
+```
+[LoadingFlow] Loading tilemap patterns for SubScene: Loading
+[TilemapStreamingManager] Loading 1 initial patterns for Loading
+[TilemapStreamingManager] Pattern loaded: TestPattern_01_0_0 at (0, 0, 0)
+[LoadingFlow] Tilemap patterns loaded successfully for Loading
+
+[TownFlow] Unloading tilemap patterns
+[TilemapStreamingManager] Pattern unloaded: TestPattern_01_0_0
+
+[TownFlow] Loading tilemap patterns for SubScene: Town
+[TilemapStreamingManager] Loading 2 initial patterns for Town
+[TilemapStreamingManager] Pattern loaded: TestPattern_02_0_0 at (0, 0, 0)
+[TilemapStreamingManager] Pattern loaded: TestPattern_03_1_0 at (50, 0, 0)
+[TownFlow] Tilemap patterns loaded successfully for Town
+```
+
+### Phase 4: 에디터 도구 (완료) ✅
 
 **목표**: 개발 편의성 향상
 
-**구현 계획**:
-- 패턴 검증 도구
-- 패턴 프리뷰 도구
-- 매핑 관리 윈도우
+**구현 완료**:
+- ✅ `TilemapPatternValidator.cs`: 패턴 데이터 검증 도구
+- ✅ `TilemapPatternPreview.cs`: Scene View 패턴 프리뷰
+- ✅ `TilemapMappingWindow.cs`: SubScene-Pattern 매핑 관리
 
 **파일 위치**:
 ```
 Assets/TS/Scripts/EditorLevel/Editor/Tilemap/
-├── TilemapPatternValidator.cs
-├── TilemapPatternPreview.cs
-└── TilemapMappingWindow.cs
+├── TilemapPatternValidator.cs (457 lines)
+├── TilemapPatternPreview.cs (406 lines)
+└── TilemapMappingWindow.cs (438 lines)
 ```
 
-**주요 기능**:
-- 패턴 ID 중복 검사
-- Addressable 참조 검증
-- Connection 유효성 확인
-- Scene View 프리뷰
+**구현된 주요 기능**:
 
-### Phase 5: 프로시저럴 확장 (선택) ⭐
+#### 1. TilemapPatternValidator (검증 도구)
+
+**목적**: 패턴 데이터의 무결성을 자동으로 검증
+
+**주요 기능**:
+```csharp
+[MenuItem("TS/Tilemap/Pattern Validator")]
+public static void ShowWindow()
+
+private void ValidateAll()
+{
+    ValidateDuplicateIDs();           // 중복 PatternID 검사
+    ValidateAddressableReferences();  // Addressable 참조 검증
+    ValidateConnections();             // Connection 유효성 확인
+    ValidateSubSceneMappings();        // SubScene 매핑 검증
+    ValidatePatternCategories();       // 카테고리 검증
+}
+```
+
+**검증 항목**:
+- **중복 ID**: 같은 PatternID를 사용하는 패턴 감지
+- **Addressable 참조**: TilemapPrefab이 유효한 Addressable인지 확인
+- **연결 패턴**: ValidNextPatterns에 존재하지 않는 패턴 ID 감지
+- **SubScene 매핑**: null 참조, 빈 이름, 중복 매핑 검사
+- **카테고리**: 빈 카테고리 이름, null 패턴 참조 확인
+
+**출력 결과**:
+- ❌ Error: 심각한 문제, 즉시 수정 필요
+- ⚠️ Warning: 잠재적 문제, 검토 권장
+- ℹ️ Info: 참고 정보
+
+**사용 방법**:
+```
+Unity Editor 상단 메뉴
+→ TS → Tilemap → Pattern Validator
+→ 'Validate All' 버튼 클릭
+→ 검증 결과 확인 및 수정
+```
+
+#### 2. TilemapPatternPreview (프리뷰 도구)
+
+**목적**: Scene View에서 패턴 배치 미리보기 및 연결 지점 시각화
+
+**주요 기능**:
+```csharp
+[MenuItem("TS/Tilemap/Pattern Preview")]
+public static void ShowWindow()
+
+private void OnSceneGUI(SceneView sceneView)
+{
+    DrawPatternInScene(preview, isSelected);  // 패턴 경계 및 그리드
+    DrawConnectionsInScene(preview);           // 연결 지점 시각화
+}
+```
+
+**시각화 요소**:
+- **패턴 경계**: 흰색 와이어프레임 (선택 시 노란색)
+- **그리드**: 10타일 간격 그리드 라인 (회색, 투명도 30%)
+- **연결 지점**: 녹색 원형 마커
+- **방향 화살표**: 연결 방향 표시 (North, South, East, West)
+- **레이블**: PatternID 및 GridSize 표시
+
+**인터랙티브 기능**:
+- 패턴 추가/제거
+- 패턴 선택 및 GridOffset 조정
+- 프리뷰 뷰포트 이동 및 스케일 조정
+- 그리드/연결/레이블 표시 토글
+
+**사용 방법**:
+```
+Unity Editor 상단 메뉴
+→ TS → Tilemap → Pattern Preview
+→ Registry 선택
+→ Available Patterns에서 패턴 선택
+→ Scene View에서 배치 확인
+→ GridOffset 조정으로 위치 변경
+```
+
+#### 3. TilemapMappingWindow (매핑 관리 도구)
+
+**목적**: SubScene과 패턴 간의 매핑을 시각적으로 관리
+
+**주요 기능**:
+```csharp
+[MenuItem("TS/Tilemap/Mapping Manager")]
+public static void ShowWindow()
+
+// SubScene 관리
+private void AddNewSubSceneMapping()
+private void RemoveSubSceneMapping(int index)
+
+// 패턴 관리
+private void AddPatternToMapping(int mappingIndex, TilemapPatternData pattern)
+private void RemovePatternFromMapping(int mappingIndex, int patternIndex)
+private void MovePattern(int mappingIndex, int fromIndex, int toIndex)
+
+// 레지스트리 저장
+private void SaveRegistry()
+```
+
+**UI 구성**:
+
+**좌측 패널 (55% 너비)**:
+- 새 SubScene 추가 입력란
+- 기존 SubScene 매핑 목록
+- 선택된 SubScene의 패턴 목록
+- 패턴 순서 조정 버튼 (↑/↓)
+- 패턴 제거 버튼 (−)
+
+**우측 패널 (40% 너비)**:
+- 패턴 검색 필터
+- 사용 가능한 모든 패턴 목록
+- 패턴 정보 (Type, GridSize)
+- 패턴 추가 버튼 (Add →)
+
+**주요 작업**:
+1. **SubScene 생성**: 새 SubSceneName 입력 → Add 버튼
+2. **패턴 추가**: 좌측에서 SubScene 선택 → 우측에서 패턴 선택 → Add → 버튼
+3. **패턴 순서 변경**: 패턴 목록에서 ↑/↓ 버튼 사용
+4. **패턴 제거**: 패턴 목록에서 − 버튼 클릭
+5. **저장**: 상단 Save 버튼으로 레지스트리에 저장
+
+**데이터 검증**:
+- 중복 SubSceneName 방지
+- 중복 패턴 추가 방지
+- null 패턴 경고
+- 저장 전 EditorUtility.SetDirty() 호출
+
+**사용 방법**:
+```
+Unity Editor 상단 메뉴
+→ TS → Tilemap → Mapping Manager
+→ Registry 선택 (또는 'Find' 버튼)
+→ 새 SubScene 추가 또는 기존 선택
+→ 우측에서 패턴 추가
+→ 순서 조정 및 제거
+→ 'Save' 버튼으로 저장
+```
+
+**개발 워크플로우**:
+```
+1. TilemapPatternValidator로 패턴 검증
+   ↓
+2. TilemapPatternPreview로 Scene View 배치 확인
+   ↓
+3. TilemapMappingWindow로 SubScene 매핑 설정
+   ↓
+4. 게임 실행 및 테스트
+```
+
+**에디터 도구 통합**:
+- 모든 도구는 동일한 TilemapPatternRegistry 공유
+- 자동 레지스트리 검색 (Find 버튼)
+- 즉시 저장 및 반영 (EditorUtility.SetDirty)
+- Unity Inspector와 완전 호환
+
+### Phase 5: 프로시저럴 확장 (완료) ✅
 
 **목표**: 동적 맵 생성 시스템
 
-**구현 계획**:
-- `ProceduralMapGenerator.cs`: 프로시저럴 맵 생성기
-- 방향 기반 패턴 선택
-- 자동 로드/언로드
+**구현 완료**:
+- ✅ `ProceduralMapGenerator.cs`: 프로시저럴 맵 생성 매니저
+- ✅ `ProceduralMapPlayer.cs`: 플레이어 위치 추적 컴포넌트
+- ✅ 방향 기반 패턴 선택 로직
+- ✅ 연결 규칙 기반 자동 확장
+- ✅ 플레이어 거리 기반 자동 확장
 
 **파일 위치**:
 ```
 Assets/TS/Scripts/HighLevel/Manager/
-└── ProceduralMapGenerator.cs
+└── ProceduralMapGenerator.cs (446 lines)
+
+Assets/TS/Scripts/HighLevel/Controller/
+└── ProceduralMapPlayer.cs (72 lines)
 ```
 
+**구현된 주요 기능**:
+
+#### 1. ProceduralMapGenerator (프로시저럴 맵 생성기)
+
+**목적**: 플레이어 위치 기반으로 패턴을 동적으로 확장하여 무한 맵 생성
+
 **주요 기능**:
-- `ExpandToDirection(currentGrid, direction)`: 방향으로 확장
-- 연결 규칙 기반 패턴 선택
-- 무한 맵 생성 지원
+```csharp
+[SerializeField] private TilemapPatternRegistry patternRegistry;
+[SerializeField] private TilemapStreamingManager streamingManager;
+[SerializeField] private bool enableAutoExpansion = true;
+[SerializeField] private float expansionDistance = 75f;
+[SerializeField] private int maxGeneratedPatterns = 50;
+[SerializeField] private float checkInterval = 1f;
+
+// 초기화
+public override void Initialize()
+
+// 플레이어 등록
+public void SetPlayerTransform(Transform player)
+
+// 시드 패턴 등록
+public void RegisterSeedPattern(string patternID, Vector2Int gridOffset)
+public void RegisterLoadedPatternsAsSeed()
+
+// 맵 확장
+public async UniTask<bool> ExpandToDirection(Vector2Int currentGrid, Direction direction)
+private async void CheckAndExpandAroundPlayer(Vector3 playerPosition)
+
+// 패턴 선택
+private string GetValidNextPattern(string currentPatternID, Direction direction)
+
+// 유틸리티
+public int GeneratedPatternCount
+public bool IsGridGenerated(Vector2Int gridOffset)
+public List<Vector2Int> GetAllGeneratedGrids()
+public void ClearGeneratedPatterns()
+```
+
+**핵심 로직**:
+
+**1. 시드 패턴 등록**:
+```csharp
+// SubScene 초기 로드 시 시드 패턴 등록
+RegisterLoadedPatternsAsSeed();
+// → 로드된 모든 패턴을 확장의 시작점으로 등록
+```
+
+**2. 자동 확장 프로세스**:
+```
+플레이어 이동
+    ↓
+Update() → checkInterval마다 체크 (기본 1초)
+    ↓
+CheckAndExpandAroundPlayer(playerPos)
+    ↓
+FindNearbyGrids(playerPos, distance*2) → 근처 그리드 탐색
+    ↓
+각 그리드의 4방향(North, South, East, West) 체크
+    ↓
+IsPlayerNearBoundary(playerPos, grid, direction, expansionDistance)
+    ↓ (플레이어가 경계 75 유닛 이내)
+ExpandToDirection(grid, direction)
+    ↓
+GetValidNextPattern(currentPatternID, direction)
+    ↓ (연결 규칙 기반 패턴 선택)
+streamingManager.LoadPattern(nextPatternID, nextGrid)
+    ↓
+_generatedGrids[nextGrid] = nextPatternID
+```
+
+**3. 연결 규칙 기반 패턴 선택**:
+```csharp
+private string GetValidNextPattern(string currentPatternID, Direction direction)
+{
+    var currentPattern = patternRegistry.GetPattern(currentPatternID);
+
+    // 1. 해당 방향의 ConnectionPoint 확인
+    var connection = currentPattern.Connections
+        .FirstOrDefault(c => c.Direction == direction && c.IsActive);
+
+    // 2. ValidNextPatterns에서 랜덤 선택
+    if (connection.ValidNextPatterns != null && connection.ValidNextPatterns.Count > 0)
+    {
+        int randomIndex = Random.Range(0, connection.ValidNextPatterns.Count);
+        return connection.ValidNextPatterns[randomIndex];
+    }
+
+    // 3. 연결 규칙이 없으면 같은 타입의 랜덤 패턴
+    var randomPattern = patternRegistry.GetRandomPattern(currentPattern.Type);
+    return randomPattern?.PatternID;
+}
+```
+
+**4. 경계 감지 로직**:
+```csharp
+private bool IsPlayerNearBoundary(Vector3 playerPos, Vector2Int grid, Direction direction, float threshold)
+{
+    // 그리드의 월드 위치 계산
+    Vector3 gridWorldPos = new Vector3(
+        grid.x * pattern.WorldSize.x,
+        grid.y * pattern.WorldSize.y,
+        0
+    );
+
+    // 방향별 경계 확인
+    switch (direction)
+    {
+        case Direction.North:
+            float northBoundary = gridWorldPos.y + pattern.WorldSize.y;
+            return playerPosition.y > northBoundary - threshold;
+
+        // South, East, West 동일 방식
+    }
+}
+```
+
+**설정 파라미터**:
+- **enableAutoExpansion**: 자동 확장 활성화 (기본: true)
+- **expansionDistance**: 확장 트리거 거리 (기본: 75 유닛)
+  - 플레이어가 패턴 경계로부터 이 거리 내에 오면 확장
+- **maxGeneratedPatterns**: 최대 생성 패턴 수 (기본: 50개)
+  - 메모리 관리를 위한 제한
+- **checkInterval**: 확장 체크 주기 (기본: 1초)
+  - 성능 최적화를 위한 주기적 체크
+
+**생성 추적**:
+```csharp
+// _generatedGrids: 생성된 모든 그리드 추적
+Dictionary<Vector2Int, string> _generatedGrids;
+// Vector2Int: 그리드 오프셋 (0,0), (1,0), (0,1) 등
+// string: 패턴 ID
+
+// _seedGrids: 시드 패턴 목록 (확장의 시작점)
+List<Vector2Int> _seedGrids;
+```
+
+**디버그 시각화**:
+```csharp
+private void OnDrawGizmos()
+{
+    // 생성된 그리드: 파란색 와이어프레임
+    // 시드 그리드: 녹색 와이어프레임
+    // 플레이어: 노란색 구체
+    // 확장 거리: 반투명 노란색 구체
+}
+```
+
+#### 2. ProceduralMapPlayer (플레이어 컴포넌트)
+
+**목적**: 플레이어 오브젝트에 붙여서 ProceduralMapGenerator에 자동 등록
+
+**주요 기능**:
+```csharp
+[SerializeField] private bool registerOnStart = true;
+[SerializeField] private bool showDebugLogs = false;
+
+private void Start()
+{
+    if (registerOnStart)
+        RegisterToGenerator();
+}
+
+public void RegisterToGenerator()
+{
+    _generator = ProceduralMapGenerator.Instance;
+    _generator.SetPlayerTransform(transform);
+}
+
+public void UnregisterFromGenerator()
+{
+    _generator.SetPlayerTransform(null);
+}
+```
+
+**사용 방법**:
+```
+1. 플레이어 GameObject 선택
+2. Add Component → ProceduralMapPlayer
+3. Inspector 설정:
+   - Register On Start: true (자동 등록)
+   - Show Debug Logs: false (디버그 로그)
+4. 플레이어가 이동하면 자동으로 맵 확장
+```
+
+**통합 워크플로우**:
+```
+GameManager 초기화
+    ↓
+TilemapStreamingManager 초기화
+    ↓
+ProceduralMapGenerator 초기화
+    ↓
+LoadingFlow.Enter()
+    ↓
+LoadInitialPatterns(subSceneName)
+    ↓
+ProceduralMapGenerator.RegisterLoadedPatternsAsSeed()
+    ↓
+플레이어 생성
+    ↓
+ProceduralMapPlayer.RegisterToGenerator()
+    ↓
+플레이어 이동 시작
+    ↓
+자동 맵 확장 시작
+```
+
+**성능 최적화**:
+- **주기적 체크**: 매 프레임이 아닌 checkInterval마다 체크
+- **최대 패턴 제한**: maxGeneratedPatterns로 메모리 관리
+- **근처 그리드만 체크**: FindNearbyGrids로 범위 제한
+- **중복 생성 방지**: _generatedGrids로 이미 생성된 그리드 스킵
+- **비동기 로딩**: UniTask로 프레임 드랍 방지
+
+**에러 처리**:
+- 레지스트리 미할당 시 에러 로그
+- 스트리밍 매니저 미발견 시 자동 찾기
+- 최대 패턴 수 도달 시 경고
+- 패턴 로드 실패 시 예외 처리
+
+**디버그 지원**:
+- showDebugLogs: 상세 로그 출력
+- showDebugGizmos: Scene View 시각화
+- 생성된 그리드 수 추적
+- 시드 패턴 구분 표시
 
 ---
 
@@ -732,14 +1203,81 @@ if (Time.time - lastUpdateTime > updateInterval)
 }
 ```
 
-### 4. 프로시저럴 확장 (선택)
+### 4. 프로시저럴 맵 생성 사용
 
+**Step 1**: ProceduralMapGenerator 설정
+```
+Hierarchy 우클릭
+→ Create Empty → "ProceduralMapGenerator"
+→ Add Component → ProceduralMapGenerator
+
+Inspector 설정:
+- Pattern Registry: MainTilemapRegistry 할당
+- Streaming Manager: (자동 찾기, 비워도 됨)
+- Enable Auto Expansion: true
+- Expansion Distance: 75 (기본값)
+- Max Generated Patterns: 50 (기본값)
+- Check Interval: 1 (기본값)
+```
+
+**Step 2**: 플레이어 설정
+```
+플레이어 GameObject 선택
+→ Add Component → ProceduralMapPlayer
+
+Inspector 설정:
+- Register On Start: true
+- Show Debug Logs: false
+```
+
+**Step 3**: 초기화 코드 (LoadingFlow 또는 GameManager)
 ```csharp
-// 플레이어가 패턴 경계 근처 도달 시
-if (IsNearBoundary(playerPos, currentPattern, Direction.North))
-{
-    await proceduralGenerator.ExpandToDirection(currentGrid, Direction.North);
-}
+// SubScene 로드 후
+await TilemapStreamingManager.Instance.LoadInitialPatterns("Level1_SubScene");
+
+// 로드된 패턴을 시드로 등록
+ProceduralMapGenerator.Instance.RegisterLoadedPatternsAsSeed();
+
+// 또는 수동으로 시드 패턴 등록
+ProceduralMapGenerator.Instance.RegisterSeedPattern("Forest_01", Vector2Int.zero);
+```
+
+**Step 4**: 패턴 연결 규칙 설정
+```
+패턴 ScriptableObject에서:
+- Connections 리스트 설정
+- Direction: North, South, East, West
+- Valid Next Patterns: 연결 가능한 패턴 ID 목록
+- Is Active: true
+
+예시:
+Forest_01 패턴:
+- North Connection: [Forest_02, Bridge_01, Cave_01]
+- East Connection: [Village_01]
+- South Connection: [Forest_01, Forest_02]
+- West Connection: (비활성화)
+```
+
+**Step 5**: 게임 실행 및 테스트
+```
+1. Play 버튼 클릭
+2. 플레이어를 패턴 경계로 이동
+3. 경계로부터 75 유닛 이내에 도달하면 자동 확장
+4. Scene View에서 Gizmos로 생성된 그리드 확인
+   - 녹색: 시드 패턴
+   - 파란색: 생성된 패턴
+   - 노란색 구체: 플레이어
+```
+
+**수동 확장 (선택)**:
+```csharp
+// 특정 방향으로 수동 확장
+Vector2Int currentGrid = new Vector2Int(0, 0);
+await ProceduralMapGenerator.Instance.ExpandToDirection(currentGrid, Direction.North);
+
+// 생성된 그리드 확인
+bool isGenerated = ProceduralMapGenerator.Instance.IsGridGenerated(new Vector2Int(1, 0));
+int totalPatterns = ProceduralMapGenerator.Instance.GeneratedPatternCount;
 ```
 
 ---
@@ -753,23 +1291,40 @@ if (IsNearBoundary(playerPos, currentPattern, Direction.North))
 - [x] 로딩/언로딩 로직 구현
 - [x] 자동 스트리밍 시스템
 
-### Phase 3 (단기)
+### Phase 3 (완료) ✅
 
-- [ ] LoadingFlow 통합
-- [ ] 초기 패턴 로딩 검증
+- [x] LoadingFlow 통합
+- [x] TownFlow 통합
+- [x] 초기 패턴 로딩 구현
+- [x] Flow 전환 시 패턴 자동 관리
+- [x] 에러 처리 구현
+- [x] 테스트 시나리오 작성
+
+**다음 단계**:
 - [ ] 성능 테스트 및 최적화
+- [ ] 실제 게임 패턴 생성 및 테스트
 
-### Phase 4 (중기)
+### Phase 4 (완료) ✅
 
-- [ ] 에디터 검증 도구
-- [ ] 패턴 프리뷰 시스템
-- [ ] 자동화된 테스트 케이스
+- [x] 에디터 검증 도구 (TilemapPatternValidator.cs)
+- [x] 패턴 프리뷰 시스템 (TilemapPatternPreview.cs)
+- [x] 매핑 관리 윈도우 (TilemapMappingWindow.cs)
 
-### Phase 5 (장기)
+**다음 단계**:
+- [ ] 에디터 도구 실사용 테스트
+- [ ] 워크플로우 개선 피드백 반영
 
-- [ ] 프로시저럴 맵 생성기
-- [ ] AI 기반 패턴 배치
-- [ ] 동적 난이도 조절
+### Phase 5 (완료) ✅
+
+- [x] 프로시저럴 맵 생성기 (ProceduralMapGenerator.cs)
+- [x] 플레이어 위치 추적 (ProceduralMapPlayer.cs)
+- [x] 연결 규칙 기반 패턴 선택
+- [x] 자동 맵 확장 시스템
+
+**다음 단계**:
+- [ ] 실제 게임에서 프로시저럴 생성 테스트
+- [ ] 다양한 패턴 조합 테스트
+- [ ] 성능 최적화 및 튜닝
 
 ### 추가 기능 (검토 중)
 
@@ -789,11 +1344,23 @@ LowLevel (데이터 구조):
 ├── Data/Config/TilemapPatternData.cs (완료)
 └── Data/Config/TilemapPatternRegistry.cs (완료)
 
-HighLevel (매니저):
-└── Manager/TilemapStreamingManager.cs (완료 - 503 lines)
+HighLevel (매니저 & Flow):
+├── Manager/TilemapStreamingManager.cs (완료 - 503 lines)
+└── Flow/LoadingFlow.cs (완료 - 98 lines)
+└── Flow/HomeFlow.cs (TownFlow, 완료 - 88 lines)
 
-EditorLevel (에디터 도구 - 예정):
-└── Editor/Tilemap/TilemapPatternValidator.cs
+Docs (문서):
+├── TilemapPatternStreaming_Design.md (완료 - v1.4)
+└── TilemapStreaming_TestScenarios.md (완료 - v1.0)
+
+EditorLevel (에디터 도구 - 완료):
+├── Editor/Tilemap/TilemapPatternValidator.cs (완료 - 457 lines)
+├── Editor/Tilemap/TilemapPatternPreview.cs (완료 - 406 lines)
+└── Editor/Tilemap/TilemapMappingWindow.cs (완료 - 438 lines)
+
+HighLevel (프로시저럴 맵 생성 - 완료):
+├── Manager/ProceduralMapGenerator.cs (완료 - 446 lines)
+└── Controller/ProceduralMapPlayer.cs (완료 - 72 lines)
 ```
 
 ### 외부 라이브러리
@@ -812,24 +1379,93 @@ EditorLevel (에디터 도구 - 예정):
 
 ---
 
-**문서 버전**: 1.1
+**문서 버전**: 1.4
 **최종 수정**: 2025-10-14
 **작성자**: Claude Code
-**상태**: Phase 2 완료, Phase 3 준비 중
+**상태**: Phase 5 완료, 프로시저럴 맵 생성 시스템 구축 완료
 
 ---
 
 ## 변경 이력
 
-### v1.1 (2025-10-14)
+### v1.4 (2025-10-14) - Phase 5 완료 + 어셈블리 재배치
+- ✅ 프로시저럴 맵 생성 시스템 구축 완료
+- ✅ `ProceduralMapGenerator.cs`: 프로시저럴 맵 생성 매니저 (446 lines)
+- ✅ `ProceduralMapPlayer.cs`: 플레이어 위치 추적 컴포넌트 (72 lines)
+- ✅ 플레이어 거리 기반 자동 확장
+- ✅ 연결 규칙 기반 패턴 선택
+- ✅ 무한 맵 생성 지원
+- ✅ 어셈블리 레벨 규칙 준수 및 파일 재배치
+- ✅ `TilemapPatternData.cs` 버그 수정 (FindIndex null 체크 문제)
+
+**주요 변경사항**:
+- **ProceduralMapGenerator**: 방향 기반 맵 확장, 시드 패턴 등록, 자동 확장 로직
+- **자동 확장 프로세스**: 플레이어 위치 감지 → 경계 체크 → 연결 규칙 기반 패턴 선택 → 패턴 로드
+- **연결 규칙**: ConnectionPoint의 ValidNextPatterns 활용, 없으면 같은 타입 랜덤 선택
+- **성능 최적화**: 주기적 체크(1초), 최대 패턴 제한(50개), 근처 그리드만 확인
+- **디버그 시각화**: Scene View에서 생성된 그리드, 시드 패턴, 플레이어 위치 표시
+- **ProceduralMapPlayer**: 플레이어에 붙여서 자동 등록, Start 시 자동 초기화
+- **통합 워크플로우**: TilemapStreamingManager와 완전 통합
+
+**어셈블리 재배치**:
+- **ProceduralMapPlayer.cs**: MiddleLevel/Support → HighLevel/Controller로 이동
+  - 이유: HighLevel의 ProceduralMapGenerator 참조 (의존성 규칙 위반 해결)
+  - namespace: TS.MiddleLevel.Support → TS.HighLevel.Controller
+- **TilemapPatternData.cs**: GetValidNextPatterns() 버그 수정
+  - FindIndex는 int 반환이므로 null 체크 불가능 문제 해결
+  - OnValidate에서 ValidNextPatterns 초기화 보장 추가
+- **ProceduralMapGenerator.cs**: GetValidNextPattern() 개선
+  - FirstOrDefault 대신 FindIndex 사용으로 명확한 인덱스 체크
+
+### v1.3 (2025-10-14) - Phase 4 완료
+- ✅ 에디터 도구 3종 구축 완료
+- ✅ `TilemapPatternValidator.cs`: 패턴 데이터 검증 도구 (457 lines)
+- ✅ `TilemapPatternPreview.cs`: Scene View 패턴 프리뷰 (406 lines)
+- ✅ `TilemapMappingWindow.cs`: SubScene-Pattern 매핑 관리 (438 lines)
+- ✅ 통합 개발 워크플로우 완성
+- ✅ Unity Editor 메뉴 통합 (TS/Tilemap/)
+
+**주요 변경사항**:
+- **TilemapPatternValidator**: 중복 ID, Addressable 참조, 연결 패턴, SubScene 매핑, 카테고리 검증
+- **TilemapPatternPreview**: Scene View 시각화, 패턴 경계/그리드/연결 지점 표시, 인터랙티브 편집
+- **TilemapMappingWindow**: SubScene-Pattern 매핑 관리, 패턴 추가/제거/순서 조정, 검색 필터
+- **개발 워크플로우**: Validator → Preview → Mapping → 게임 테스트
+- **에디터 통합**: 모든 도구가 동일한 Registry 공유, 자동 검색, 즉시 저장
+
+### v1.2 (2025-10-14) - Phase 3 완료
+- ✅ LoadingFlow 통합 완료
+- ✅ TownFlow (HomeFlow) 통합 완료
+- ✅ FlowManager와의 완전한 통합
+- ✅ Flow 전환 시 패턴 자동 관리
+- ✅ 에러 처리 및 Fallback 구현
+- ✅ 테스트 시나리오 문서 작성 (18개 테스트 케이스)
+- ✅ Inspector 설정 옵션 추가
+
+**주요 변경사항**:
+- LoadingFlow.cs: Enter/Exit 메서드에 타일맵 로딩/언로딩 추가 (98 lines)
+- HomeFlow.cs (TownFlow): 동일 구조로 통합 (88 lines)
+- 로그 시스템 추가: 각 Flow별 상세 로그 출력
+- 설정 옵션: loadTilemapPatterns, tilemapSubSceneName
+
+### v1.1 (2025-10-14) - Phase 2 완료
 - ✅ Phase 2 완료: TilemapStreamingManager 구현
 - ✅ Addressables 통합 완료
 - ✅ 자동 스트리밍 시스템 구현
 - ✅ 로딩 대기열 시스템 추가
 - ✅ 디버그 시각화 기능 추가
 
-### v1.0 (2025-10-14)
+**주요 구현사항**:
+- TilemapStreamingManager.cs: 503 lines
+- 6개 주요 기능 영역 (초기화, 로딩, 언로딩, 자동 스트리밍, 대기열, 디버그)
+- 성능 최적화: 비동기, 중복 방지, 동시성 제한, 캐싱
+
+### v1.0 (2025-10-14) - Phase 1 완료
 - ✅ Phase 1 완료: 기반 데이터 구조
 - ✅ TilemapPatternData 생성
 - ✅ TilemapPatternRegistry 생성
 - ✅ 초기 설계 문서 작성
+
+**주요 데이터 구조**:
+- TilemapPatternData: 패턴 정의 ScriptableObject
+- TilemapPatternRegistry: 패턴 관리 레지스트리
+- ConnectionPoint: 패턴 간 연결 시스템

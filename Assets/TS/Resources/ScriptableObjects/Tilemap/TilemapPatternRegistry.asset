@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a905f381146dfec49b641caa0c77f33d, type: 3}
+  m_Name: TilemapPatternRegistry
+  m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternRegistry
+  AllPatterns:
+  - {fileID: 11400000, guid: 056fcd9883597994181e80a456ba84bf, type: 2}
+  InitialMappings:
+  - SubSceneName: TownActor
+    InitialPatterns:
+    - {fileID: 0}
+    LoadingOptions:
+      LoadWithSubScene: 0
+      UnloadWithSubScene: 0
+      Priority: 0
+  Categories:
+  - CategoryName: 
+    Patterns: []
+    CategoryColor: {r: 0, g: 0, b: 0, a: 0}

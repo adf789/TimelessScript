@@ -34,6 +34,7 @@ Transform:
   - {fileID: 4386019993051515750}
   - {fileID: 830782464544235364}
   - {fileID: 7394863741112358117}
+  - {fileID: 8429119617147981413}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6250044982121014311
@@ -48,11 +49,61 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4ab0b00fe5e599469a3a45cda9ba6ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dragSpeed: 0.03
-  dragRange: {fileID: 4267798726671495052}
-  dragPadding: {x: 0, y: 0, z: 0, w: 0}
-  isLimitDragX: 1
-  isLimitDragY: 1
+--- !u!1 &5567331804587148750
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8429119617147981413}
+  - component: {fileID: 6569350997235966825}
+  m_Layer: 0
+  m_Name: TilemapManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8429119617147981413
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5567331804587148750}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3214262558968597275}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6569350997235966825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5567331804587148750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e366938a1312f604c96eaacc852883cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HighLevel::TS.HighLevel.Manager.TilemapStreamingManager
+  patternRegistry: {fileID: 0}
+  targetCamera: {fileID: 8340294928188985847}
+  maxLoadedPatterns: 9
+  updateInterval: 0.5
+  enableAutoStreaming: 1
+  loadBufferSize: 20
+  maxConcurrentLoads: 3
+  usePriority: 1
+  showDebugInfo: 1
+  debugColor: {r: 0, g: 1, b: 0, a: 1}
+  showCameraBounds: 1
 --- !u!1 &6512728254771524658
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,30 +279,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: CameraManager
       objectReference: {fileID: 0}
-    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 6250044982121014311}
-    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: OnDrag
-      objectReference: {fileID: 0}
-    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: GameManager, HighLevel
-      objectReference: {fileID: 0}
-    - target: {fileID: 9033749700006500435, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-      propertyPath: onEventDrag.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6660272452424060912, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
     - {fileID: 4838116470969281231, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
@@ -265,11 +292,6 @@ Camera:
   m_CorrespondingSourceObject: {fileID: 2944495126145470101, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
   m_PrefabInstance: {fileID: 2853081750336065482}
   m_PrefabAsset: {fileID: 0}
---- !u!61 &4267798726671495052 stripped
-BoxCollider2D:
-  m_CorrespondingSourceObject: {fileID: 2063329127576903750, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
-  m_PrefabInstance: {fileID: 2853081750336065482}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4386019993051515750 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1965376271696692396, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
@@ -278,6 +300,11 @@ Transform:
 --- !u!20 &6532113092549632472 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 9024813996107574802, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
+  m_PrefabInstance: {fileID: 2853081750336065482}
+  m_PrefabAsset: {fileID: 0}
+--- !u!20 &8340294928188985847 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 6063675442632334909, guid: 3a1b18de8532f9c49af3283daa075f07, type: 3}
   m_PrefabInstance: {fileID: 2853081750336065482}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4276495847768640956

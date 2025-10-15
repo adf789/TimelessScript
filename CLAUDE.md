@@ -1,180 +1,274 @@
-# CLAUDE.md
+# CLAUDE.md - Unity Project Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> 간결성 | Unity 6000.2.7f2 | 4-Layer Assembly | Hybrid MonoBehaviour + ECS
 
-## Project Overview
+## Project Description
+- 2D Side-Scrolling Slmulation
+- Control Mouse or Touch
 
-This is a Unity 2D game project using Unity 6000.2.0b12 with a sophisticated multi-layered architecture. The project combines traditional MonoBehaviour patterns with Unity DOTS (ECS) for performance-critical systems.
+## 📋 Quick Reference
 
-## Commands
+### Project Stack
+- **Unity**: 6000.2.7f2 (Beta)
+- **Async**: UniTask (`https://github.com/Cysharp/UniTask.git`)
+- **ECS**: Unity Entities 1.3.14 + Burst
+- **Rendering**: URP 17.2.0 + Custom ToonLitSprite
+- **Input**: Input System 1.14.2
 
-### Unity Development
-- Open project in Unity Editor (Unity 6000.2.0b12 required)
-- Build through Unity Editor: File → Build Settings
-- Package management through Unity Package Manager or modify `Packages/manifest.json`
+### Core Patterns
+- **Managers**: `BaseManager<T>` singleton (MonoBehaviour)
+- **Flows**: `BaseFlow` state management
+- **Resources**: Type-based registry with `ResourcesPath` attribute
+- **Physics**: Custom `LightweightPhysics2D`
+- **ECS**: Hybrid authoring + runtime separation
 
-### Key Dependencies
-- UniTask for async/await: `https://github.com/Cysharp/UniTask.git`
-- Unity Entities (ECS): 1.3.14
-- Universal Render Pipeline: 17.2.0
-- Unity Input System: 1.14.2
+---
 
-## Architecture
+## 🏗️ Assembly Architecture (CRITICAL)
 
-### Four-Layer Assembly Structure
-The codebase uses a strict layered architecture with assembly definitions:
+### 4-Layer Dependency Rule
+```
+EditorLevel (#if UNITY_EDITOR)
+    ↓ can reference all
+HighLevel (Managers, Controllers, Flows, ECS Systems)
+    ↓ can reference: Low, Middle
+MiddleLevel (MonoBehaviour, Views, Jobs, Authoring)
+    ↓ can reference: Low only
+LowLevel (Data, Enums, ScriptableObjects)
+    ↓ independent
+```
 
-1. **LowLevel** (`Assets/TS/Scripts/LowLevel/`): Core data structures, enums, models, base components
-2. **MiddleLevel** (`Assets/TS/Scripts/MiddleLevel/`): Business logic, physics, jobs, views, support systems  
-3. **HighLevel** (`Assets/TS/Scripts/HighLevel/`): Game managers, flow control, controllers, ECS systems
-4. **EditorLevel** (`Assets/TS/Scripts/EditorLevel/`): Editor-only tools, inspectors, workflow automation
+### Layer Responsibilities
 
-### Key Architectural Patterns
+| Layer | ✅ Allowed | ❌ Forbidden | Path |
+|-------|-----------|-------------|------|
+| **LowLevel** | ScriptableObject, struct, enum, data | MonoBehaviour, Manager refs, scene objects | `Assets/TS/Scripts/LowLevel/` |
+| **MiddleLevel** | MonoBehaviour, Views, SubManager, Jobs, Authoring | HighLevel refs (Manager/Controller/Flow) | `Assets/TS/Scripts/MiddleLevel/` |
+| **HighLevel** | `BaseManager<T>`, Controllers, Flows, ECS Systems | Direct View manipulation | `Assets/TS/Scripts/HighLevel/` |
+| **EditorLevel** | Editor tools, inspectors, all refs | Code without `#if UNITY_EDITOR` | `Assets/TS/Scripts/EditorLevel/` |
 
-**Manager System**: All managers inherit from `BaseManager<T>` singleton pattern
-- `GameManager`: Main game entry point
-- `FlowManager`: State management using BaseFlow pattern
-- `UIManager`, `CameraManager`: Specialized system managers
-
-**Flow-Based State Management**: `BaseFlow` classes manage game states (Intro, Home, Loading)
-
-**ECS Integration**: Hybrid approach combining MonoBehaviour with DOTS
-- Authoring components: `ConfigAuthoring`, `RotateSpeedAuthoring`, `SpawnAuthoring`
-- Systems: `RotatingSystem` with Burst compilation
-- Jobs: `RotateUpdateJob`, `SpawnJob` for parallel processing
-
-### Custom Systems
-
-**Resource Management**: Type-based loading system
-- `ResourcesTypeRegistry`: Maps types to resource paths
-- `ResourcesPath`: Attribute-based resource path mapping
-- Supports automatic resource loading by type
-
-**Physics**: Custom `LightweightPhysics2D` with specialized ground collision detection
-
-**Animation**: `SpriteSheetAnimationSupport` for 2D sprite animations
-
-**Input**: Comprehensive input system with action maps and mouse input processing
-
-## Important Files
-
-- `GameManager.cs`: Main game controller and entry point
-- `BaseManager.cs`: Singleton manager base class used throughout
-- `BaseFlow.cs`: State management foundation
-- `ResourcesTypeRegistry.cs`: Core resource loading architecture
-- `LightweightPhysics2D.cs`: Custom physics implementation
-
-## Development Workflow
-
-### Editor Tools
-The project includes extensive custom editor tools:
-- Resource management windows
-- Script generation utilities
-- Sprite sheet processing tools
-- Pixelate workflow for 3D-to-2D conversion
-
-### Asset Processing
-- Automated sprite slicing and sheet generation
-- 3D model to 2D sprite conversion using Pixelate asset
-- URP-based 2D rendering with custom ToonLitSprite shader
-
-### Performance Considerations
-- ECS systems use Burst compilation for performance-critical code
-- Job System implementation for parallel processing
-- Addressables for efficient asset loading
-- Custom physics system optimized for 2D gameplay
-
-## Code Conventions
-
-- Assembly definitions enforce layer separation - respect dependency direction
-- Managers use generic singleton pattern `BaseManager<T>`
-- ECS components follow Unity DOTS conventions with authoring/runtime separation
-- Resource loading uses type-based registry pattern
-- Editor code is strictly separated in EditorLevel assembly
-
-## File Reference Format
-
-For VSCode integrated terminal with Claude Code, use these settings and formats:
-
-### VSCode Terminal Settings
-Add to `settings.json` to prevent path wrapping and enable file links:
-```json
+### Common Violations
+```csharp
+// ❌ WRONG: MiddleLevel referencing HighLevel
+namespace TS.MiddleLevel.Support
 {
-  "terminal.integrated.enableFileLinks": true,
-  "terminal.integrated.wordWrap": false,
-  "terminal.integrated.scrollback": 10000,
-  "terminal.integrated.fontSize": 12,
-  "terminal.integrated.lineHeight": 1.2
+    public class Player : MonoBehaviour
+    {
+        GameManager manager; // ❌ GameManager is in HighLevel
+    }
+}
+
+// ✅ CORRECT: Move to HighLevel
+namespace TS.HighLevel.Controller
+{
+    public class PlayerController : MonoBehaviour
+    {
+        GameManager manager; // ✅ Both in HighLevel
+    }
+}
+
+// ❌ WRONG: LowLevel with MonoBehaviour
+namespace TS.LowLevel.Data
+{
+    public class Config : MonoBehaviour { } // ❌ Use ScriptableObject
+}
+
+// ✅ CORRECT: LowLevel data-only
+namespace TS.LowLevel.Data.Config
+{
+    [CreateAssetMenu(...)]
+    public class ConfigData : ScriptableObject { } // ✅ Data only
 }
 ```
 
-### File Path Format (Clickable Links)
-For long paths that wrap in terminal, use multiple format options:
+---
 
-**Option 1: Full Path** (if terminal is wide enough):
-- `.\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12`
+## 🎯 Unity-Specific Guidelines
 
-**Option 2: Shortened Names** (for narrow terminals):
-- `.\Assets\TS\Scripts\LowLevel\Data\CompData\Physics\LightweightPhysicsComp.cs:12`
+### Code Generation Rules
 
-**Option 3: DOS 8.3 Format** (Windows short names):
-- `.\ASSETS~1\TS\SCRIPT~1\LOWLEV~1\DATA\COMPDA~1\PHYSIC~1\LIGHTW~1.CS:12`
+**❌ DO NOT create namespace declarations** - Files already have namespaces
+```csharp
+// ❌ WRONG: Don't generate namespace
+namespace TS.HighLevel.Manager
+{
+    public class MyManager : BaseManager<MyManager>
+    {
+    }
+}
 
-**Option 4: Copy-paste format**:
-```
-.\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12
-```
-
-### File Reference Structure
-```
-Physics System Files:
-- .\Assets\TS\Scripts\HighLevel\System\Physics\PhysicsSystem.cs:22
-- .\Assets\TS\Scripts\MiddleLevel\Job\Physics\PhysicsUpdateJob.cs:23  
-- .\Assets\TS\Scripts\MiddleLevel\Job\Physics\PhysicsCollisionJob.cs:36
-- .\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12
+// ✅ CORRECT: Only generate class body
+public class MyManager : BaseManager<MyManager>
+{
+    // Implementation only
+}
 ```
 
-### Terminal Width Management
-1. **Expand terminal panel**: Drag terminal panel height to maximum
-2. **Horizontal scroll**: Use `Shift + Mouse Wheel` to scroll horizontally  
-3. **Word wrap off**: Prevents automatic line breaking of file paths
-4. **Ctrl+Click**: Click on any part of the file path to open
+### MonoBehaviour Lifecycle
+```csharp
+// BaseManager<T> Pattern
+public class MyManager : BaseManager<MyManager>
+{
+    // ❌ NO: public override void Initialize()
+    // ✅ YES: Use MonoBehaviour lifecycle
 
-### Alternative: Copy-Paste Commands
-For very long paths, provide both clickable link and command:
+    private void Start()  // ✅ Initialization
+    {
+        // BaseManager.Awake() handles singleton setup
+        // Use Start() for your initialization
+    }
+
+    private void OnDestroy()  // ✅ Cleanup
+    {
+        // Release resources
+    }
+}
 ```
-File: LightweightPhysicsComponent.cs:12
-Path: .\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12  
-Cmd:  code -g ".\Assets\TS\Scripts\LowLevel\Data\ComponentData\Physics\LightweightPhysicsComponent.cs:12"
+
+### ScriptableObject Validation
+```csharp
+[CreateAssetMenu(fileName = "Data", menuName = "TS/Data")]
+public class MyData : ScriptableObject
+{
+#if UNITY_EDITOR
+    private void OnValidate()  // ✅ Editor-time validation
+    {
+        // Initialize lists, validate references
+        // Fix struct field initialization
+    }
+#endif
+}
 ```
 
-Environment: Windows + VSCode integrated terminal + Claude Code CLI
+### Struct vs Class
+```csharp
+// ⚠️ Structs are value types
+[Serializable]
+public struct ConnectionPoint
+{
+    public List<string> ValidNextPatterns;
+}
 
-## Communication Style & User Interaction
+// ❌ WRONG: Null check on struct
+var point = list.FirstOrDefault();
+if (point == null) { } // ❌ Compile error
 
-### Quick CLAUDE.md Update Commands
-When user wants to customize Claude Code behavior, they can use this trigger phrase:
+// ✅ CORRECT: Index-based check
+int index = list.FindIndex(p => p.IsValid);
+if (index < 0) return; // ✅ Check index
+var point = list[index];
+if (point.ValidNextPatterns == null) { } // ✅ Check field
+```
 
-- **"앞으로도 적용해줘"** or **"앞으로도 적용되게 해줘"** - Make temporary changes permanent in CLAUDE.md
+### Namespace Convention
+```
+TS.LowLevel.Data.{Category}
+TS.LowLevel.Data.Config
+TS.MiddleLevel.{Category}
+TS.MiddleLevel.Job.Physics
+TS.HighLevel.{Category}
+TS.HighLevel.Manager
+TS.HighLevel.Controller
+TS.EditorLevel.Editor.{Category}
+```
 
-This phrase will trigger automatic CLAUDE.md updates to preserve user preferences.
+---
 
-### SuperClaude Command Suggestions
-When user makes requests, automatically suggest relevant SuperClaude commands with appropriate keywords and flags:
+## 🤖 AI Interaction Guidelines
 
-**Command Mapping Examples:**
-- 코드 분석 요청 → `/analyze` + appropriate flags
-- 기능 구현 요청 → `/implement` + framework detection
-- 성능 개선 요청 → `/improve --perf` + performance persona
-- UI 컴포넌트 생성 → `/build` + Magic MCP integration
-- 버그 수정 요청 → `/troubleshoot` + analyzer persona
-- 문서화 요청 → `/document` + scribe persona
-- 시스템 설계 → `/design` + architect persona
-- 테스트 작성 → `/test` + QA persona + Playwright
+### 코드 생성 전 필수 체크
+```yaml
+Before_Code_Generation:
+  - "❌ Namespace 생성 금지 → 클래스 바디만 생성"
+  - "이 클래스가 어느 Assembly에 속하나?" (LowLevel/MiddleLevel/HighLevel/EditorLevel)
+  - "MonoBehaviour가 필요한가? → MiddleLevel 이상"
+  - "Manager를 참조하나? → HighLevel"
+  - "ScriptableObject 데이터인가? → LowLevel"
+  - "Editor 전용인가? → #if UNITY_EDITOR 필수"
 
-**Unity-Specific Mappings:**
-- ECS 시스템 작업 → `/implement --type system` + backend persona
-- MonoBehaviour 스크립트 → `/implement --type component` + Unity patterns
-- 에디터 도구 → `/implement --type editor` + EditorLevel assembly
-- 퍼포먼스 최적화 → `/improve --perf` + ECS/Jobs focus
-- 물리 시스템 → `/analyze --focus physics` + custom physics patterns
+Struct_Usage:
+  - "Null 체크 불가 → FindIndex 사용"
+  - "List 필드 → OnValidate()에서 초기화"
+  - "값 복사 주의 → 수정 후 다시 할당"
+
+MonoBehaviour_Lifecycle:
+  - "BaseManager<T> → Awake(singleton), Start(init)"
+  - "Initialize() override 불가 → Start() 사용"
+  - "async 작업 → UniTask 사용"
+```
+
+### 효과적인 질문 형식
+```markdown
+**좋은 질문 형식**:
+- "HighLevel에서 TilemapPatternData(LowLevel)를 참조하는 Manager 생성"
+- "MiddleLevel MonoBehaviour가 ProceduralMapGenerator를 참조 → 어디로 이동?"
+- "ScriptableObject의 List<struct> 필드 초기화 방법"
+
+**피해야 할 질문**:
+- "컴포넌트 만들어줘" (어느 레벨? MonoBehaviour? ScriptableObject?)
+- "Manager 추가" (GameObject 있는 Manager? SubManager?)
+- "데이터 클래스" (ScriptableObject? 일반 class?)
+```
+
+### 에러 보고 시 포함 정보
+```yaml
+Essential_Info:
+  - 파일 경로: "Assets/TS/Scripts/{Level}/{Category}/{File}.cs:LineNumber"
+  - 에러 메시지: "정확한 컴파일 에러 또는 런타임 예외"
+  - 관련 타입: "MonoBehaviour/ScriptableObject/struct/class"
+  - Assembly: "LowLevel/MiddleLevel/HighLevel/EditorLevel"
+  - Unity 버전: "6000.2.7f2"
+
+Example:
+  "Assets/TS/Scripts/MiddleLevel/Support/Player.cs:23
+   CS0246: The type or namespace name 'GameManager' could not be found
+   → Player (MiddleLevel) referencing GameManager (HighLevel)
+   → Move Player to HighLevel/Controller"
+```
+
+### 코드 리뷰 체크리스트
+- [ ] ❌ **Namespace 생성하지 않았나?** (클래스 바디만 생성)
+- [ ] Assembly 레벨 적절한가?
+- [ ] 의존성 방향 올바른가? (하위 → 상위만)
+- [ ] MonoBehaviour vs ScriptableObject 선택 맞나?
+- [ ] Struct null 체크 없나?
+- [ ] List/Collection 초기화 됐나?
+- [ ] `#if UNITY_EDITOR` 래핑 됐나? (EditorLevel)
+- [ ] BaseManager 상속 시 Start() 사용하나?
+
+---
+
+## 📁 File Reference Format
+
+**VSCode Terminal**: Ctrl+Click on path to open
+```
+.\Assets\TS\Scripts\HighLevel\Manager\GameManager.cs:45
+```
+
+**Path Tips**:
+- 전체 경로가 터미널 너비 초과 시 가로 스크롤 (Shift+Mouse Wheel)
+- `terminal.integrated.wordWrap: false` 설정 권장
+- Line number 포함 시 해당 라인으로 바로 이동
+
+---
+
+## 🔧 Quick CLAUDE.md Update
+
+**트리거 문구**: "앞으로도 적용해줘" / "앞으로도 적용되게 해줘"
+→ 임시 변경사항을 CLAUDE.md에 영구 저장
+
+---
+
+## 📚 Reference Files
+
+| Purpose | File Path |
+|---------|-----------|
+| Manager base | `HighLevel/Manager/BaseManager.cs` |
+| Flow base | `HighLevel/Flow/BaseFlow.cs` |
+| Resource registry | `MiddleLevel/Support/ResourcesTypeRegistry.cs` |
+| Physics system | `HighLevel/System/Physics/OptimizedPhysicsSystem.cs` |
+| Game entry point | `HighLevel/Manager/GameManager.cs` |
+
+---
+
+*Last Updated: 2025-01-15 | Unity 6000.2.7f2*

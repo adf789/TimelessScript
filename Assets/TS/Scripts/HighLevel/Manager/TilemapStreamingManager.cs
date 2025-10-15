@@ -10,17 +10,21 @@ namespace TS.HighLevel.Manager
 {
     /// <summary>
     /// 타일맵 패턴 스트리밍 매니저
-    /// Addressables 기반 동적 로딩/언로딩 시스템
+    /// Addressables 기반 동적 로딩/언로딩 시스템 (카메라 기반)
     /// </summary>
     public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         [Header("Registry")]
         [SerializeField] private TilemapPatternRegistry patternRegistry;
 
+        [Header("Camera Reference")]
+        [SerializeField] private Camera targetCamera; // 추적할 카메라 (Orthographic)
+
         [Header("Streaming Settings")]
         [SerializeField] private int maxLoadedPatterns = 9; // 3x3 그리드 최대
         [SerializeField] private float updateInterval = 0.5f; // 업데이트 주기 (초)
         [SerializeField] private bool enableAutoStreaming = true; // 자동 스트리밍 활성화
+        [SerializeField] private float loadBufferSize = 20f; // 카메라 가시 영역 외곽 버퍼 (로드 여유 공간)
 
         [Header("Performance")]
         [SerializeField] private int maxConcurrentLoads = 3; // 동시 로딩 최대 수
@@ -29,6 +33,7 @@ namespace TS.HighLevel.Manager
         [Header("Debug")]
         [SerializeField] private bool showDebugInfo = true;
         [SerializeField] private Color debugColor = Color.green;
+        [SerializeField] private bool showCameraBounds = true; // 카메라 영역 표시
 
         // 로드된 패턴 캐시
         private Dictionary<string, LoadedPattern> _loadedPatterns = new Dictionary<string, LoadedPattern>();
@@ -37,8 +42,9 @@ namespace TS.HighLevel.Manager
         private Queue<LoadRequest> _loadQueue = new Queue<LoadRequest>();
         private HashSet<string> _loadingKeys = new HashSet<string>(); // 현재 로딩 중인 키
 
-        // 플레이어 위치 추적
-        private Vector3 _playerPosition;
+        // 카메라 추적
+        private Vector3 _cameraPosition;
+        private float _lastCameraSize; // 이전 카메라 크기 (줌 변경 감지)
         private float _lastUpdateTime;
 
         // 초기화 상태
@@ -55,9 +61,31 @@ namespace TS.HighLevel.Manager
         {
             if (!_isInitialized || !enableAutoStreaming) return;
 
+            // 카메라 검증
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+                if (targetCamera == null) return;
+            }
+
+            // 카메라 위치 업데이트
+            _cameraPosition = targetCamera.transform.position;
+
+            // 줌 변경 감지 (Orthographic size 변경)
+            if (targetCamera.orthographic && Mathf.Abs(targetCamera.orthographicSize - _lastCameraSize) > 0.1f)
+            {
+                _lastCameraSize = targetCamera.orthographicSize;
+                if (showDebugInfo)
+                    Debug.Log($"[TilemapStreamingManager] Camera zoom changed: {_lastCameraSize}");
+
+                // 줌 변경 시 즉시 스트리밍 업데이트
+                UpdateStreamingByCameraView().Forget();
+            }
+
             // 주기적 업데이트
             if (Time.time - _lastUpdateTime >= updateInterval)
             {
+                UpdateStreamingByCameraView().Forget();
                 ProcessLoadQueue().Forget();
                 _lastUpdateTime = Time.time;
             }
@@ -87,6 +115,30 @@ namespace TS.HighLevel.Manager
                 return;
             }
 
+            // 카메라 참조 설정
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+                if (targetCamera == null)
+                {
+                    Debug.LogWarning("[TilemapStreamingManager] No camera assigned or found. Auto-streaming disabled.");
+                    enableAutoStreaming = false;
+                }
+            }
+
+            // Orthographic 검증
+            if (targetCamera != null && !targetCamera.orthographic)
+            {
+                Debug.LogWarning("[TilemapStreamingManager] Camera is not Orthographic! Streaming may not work correctly.");
+            }
+
+            // 카메라 초기 상태 저장
+            if (targetCamera != null)
+            {
+                _cameraPosition = targetCamera.transform.position;
+                _lastCameraSize = targetCamera.orthographicSize;
+            }
+
             // 레지스트리 초기화
             patternRegistry.Initialize();
 
@@ -95,8 +147,32 @@ namespace TS.HighLevel.Manager
 
             if (showDebugInfo)
             {
-                Debug.Log($"[TilemapStreamingManager] Initialized. MaxPatterns: {maxLoadedPatterns}, UpdateInterval: {updateInterval}s");
+                Debug.Log($"[TilemapStreamingManager] Initialized. Camera: {targetCamera?.name}, MaxPatterns: {maxLoadedPatterns}, UpdateInterval: {updateInterval}s");
             }
+        }
+
+        /// <summary>
+        /// 카메라 참조 설정 (외부에서 호출 가능)
+        /// </summary>
+        public void SetCamera(Camera camera)
+        {
+            if (camera == null)
+            {
+                Debug.LogError("[TilemapStreamingManager] Cannot set null camera!");
+                return;
+            }
+
+            if (!camera.orthographic)
+            {
+                Debug.LogWarning("[TilemapStreamingManager] Camera is not Orthographic!");
+            }
+
+            targetCamera = camera;
+            _cameraPosition = camera.transform.position;
+            _lastCameraSize = camera.orthographicSize;
+
+            if (showDebugInfo)
+                Debug.Log($"[TilemapStreamingManager] Camera set: {camera.name}");
         }
 
         #endregion
@@ -187,7 +263,7 @@ namespace TS.HighLevel.Manager
             if (_loadedPatterns.Count >= maxLoadedPatterns)
             {
                 Debug.LogWarning($"[TilemapStreamingManager] Max loaded patterns reached ({maxLoadedPatterns}). Unloading distant patterns...");
-                await UnloadDistantPatterns(_playerPosition, 1);
+                await UnloadDistantPatterns(_cameraPosition, 1);
             }
 
             // 패턴 데이터 가져오기
@@ -344,17 +420,20 @@ namespace TS.HighLevel.Manager
         #region Auto Streaming
 
         /// <summary>
-        /// 플레이어 위치 기반 자동 스트리밍
+        /// 카메라 가시 영역 기반 자동 스트리밍
         /// </summary>
-        public async UniTask UpdateStreamingByPosition(Vector3 playerPosition)
+        public async UniTask UpdateStreamingByCameraView()
         {
-            if (!_isInitialized) return;
+            if (!_isInitialized || targetCamera == null) return;
 
-            _playerPosition = playerPosition;
+            _cameraPosition = targetCamera.transform.position;
 
-            // 언로드할 패턴 찾기
+            // 카메라 가시 영역 계산 (Orthographic)
+            var cameraBounds = GetCameraBounds();
+
+            // 언로드할 패턴 찾기 (카메라 가시 영역 + 버퍼 벗어난 패턴)
             var toUnload = _loadedPatterns.Values
-                .Where(p => ShouldUnload(p, playerPosition))
+                .Where(p => ShouldUnloadByCamera(p, cameraBounds))
                 .ToList();
 
             // 언로드 실행
@@ -365,16 +444,34 @@ namespace TS.HighLevel.Manager
 
             if (showDebugInfo && toUnload.Count > 0)
             {
-                Debug.Log($"[TilemapStreamingManager] Auto-unloaded {toUnload.Count} distant patterns");
+                Debug.Log($"[TilemapStreamingManager] Auto-unloaded {toUnload.Count} patterns outside camera view");
             }
         }
 
         /// <summary>
-        /// 플레이어 위치 설정 (외부에서 호출)
+        /// 카메라 가시 영역 계산 (Orthographic Camera)
         /// </summary>
-        public void SetPlayerPosition(Vector3 position)
+        private Bounds GetCameraBounds()
         {
-            _playerPosition = position;
+            if (targetCamera == null || !targetCamera.orthographic)
+                return new Bounds(_cameraPosition, Vector3.one * 100f);
+
+            // Orthographic 카메라의 가시 영역 크기 계산
+            float height = targetCamera.orthographicSize * 2f;
+            float width = height * targetCamera.aspect;
+
+            // 버퍼 추가
+            var size = new Vector3(width + loadBufferSize * 2f, height + loadBufferSize * 2f, 0f);
+
+            return new Bounds(_cameraPosition, size);
+        }
+
+        /// <summary>
+        /// 카메라 위치 반환 (외부 접근용)
+        /// </summary>
+        public Vector3 GetCameraPosition()
+        {
+            return _cameraPosition;
         }
 
         #endregion
@@ -441,11 +538,34 @@ namespace TS.HighLevel.Manager
         }
 
         /// <summary>
-        /// 패턴을 언로드해야 하는지 확인
+        /// 패턴 중심 위치 계산
         /// </summary>
-        private bool ShouldUnload(LoadedPattern pattern, Vector3 playerPosition)
+        private Vector3 GetPatternCenter(LoadedPattern pattern)
         {
-            var distance = GetDistanceToPattern(pattern, playerPosition);
+            return new Vector3(
+                pattern.GridOffset.x * pattern.PatternData.WorldSize.x + pattern.PatternData.WorldSize.x * 0.5f,
+                pattern.GridOffset.y * pattern.PatternData.WorldSize.y + pattern.PatternData.WorldSize.y * 0.5f,
+                0
+            );
+        }
+
+        /// <summary>
+        /// 카메라 가시 영역 기반 언로드 여부 확인
+        /// </summary>
+        private bool ShouldUnloadByCamera(LoadedPattern pattern, Bounds cameraBounds)
+        {
+            var patternCenter = GetPatternCenter(pattern);
+
+            // 패턴 중심이 카메라 가시 영역(버퍼 포함) 밖에 있으면 언로드
+            return !cameraBounds.Contains(patternCenter);
+        }
+
+        /// <summary>
+        /// 패턴을 언로드해야 하는지 확인 (거리 기반 - 호환성 유지)
+        /// </summary>
+        private bool ShouldUnload(LoadedPattern pattern, Vector3 position)
+        {
+            var distance = GetDistanceToPattern(pattern, position);
             return distance > pattern.PatternData.UnloadDistance;
         }
 
@@ -479,9 +599,8 @@ namespace TS.HighLevel.Manager
         {
             if (!showDebugInfo || !_isInitialized) return;
 
-            Gizmos.color = debugColor;
-
             // 로드된 패턴 경계 그리기
+            Gizmos.color = debugColor;
             foreach (var loaded in _loadedPatterns.Values)
             {
                 var center = new Vector3(
@@ -494,9 +613,25 @@ namespace TS.HighLevel.Manager
                 Gizmos.DrawWireCube(center, size);
             }
 
-            // 플레이어 위치 표시
+            // 카메라 위치 표시
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(_playerPosition, 5f);
+            Gizmos.DrawWireSphere(_cameraPosition, 3f);
+
+            // 카메라 가시 영역 표시
+            if (showCameraBounds && targetCamera != null && targetCamera.orthographic)
+            {
+                var cameraBounds = GetCameraBounds();
+
+                // 내부 가시 영역 (버퍼 제외)
+                Gizmos.color = new Color(0f, 1f, 1f, 0.5f); // Cyan
+                float height = targetCamera.orthographicSize * 2f;
+                float width = height * targetCamera.aspect;
+                Gizmos.DrawWireCube(_cameraPosition, new Vector3(width, height, 0f));
+
+                // 버퍼 포함 영역
+                Gizmos.color = new Color(1f, 1f, 0f, 0.3f); // Yellow
+                Gizmos.DrawWireCube(cameraBounds.center, cameraBounds.size);
+            }
         }
 
         #endregion

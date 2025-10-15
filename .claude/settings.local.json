@@ -6,7 +6,12 @@
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(del:*)",
       "Bash(rm:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(if [ -f \"D:\\Unity\\Projects\\TimelessScript\\Assets\\TS\\Scripts\\MiddleLevel\\Support\\ProceduralMapPlayer.cs.meta\" ])",
+      "Bash(then mv \"D:\\Unity\\Projects\\TimelessScript\\Assets\\TS\\Scripts\\MiddleLevel\\Support\\ProceduralMapPlayer.cs.meta\" \"D:\\Unity\\Projects\\TimelessScript\\Assets\\TS\\Scripts\\HighLevel\\Controller\\ProceduralMapPlayer.cs.meta\")",
+      "Bash(else echo \"No meta file found\")",
+      "Bash(fi)"
     ],
     "deny": []
   }

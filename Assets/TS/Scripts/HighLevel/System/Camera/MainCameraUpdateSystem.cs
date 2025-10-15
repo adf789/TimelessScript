@@ -9,7 +9,6 @@ using UnityEngine;
 /// </summary>
 [DisableAutoCreation]
 [UpdateInGroup(typeof(PresentationSystemGroup))]
-[UpdateBefore(typeof(TilemapRenderingSystem))]
 public partial struct MainCameraUpdateSystem : ISystem
 {
     private Camera mainCamera;

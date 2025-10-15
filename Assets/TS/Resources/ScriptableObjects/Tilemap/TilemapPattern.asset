@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9bb10135347b324da745d98067f8138, type: 3}
+  m_Name: TilemapPattern
+  m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternData
+  PatternID: 
+  DisplayName: 
+  Description: 
+  GridSize: {x: 50, y: 50}
+  TileSize: {x: 1, y: 1}
+  Type: 0
+  TilemapPrefab:
+    m_AssetGUID: 
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  LoadPriority: 50
+  UnloadDistance: 100
+  PreloadDistance: 150
+  Connections: []
+  PreviewThumbnail: {fileID: 0}

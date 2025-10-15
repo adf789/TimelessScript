@@ -66,8 +66,16 @@ namespace TS.LowLevel.Data.Config
         /// </summary>
         public List<string> GetValidNextPatterns(Direction direction)
         {
-            var connection = Connections.Find(c => c.Direction == direction);
-            return connection?.ValidNextPatterns ?? new List<string>();
+            var connectionIndex = Connections.FindIndex(c => c.Direction == direction);
+
+            // 해당 방향의 연결이 없으면 빈 리스트 반환
+            if (connectionIndex < 0)
+                return new List<string>();
+
+            var connection = Connections[connectionIndex];
+
+            // ValidNextPatterns가 null이면 빈 리스트 반환
+            return connection.ValidNextPatterns ?? new List<string>();
         }
 
         /// <summary>
@@ -96,6 +104,17 @@ namespace TS.LowLevel.Data.Config
             // GridSize가 0 이하면 기본값으로 설정
             if (GridSize.x <= 0) GridSize.x = 50;
             if (GridSize.y <= 0) GridSize.y = 50;
+
+            // Connections의 ValidNextPatterns 초기화 보장
+            for (int i = 0; i < Connections.Count; i++)
+            {
+                var connection = Connections[i];
+                if (connection.ValidNextPatterns == null)
+                {
+                    connection.ValidNextPatterns = new List<string>();
+                    Connections[i] = connection; // struct이므로 다시 할당 필요
+                }
+            }
         }
 #endif
     }
