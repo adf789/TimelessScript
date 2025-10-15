@@ -8,31 +8,27 @@ using TS.LowLevel.Data.Config;
 namespace TS.EditorLevel.Editor.Tilemap
 {
     /// <summary>
-    /// 타일맵 패턴 매핑 관리 도구
-    /// SubScene과 패턴 간의 매핑을 시각적으로 관리
+    /// 타일맵 패턴 관리 도구
+    /// 초기 패턴 설정, SubScene 관리, 6방향 Port 연결 관리
     /// </summary>
     public class TilemapMappingWindow : EditorWindow
     {
         private TilemapPatternRegistry _registry;
         private Vector2 _scrollPosition;
-        private Vector2 _patternScrollPosition;
 
-        private string _newSubSceneName = "";
-        private int _selectedMappingIndex = -1;
-        private List<TilemapPatternData> _availablePatterns = new List<TilemapPatternData>();
+        private int _selectedPatternIndex = -1;
+        private string _patternSearchFilter = "";
 
         private GUIStyle _headerStyle;
         private GUIStyle _subHeaderStyle;
         private GUIStyle _boxStyle;
+        private GUIStyle _selectedBoxStyle;
 
-        private bool _showAvailablePatterns = true;
-        private string _patternSearchFilter = "";
-
-        [MenuItem("TS/Tilemap/Mapping Manager")]
+        [MenuItem("TS/Tilemap/Pattern Editor")]
         public static void ShowWindow()
         {
-            var window = GetWindow<TilemapMappingWindow>("Mapping Manager");
-            window.minSize = new Vector2(600, 500);
+            var window = GetWindow<TilemapMappingWindow>("Pattern Editor");
+            window.minSize = new Vector2(700, 600);
             window.Show();
         }
 
@@ -52,14 +48,14 @@ namespace TS.EditorLevel.Editor.Tilemap
 
             EditorGUILayout.BeginHorizontal();
 
-            // Left panel: SubScene mappings
-            EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.55f));
-            DrawSubSceneMappings();
+            // Left panel: Pattern list
+            EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.4f));
+            DrawPatternList();
             EditorGUILayout.EndVertical();
 
-            // Right panel: Available patterns
-            EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.4f));
-            DrawAvailablePatterns();
+            // Right panel: Pattern editor
+            EditorGUILayout.BeginVertical(GUILayout.Width(position.width * 0.55f));
+            DrawPatternEditor();
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.EndHorizontal();
@@ -85,17 +81,36 @@ namespace TS.EditorLevel.Editor.Tilemap
                 {
                     padding = new RectOffset(10, 10, 10, 10)
                 };
+
+                _selectedBoxStyle = new GUIStyle(EditorStyles.helpBox)
+                {
+                    padding = new RectOffset(10, 10, 10, 10),
+                    normal = { background = MakeTex(2, 2, new Color(0.5f, 0.7f, 1f, 0.3f)) }
+                };
             }
+        }
+
+        private Texture2D MakeTex(int width, int height, Color col)
+        {
+            Color[] pix = new Color[width * height];
+            for (int i = 0; i < pix.Length; i++)
+                pix[i] = col;
+
+            Texture2D result = new Texture2D(width, height);
+            result.SetPixels(pix);
+            result.Apply();
+            return result;
         }
 
         private void DrawHeader()
         {
             EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Tilemap Mapping Manager", _headerStyle);
-            EditorGUILayout.LabelField("SubScene ↔ Pattern 매핑 관리", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Tilemap Pattern Editor", _headerStyle);
+            EditorGUILayout.LabelField("초기 패턴 및 Port 연결 관리", EditorStyles.miniLabel);
             EditorGUILayout.Space(5);
             EditorGUILayout.HelpBox(
-                "SubScene별 초기 로드 패턴을 설정합니다. 좌측에서 SubScene을 선택하고 우측에서 패턴을 추가하세요.",
+                "초기 패턴을 설정하고 각 패턴의 Port를 다른 패턴과 연결할 수 있습니다.\n" +
+                "Port는 6방향으로 반대 방향끼리 연결됩니다 (TopLeft ↔ BottomRight 등).",
                 MessageType.Info
             );
             EditorGUILayout.Space(10);
@@ -106,7 +121,7 @@ namespace TS.EditorLevel.Editor.Tilemap
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Registry:", GUILayout.Width(70));
 
-            var newRegistry = (TilemapPatternRegistry)EditorGUILayout.ObjectField(
+            var newRegistry = (TilemapPatternRegistry) EditorGUILayout.ObjectField(
                 _registry,
                 typeof(TilemapPatternRegistry),
                 false
@@ -115,8 +130,7 @@ namespace TS.EditorLevel.Editor.Tilemap
             if (newRegistry != _registry)
             {
                 _registry = newRegistry;
-                _selectedMappingIndex = -1;
-                RefreshAvailablePatterns();
+                _selectedPatternIndex = -1;
             }
 
             if (GUILayout.Button("Find", GUILayout.Width(60)))
@@ -134,136 +148,40 @@ namespace TS.EditorLevel.Editor.Tilemap
             if (_registry == null)
             {
                 EditorGUILayout.HelpBox("레지스트리를 선택하거나 'Find' 버튼을 눌러 자동으로 찾으세요.", MessageType.Warning);
+                return;
             }
 
+            // Initial Pattern setting
             EditorGUILayout.Space(5);
-        }
-
-        private void DrawSubSceneMappings()
-        {
-            EditorGUILayout.LabelField("SubScene Mappings", _subHeaderStyle);
-            EditorGUILayout.Space(5);
-
-            // Add new SubScene mapping
             EditorGUILayout.BeginVertical(_boxStyle);
-            EditorGUILayout.LabelField("새 SubScene 추가", EditorStyles.boldLabel);
-            EditorGUILayout.BeginHorizontal();
-            _newSubSceneName = EditorGUILayout.TextField(_newSubSceneName);
+            EditorGUILayout.LabelField("Initial Pattern (게임 시작 패턴)", EditorStyles.boldLabel);
 
-            GUI.enabled = !string.IsNullOrEmpty(_newSubSceneName) &&
-                          !_registry.InitialMappings.Any(m => m.SubSceneName == _newSubSceneName);
+            var oldInitialPattern = _registry.InitialPatternID;
+            var patterns = _registry.AllPatterns.Where(p => p != null).Select(p => p.PatternID).ToArray();
+            var currentIndex = System.Array.IndexOf(patterns, _registry.InitialPatternID);
 
-            if (GUILayout.Button("Add", GUILayout.Width(60)))
+            var newIndex = EditorGUILayout.Popup("Pattern ID", currentIndex, patterns);
+            if (newIndex >= 0 && newIndex < patterns.Length)
             {
-                AddNewSubSceneMapping();
+                _registry.InitialPatternID = patterns[newIndex];
+                if (_registry.InitialPatternID != oldInitialPattern)
+                {
+                    EditorUtility.SetDirty(_registry);
+                }
             }
-            GUI.enabled = true;
 
-            EditorGUILayout.EndHorizontal();
+            if (string.IsNullOrEmpty(_registry.InitialPatternID))
+            {
+                EditorGUILayout.HelpBox("초기 패턴을 반드시 설정해야 합니다!", MessageType.Error);
+            }
+
             EditorGUILayout.EndVertical();
-
-            EditorGUILayout.Space(10);
-
-            // List of existing mappings
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-
-            for (int i = 0; i < _registry.InitialMappings.Count; i++)
-            {
-                var mapping = _registry.InitialMappings[i];
-                bool isSelected = i == _selectedMappingIndex;
-
-                GUI.backgroundColor = isSelected ? new Color(0.5f, 0.8f, 1f) : Color.white;
-
-                EditorGUILayout.BeginVertical(_boxStyle);
-                EditorGUILayout.BeginHorizontal();
-
-                // SubScene name
-                if (GUILayout.Button($"{mapping.SubSceneName} ({mapping.InitialPatterns.Count})",
-                    GUILayout.Height(30)))
-                {
-                    _selectedMappingIndex = i;
-                }
-
-                // Remove button
-                GUI.backgroundColor = new Color(1f, 0.5f, 0.5f);
-                if (GUILayout.Button("×", GUILayout.Width(30), GUILayout.Height(30)))
-                {
-                    if (EditorUtility.DisplayDialog(
-                        "SubScene 매핑 삭제",
-                        $"'{mapping.SubSceneName}' 매핑을 삭제하시겠습니까?",
-                        "삭제", "취소"))
-                    {
-                        RemoveSubSceneMapping(i);
-                        break;
-                    }
-                }
-                GUI.backgroundColor = Color.white;
-
-                EditorGUILayout.EndHorizontal();
-
-                // Show patterns if selected
-                if (isSelected)
-                {
-                    EditorGUILayout.Space(5);
-                    EditorGUILayout.LabelField("패턴 목록:", EditorStyles.miniLabel);
-
-                    for (int j = 0; j < mapping.InitialPatterns.Count; j++)
-                    {
-                        var pattern = mapping.InitialPatterns[j];
-                        if (pattern == null)
-                        {
-                            EditorGUILayout.LabelField($"  {j + 1}. [Missing Pattern]", EditorStyles.miniLabel);
-                            continue;
-                        }
-
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField($"  {j + 1}. {pattern.PatternID} ({pattern.Type})",
-                            EditorStyles.miniLabel, GUILayout.Height(18));
-
-                        // Move up
-                        GUI.enabled = j > 0;
-                        if (GUILayout.Button("↑", GUILayout.Width(25), GUILayout.Height(18)))
-                        {
-                            MovePattern(i, j, j - 1);
-                        }
-                        GUI.enabled = true;
-
-                        // Move down
-                        GUI.enabled = j < mapping.InitialPatterns.Count - 1;
-                        if (GUILayout.Button("↓", GUILayout.Width(25), GUILayout.Height(18)))
-                        {
-                            MovePattern(i, j, j + 1);
-                        }
-                        GUI.enabled = true;
-
-                        // Remove
-                        if (GUILayout.Button("−", GUILayout.Width(25), GUILayout.Height(18)))
-                        {
-                            RemovePatternFromMapping(i, j);
-                            break;
-                        }
-
-                        EditorGUILayout.EndHorizontal();
-                    }
-
-                    if (mapping.InitialPatterns.Count == 0)
-                    {
-                        EditorGUILayout.LabelField("  (패턴 없음)", EditorStyles.miniLabel);
-                    }
-                }
-
-                EditorGUILayout.EndVertical();
-                GUI.backgroundColor = Color.white;
-
-                EditorGUILayout.Space(5);
-            }
-
-            EditorGUILayout.EndScrollView();
+            EditorGUILayout.Space(5);
         }
 
-        private void DrawAvailablePatterns()
+        private void DrawPatternList()
         {
-            EditorGUILayout.LabelField("Available Patterns", _subHeaderStyle);
+            EditorGUILayout.LabelField("Patterns", _subHeaderStyle);
             EditorGUILayout.Space(5);
 
             // Search filter
@@ -278,45 +196,53 @@ namespace TS.EditorLevel.Editor.Tilemap
 
             EditorGUILayout.Space(5);
 
-            if (_selectedMappingIndex < 0)
-            {
-                EditorGUILayout.HelpBox("좌측에서 SubScene을 선택하세요.", MessageType.Info);
-                return;
-            }
-
-            // Refresh button
-            if (GUILayout.Button("Refresh Pattern List"))
-            {
-                RefreshAvailablePatterns();
-            }
-
-            EditorGUILayout.Space(5);
-
             // Pattern list
-            _patternScrollPosition = EditorGUILayout.BeginScrollView(_patternScrollPosition);
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
             var filteredPatterns = string.IsNullOrEmpty(_patternSearchFilter)
-                ? _availablePatterns
-                : _availablePatterns.Where(p => p.PatternID.ToLower().Contains(_patternSearchFilter.ToLower()) ||
-                                                 p.Type.ToString().ToLower().Contains(_patternSearchFilter.ToLower()))
-                                    .ToList();
+                ? _registry.AllPatterns.Where(p => p != null).ToList()
+                : _registry.AllPatterns.Where(p => p != null &&
+                    (p.PatternID.ToLower().Contains(_patternSearchFilter.ToLower())))
+                    .ToList();
 
-            foreach (var pattern in filteredPatterns)
+            for (int i = 0; i < filteredPatterns.Count; i++)
             {
-                EditorGUILayout.BeginHorizontal(_boxStyle);
+                var pattern = filteredPatterns[i];
+                int actualIndex = _registry.AllPatterns.IndexOf(pattern);
+                bool isSelected = actualIndex == _selectedPatternIndex;
+                bool isInitialPattern = pattern.PatternID == _registry.InitialPatternID;
 
-                EditorGUILayout.BeginVertical();
-                EditorGUILayout.LabelField(pattern.PatternID, EditorStyles.boldLabel);
-                EditorGUILayout.LabelField($"Type: {pattern.Type} | Size: {pattern.GridSize.x}x{pattern.GridSize.y}",
-                    EditorStyles.miniLabel);
-                EditorGUILayout.EndVertical();
+                var boxStyle = isSelected ? _selectedBoxStyle : _boxStyle;
 
-                if (GUILayout.Button("Add →", GUILayout.Width(80), GUILayout.Height(35)))
+                EditorGUILayout.BeginVertical(boxStyle);
+                EditorGUILayout.BeginHorizontal();
+
+                // Pattern info button
+                var buttonStyle = new GUIStyle(GUI.skin.button);
+                if (isInitialPattern)
                 {
-                    AddPatternToMapping(_selectedMappingIndex, pattern);
+                    buttonStyle.normal.textColor = Color.green;
+                    buttonStyle.fontStyle = FontStyle.Bold;
+                }
+
+                if (GUILayout.Button($"{pattern.PatternID}", buttonStyle, GUILayout.Height(40)))
+                {
+                    _selectedPatternIndex = actualIndex;
                 }
 
                 EditorGUILayout.EndHorizontal();
+
+                // SubScene indicator
+                if (!string.IsNullOrEmpty(pattern.SubSceneName))
+                {
+                    EditorGUILayout.LabelField($"SubScene: {pattern.SubSceneName}", EditorStyles.miniLabel);
+                }
+                else
+                {
+                    EditorGUILayout.LabelField("SubScene: (None)", EditorStyles.miniLabel);
+                }
+
+                EditorGUILayout.EndVertical();
                 EditorGUILayout.Space(2);
             }
 
@@ -328,6 +254,200 @@ namespace TS.EditorLevel.Editor.Tilemap
             EditorGUILayout.EndScrollView();
         }
 
+        private void DrawPatternEditor()
+        {
+            EditorGUILayout.LabelField("Pattern Editor", _subHeaderStyle);
+            EditorGUILayout.Space(5);
+
+            if (_selectedPatternIndex < 0 || _selectedPatternIndex >= _registry.AllPatterns.Count)
+            {
+                EditorGUILayout.HelpBox("좌측에서 패턴을 선택하세요.", MessageType.Info);
+                return;
+            }
+
+            var pattern = _registry.AllPatterns[_selectedPatternIndex];
+            if (pattern == null)
+            {
+                EditorGUILayout.HelpBox("선택한 패턴이 null입니다.", MessageType.Error);
+                return;
+            }
+
+            EditorGUILayout.BeginVertical(_boxStyle);
+
+            // Basic info
+            EditorGUILayout.LabelField("Basic Information", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Pattern ID: {pattern.PatternID}");
+            EditorGUILayout.LabelField($"Display Name: {pattern.DisplayName}");
+            EditorGUILayout.LabelField($"Grid Size: {pattern.GridSize.x} x {pattern.GridSize.y}");
+
+            EditorGUILayout.Space(10);
+
+            // SubScene setting
+            EditorGUILayout.LabelField("SubScene Settings", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            var newSubSceneName = EditorGUILayout.TextField("SubScene Name", pattern.SubSceneName);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(pattern, "Change SubScene Name");
+                pattern.SubSceneName = newSubSceneName;
+                EditorUtility.SetDirty(pattern);
+            }
+
+            EditorGUILayout.Space(10);
+
+            // Port Connection Management
+            EditorGUILayout.LabelField("Port Connection Management", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "각 Port를 다른 패턴의 반대 Port와 연결할 수 있습니다.\n" +
+                "예: TopLeft ↔ BottomRight, TopRight ↔ BottomLeft, Left ↔ Right",
+                MessageType.Info
+            );
+
+            if (pattern.Connections.Count > 0)
+            {
+                for (int i = 0; i < pattern.Connections.Count; i++)
+                {
+                    var conn = pattern.Connections[i];
+
+                    EditorGUILayout.BeginVertical(_boxStyle);
+                    EditorGUILayout.BeginHorizontal();
+
+                    // Port 아이콘과 정보
+                    string icon = GetConnectionIcon(conn);
+                    string directionName = GetDirectionDisplayName(conn.Direction);
+                    string ladderInfo = conn.IsLadder ? " [사다리]" : "";
+
+                    EditorGUILayout.LabelField(
+                        $"{icon} {directionName} Port{ladderInfo}",
+                        EditorStyles.boldLabel,
+                        GUILayout.Width(150)
+                    );
+
+                    if (!conn.IsActive)
+                    {
+                        EditorGUILayout.LabelField("(비활성)", EditorStyles.miniLabel);
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.EndVertical();
+                        continue;
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+
+                    // 연결 가능한 패턴 목록 가져오기
+                    var compatiblePatterns = GetCompatiblePatterns(pattern, conn.Direction);
+                    var oppositeDirection = GetOppositeDirection(conn.Direction);
+
+                    EditorGUILayout.LabelField(
+                        $"반대 Port: {GetDirectionDisplayName(oppositeDirection)}",
+                        EditorStyles.miniLabel
+                    );
+
+                    if (compatiblePatterns.Count == 0)
+                    {
+                        EditorGUILayout.HelpBox(
+                            $"{GetDirectionDisplayName(oppositeDirection)} Port를 가진 패턴이 없습니다.",
+                            MessageType.Warning
+                        );
+                    }
+                    else
+                    {
+                        // 패턴 선택 Dropdown
+                        var patternNames = new List<string> { "(연결 안 함)" };
+                        patternNames.AddRange(compatiblePatterns.Select(p => $"{p.PatternID}"));
+
+                        int currentIndex = 0;
+                        if (!string.IsNullOrEmpty(conn.LinkedPatternID))
+                        {
+                            var linkedPattern = compatiblePatterns.FirstOrDefault(p => p.PatternID == conn.LinkedPatternID);
+                            if (linkedPattern != null)
+                            {
+                                currentIndex = compatiblePatterns.IndexOf(linkedPattern) + 1;
+                            }
+                        }
+
+                        EditorGUI.BeginChangeCheck();
+                        int newIndex = EditorGUILayout.Popup(
+                            "연결할 패턴:",
+                            currentIndex,
+                            patternNames.ToArray()
+                        );
+
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            Undo.RecordObject(pattern, "Change Port Connection");
+
+                            var updatedConn = conn;
+                            if (newIndex == 0)
+                            {
+                                // 연결 해제
+                                updatedConn.LinkedPatternID = "";
+                            }
+                            else
+                            {
+                                // 새로운 패턴 연결
+                                updatedConn.LinkedPatternID = compatiblePatterns[newIndex - 1].PatternID;
+                            }
+
+                            pattern.Connections[i] = updatedConn;
+                            EditorUtility.SetDirty(pattern);
+                        }
+
+                        // 현재 연결 상태 표시
+                        if (!string.IsNullOrEmpty(conn.LinkedPatternID))
+                        {
+                            var linkedPattern = _registry.AllPatterns.FirstOrDefault(p => p != null && p.PatternID == conn.LinkedPatternID);
+                            if (linkedPattern != null)
+                            {
+                                EditorGUILayout.LabelField(
+                                    $"✅ 연결됨: {linkedPattern.PatternID}",
+                                    EditorStyles.miniLabel
+                                );
+                            }
+                            else
+                            {
+                                EditorGUILayout.HelpBox(
+                                    $"⚠️ 연결된 패턴 '{conn.LinkedPatternID}'을(를) 찾을 수 없습니다.",
+                                    MessageType.Error
+                                );
+                            }
+                        }
+                    }
+
+                    EditorGUILayout.EndVertical();
+                    EditorGUILayout.Space(3);
+                }
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "연결 지점이 없습니다. Inspector에서 패턴에 Connection Points를 추가하세요.",
+                    MessageType.Info
+                );
+            }
+
+            EditorGUILayout.Space(10);
+
+            // Quick actions
+            EditorGUILayout.LabelField("Quick Actions", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Set as Initial Pattern"))
+            {
+                _registry.InitialPatternID = pattern.PatternID;
+                EditorUtility.SetDirty(_registry);
+            }
+
+            if (GUILayout.Button("Open in Inspector"))
+            {
+                Selection.activeObject = pattern;
+                EditorGUIUtility.PingObject(pattern);
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
+        }
+
         private void FindRegistry()
         {
             string[] guids = AssetDatabase.FindAssets("t:TilemapPatternRegistry");
@@ -335,111 +455,12 @@ namespace TS.EditorLevel.Editor.Tilemap
             {
                 string path = AssetDatabase.GUIDToAssetPath(guids[0]);
                 _registry = AssetDatabase.LoadAssetAtPath<TilemapPatternRegistry>(path);
-                RefreshAvailablePatterns();
                 Debug.Log($"[TilemapMappingWindow] Found registry: {path}");
             }
             else
             {
                 Debug.LogWarning("[TilemapMappingWindow] No TilemapPatternRegistry found in project.");
             }
-        }
-
-        private void RefreshAvailablePatterns()
-        {
-            if (_registry == null) return;
-
-            _availablePatterns.Clear();
-            _availablePatterns.AddRange(_registry.AllPatterns.Where(p => p != null));
-        }
-
-        private void AddNewSubSceneMapping()
-        {
-            if (string.IsNullOrEmpty(_newSubSceneName)) return;
-
-            var newMapping = new SubScenePatternMapping
-            {
-                SubSceneName = _newSubSceneName,
-                InitialPatterns = new List<TilemapPatternData>()
-            };
-
-            _registry.InitialMappings.Add(newMapping);
-            _selectedMappingIndex = _registry.InitialMappings.Count - 1;
-            _newSubSceneName = "";
-
-            EditorUtility.SetDirty(_registry);
-            Debug.Log($"[TilemapMappingWindow] Added new SubScene mapping: {newMapping.SubSceneName}");
-        }
-
-        private void RemoveSubSceneMapping(int index)
-        {
-            if (index < 0 || index >= _registry.InitialMappings.Count) return;
-
-            string subSceneName = _registry.InitialMappings[index].SubSceneName;
-            _registry.InitialMappings.RemoveAt(index);
-
-            if (_selectedMappingIndex == index)
-            {
-                _selectedMappingIndex = -1;
-            }
-            else if (_selectedMappingIndex > index)
-            {
-                _selectedMappingIndex--;
-            }
-
-            EditorUtility.SetDirty(_registry);
-            Debug.Log($"[TilemapMappingWindow] Removed SubScene mapping: {subSceneName}");
-        }
-
-        private void AddPatternToMapping(int mappingIndex, TilemapPatternData pattern)
-        {
-            if (mappingIndex < 0 || mappingIndex >= _registry.InitialMappings.Count) return;
-            if (pattern == null) return;
-
-            var mapping = _registry.InitialMappings[mappingIndex];
-
-            // Check if pattern already exists
-            if (mapping.InitialPatterns.Contains(pattern))
-            {
-                EditorUtility.DisplayDialog(
-                    "중복된 패턴",
-                    $"패턴 '{pattern.PatternID}'는 이미 '{mapping.SubSceneName}'에 추가되어 있습니다.",
-                    "확인"
-                );
-                return;
-            }
-
-            mapping.InitialPatterns.Add(pattern);
-            EditorUtility.SetDirty(_registry);
-            Debug.Log($"[TilemapMappingWindow] Added pattern '{pattern.PatternID}' to '{mapping.SubSceneName}'");
-        }
-
-        private void RemovePatternFromMapping(int mappingIndex, int patternIndex)
-        {
-            if (mappingIndex < 0 || mappingIndex >= _registry.InitialMappings.Count) return;
-
-            var mapping = _registry.InitialMappings[mappingIndex];
-            if (patternIndex < 0 || patternIndex >= mapping.InitialPatterns.Count) return;
-
-            var pattern = mapping.InitialPatterns[patternIndex];
-            mapping.InitialPatterns.RemoveAt(patternIndex);
-
-            EditorUtility.SetDirty(_registry);
-            Debug.Log($"[TilemapMappingWindow] Removed pattern '{pattern?.PatternID}' from '{mapping.SubSceneName}'");
-        }
-
-        private void MovePattern(int mappingIndex, int fromIndex, int toIndex)
-        {
-            if (mappingIndex < 0 || mappingIndex >= _registry.InitialMappings.Count) return;
-
-            var mapping = _registry.InitialMappings[mappingIndex];
-            if (fromIndex < 0 || fromIndex >= mapping.InitialPatterns.Count) return;
-            if (toIndex < 0 || toIndex >= mapping.InitialPatterns.Count) return;
-
-            var pattern = mapping.InitialPatterns[fromIndex];
-            mapping.InitialPatterns.RemoveAt(fromIndex);
-            mapping.InitialPatterns.Insert(toIndex, pattern);
-
-            EditorUtility.SetDirty(_registry);
         }
 
         private void SaveRegistry()
@@ -452,6 +473,73 @@ namespace TS.EditorLevel.Editor.Tilemap
 
             Debug.Log($"[TilemapMappingWindow] Registry saved: {AssetDatabase.GetAssetPath(_registry)}");
             EditorUtility.DisplayDialog("저장 완료", "레지스트리가 성공적으로 저장되었습니다.", "확인");
+        }
+
+        /// <summary>
+        /// 반대 방향 Port 계산
+        /// TopLeft ↔ BottomRight, TopRight ↔ BottomLeft, Left ↔ Right
+        /// </summary>
+        private PatternDirection GetOppositeDirection(PatternDirection direction)
+        {
+            return direction switch
+            {
+                PatternDirection.TopLeft => PatternDirection.BottomRight,
+                PatternDirection.TopRight => PatternDirection.BottomLeft,
+                PatternDirection.Left => PatternDirection.Right,
+                PatternDirection.Right => PatternDirection.Left,
+                PatternDirection.BottomLeft => PatternDirection.TopRight,
+                PatternDirection.BottomRight => PatternDirection.TopLeft,
+                _ => direction
+            };
+        }
+
+        /// <summary>
+        /// 특정 Port 방향과 연결 가능한 패턴 목록 반환
+        /// </summary>
+        private List<TilemapPatternData> GetCompatiblePatterns(TilemapPatternData currentPattern, PatternDirection portDirection)
+        {
+            var oppositeDirection = GetOppositeDirection(portDirection);
+            var compatiblePatterns = new List<TilemapPatternData>();
+
+            foreach (var pattern in _registry.AllPatterns)
+            {
+                if (pattern == null || pattern == currentPattern) continue;
+
+                // 반대 방향 Port를 가진 패턴만 연결 가능
+                if (pattern.HasActiveConnection(oppositeDirection))
+                {
+                    compatiblePatterns.Add(pattern);
+                }
+            }
+
+            return compatiblePatterns;
+        }
+
+        /// <summary>
+        /// Port 연결 상태 표시 아이콘
+        /// </summary>
+        private string GetConnectionIcon(ConnectionPoint connection)
+        {
+            if (!connection.IsActive) return "⚫"; // 비활성
+            if (!string.IsNullOrEmpty(connection.LinkedPatternID)) return "🔗"; // 연결됨
+            return "⚪"; // 활성, 미연결
+        }
+
+        /// <summary>
+        /// Port 방향 이름을 한글로 변환
+        /// </summary>
+        private string GetDirectionDisplayName(PatternDirection direction)
+        {
+            return direction switch
+            {
+                PatternDirection.TopLeft => "좌상단",
+                PatternDirection.TopRight => "우상단",
+                PatternDirection.Left => "좌측",
+                PatternDirection.Right => "우측",
+                PatternDirection.BottomLeft => "좌하단",
+                PatternDirection.BottomRight => "우하단",
+                _ => direction.ToString()
+            };
         }
     }
 }

@@ -89,7 +89,7 @@ namespace TS.EditorLevel.Editor.Tilemap
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Registry:", GUILayout.Width(70));
-            _registry = (TilemapPatternRegistry)EditorGUILayout.ObjectField(
+            _registry = (TilemapPatternRegistry) EditorGUILayout.ObjectField(
                 _registry,
                 typeof(TilemapPatternRegistry),
                 false
@@ -158,7 +158,7 @@ namespace TS.EditorLevel.Editor.Tilemap
                 bool isInPreview = _previewPatterns.Exists(p => p.Data == pattern);
                 GUI.backgroundColor = isInPreview ? Color.green : Color.white;
 
-                if (GUILayout.Button($"{pattern.PatternID} ({pattern.Type})", GUILayout.Height(25)))
+                if (GUILayout.Button($"{pattern.PatternID}", GUILayout.Height(25)))
                 {
                     AddPatternToPreview(pattern);
                 }
@@ -268,8 +268,15 @@ namespace TS.EditorLevel.Editor.Tilemap
 
             var size = new Vector3(data.WorldSize.x * _previewScale, data.WorldSize.y * _previewScale, 0);
 
-            // 패턴 경계 그리기
-            Handles.color = isSelected ? _selectedColor : Color.white;
+            // 패턴 경계 그리기 (Shape별 색상)
+            if (isSelected)
+            {
+                Handles.color = _selectedColor;
+            }
+            else
+            {
+                Handles.color = Color.white;
+            }
             Handles.DrawWireCube(worldPos + size * 0.5f, size);
 
             // 그리드 그리기
@@ -308,45 +315,53 @@ namespace TS.EditorLevel.Editor.Tilemap
                 0
             );
 
-            var size = new Vector3(data.WorldSize.x * _previewScale, data.WorldSize.y * _previewScale, 0);
-            var center = worldPos + size * 0.5f;
-
-            Handles.color = _connectionColor;
-
             foreach (var connection in data.Connections)
             {
                 if (!connection.IsActive) continue;
 
-                Vector3 connectionPoint = center;
-                Vector3 direction = Vector3.zero;
+                // LocalPosition 기반 연결 지점 계산
+                Vector3 connectionPoint = worldPos + new Vector3(
+                    connection.LocalPosition.x * data.TileSize.x * _previewScale,
+                    connection.LocalPosition.y * data.TileSize.y * _previewScale,
+                    0
+                );
 
-                switch (connection.Direction)
-                {
-                    case Direction.North:
-                        connectionPoint = center + new Vector3(0, size.y * 0.5f, 0);
-                        direction = Vector3.up;
-                        break;
-                    case Direction.South:
-                        connectionPoint = center - new Vector3(0, size.y * 0.5f, 0);
-                        direction = Vector3.down;
-                        break;
-                    case Direction.East:
-                        connectionPoint = center + new Vector3(size.x * 0.5f, 0, 0);
-                        direction = Vector3.right;
-                        break;
-                    case Direction.West:
-                        connectionPoint = center - new Vector3(size.x * 0.5f, 0, 0);
-                        direction = Vector3.left;
-                        break;
-                }
+                // 방향 벡터 계산 (6방향)
+                Vector3 direction = GetDirectionVector(connection.Direction);
+
+                // 색상 설정 (사다리는 노란색)
+                Handles.color = connection.IsLadder ? Color.yellow : _connectionColor;
 
                 // 연결 지점 표시
-                Handles.DrawSolidDisc(connectionPoint, Vector3.forward, 2f);
+                float discSize = connection.IsLadder ? 3f : 2f;
+                Handles.DrawSolidDisc(connectionPoint, Vector3.forward, discSize);
 
                 // 방향 화살표
-                Handles.DrawLine(connectionPoint, connectionPoint + direction * 10f);
-                Handles.ConeHandleCap(0, connectionPoint + direction * 10f, Quaternion.LookRotation(direction), 3f, EventType.Repaint);
+                float arrowLength = connection.IsLadder ? 15f : 10f;
+                Handles.DrawLine(connectionPoint, connectionPoint + direction * arrowLength);
+                Handles.ConeHandleCap(0, connectionPoint + direction * arrowLength,
+                    Quaternion.LookRotation(Vector3.forward, direction), 3f, EventType.Repaint);
+
+                // 사다리 표시 레이블
+                if (connection.IsLadder && _showLabels)
+                {
+                    Handles.Label(connectionPoint + direction * (arrowLength + 5f), "Ladder");
+                }
             }
+        }
+
+        private Vector3 GetDirectionVector(PatternDirection direction)
+        {
+            return direction switch
+            {
+                PatternDirection.TopLeft => new Vector3(-0.7071f, 0.7071f, 0),      // 대각선 좌상
+                PatternDirection.TopRight => new Vector3(0.7071f, 0.7071f, 0),      // 대각선 우상
+                PatternDirection.Left => Vector3.left,
+                PatternDirection.Right => Vector3.right,
+                PatternDirection.BottomLeft => new Vector3(-0.7071f, -0.7071f, 0),  // 대각선 좌하
+                PatternDirection.BottomRight => new Vector3(0.7071f, -0.7071f, 0),  // 대각선 우하
+                _ => Vector3.zero
+            };
         }
 
         private void FindRegistry()

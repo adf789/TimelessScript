@@ -6,7 +6,7 @@ namespace TS.LowLevel.Data.Config
 {
     /// <summary>
     /// 타일맵 패턴 레지스트리
-    /// 모든 타일맵 패턴을 관리하고 SubScene과의 매핑을 담당
+    /// 모든 타일맵 패턴을 관리하고 초기 패턴 설정
     /// </summary>
     [CreateAssetMenu(fileName = "TilemapPatternRegistry", menuName = "TS/Tilemap/Pattern Registry")]
     public class TilemapPatternRegistry : ScriptableObject
@@ -15,18 +15,17 @@ namespace TS.LowLevel.Data.Config
         [Tooltip("등록된 모든 타일맵 패턴")]
         public List<TilemapPatternData> AllPatterns = new List<TilemapPatternData>();
 
-        [Header("SubScene Initial Patterns")]
-        [Tooltip("각 SubScene이 시작할 때 로드할 패턴들")]
-        public List<SubScenePatternMapping> InitialMappings = new List<SubScenePatternMapping>();
+        [Header("Initial Setup")]
+        [Tooltip("게임 시작 시 로드할 초기 패턴 ID")]
+        public string InitialPatternID;
 
         [Header("Pattern Categories")]
-        [Tooltip("타입별로 분류된 패턴")]
+        [Tooltip("Shape별로 분류된 패턴")]
         public List<PatternCategory> Categories = new List<PatternCategory>();
 
         // 런타임 캐시
         private Dictionary<string, TilemapPatternData> _patternCache;
-        private Dictionary<string, List<TilemapPatternData>> _subSceneCache;
-        private Dictionary<TilemapPatternType, List<TilemapPatternData>> _typeCache;
+        private Dictionary<PatternDirection, List<TilemapPatternData>> _shapeCache;
         private bool _isInitialized = false;
 
         /// <summary>
@@ -51,23 +50,15 @@ namespace TS.LowLevel.Data.Config
                 _patternCache[pattern.PatternID] = pattern;
             }
 
-            // SubScene 캐시 생성
-            _subSceneCache = new Dictionary<string, List<TilemapPatternData>>();
-            foreach (var mapping in InitialMappings)
+            // Shape별 캐시 생성
+            _shapeCache = new Dictionary<PatternDirection, List<TilemapPatternData>>();
+            foreach (PatternDirection direction in System.Enum.GetValues(typeof(PatternDirection)))
             {
-                if (string.IsNullOrEmpty(mapping.SubSceneName)) continue;
-                _subSceneCache[mapping.SubSceneName] = new List<TilemapPatternData>(mapping.InitialPatterns);
-            }
-
-            // 타입별 캐시 생성
-            _typeCache = new Dictionary<TilemapPatternType, List<TilemapPatternData>>();
-            foreach (TilemapPatternType type in System.Enum.GetValues(typeof(TilemapPatternType)))
-            {
-                _typeCache[type] = AllPatterns.Where(p => p != null && p.Type == type).ToList();
+                _shapeCache[direction] = AllPatterns.Where(p => p != null && p.Connections.Any(c => c.Direction == direction)).ToList();
             }
 
             _isInitialized = true;
-            Debug.Log($"[TilemapPatternRegistry] Initialized with {_patternCache.Count} patterns");
+            Debug.Log($"[TilemapPatternRegistry] Initialized with {_patternCache.Count} patterns, Initial: {InitialPatternID}");
         }
 
         /// <summary>
@@ -93,46 +84,13 @@ namespace TS.LowLevel.Data.Config
         }
 
         /// <summary>
-        /// SubScene 이름으로 초기 패턴 목록 가져오기
+        /// 패턴 Shape으로 패턴 목록 가져오기
         /// </summary>
-        public List<TilemapPatternData> GetPatternsForSubScene(string subSceneName)
+        public List<TilemapPatternData> GetPatternsByShape(PatternDirection direction)
         {
             if (!_isInitialized) Initialize();
 
-            if (string.IsNullOrEmpty(subSceneName))
-            {
-                Debug.LogWarning("[TilemapPatternRegistry] SubSceneName is null or empty");
-                return new List<TilemapPatternData>();
-            }
-
-            if (_subSceneCache.TryGetValue(subSceneName, out var patterns))
-            {
-                return new List<TilemapPatternData>(patterns);
-            }
-
-            Debug.LogWarning($"[TilemapPatternRegistry] No patterns found for SubScene: {subSceneName}");
-            return new List<TilemapPatternData>();
-        }
-
-        /// <summary>
-        /// 현재 패턴의 특정 방향으로 연결 가능한 패턴 ID 목록 가져오기
-        /// </summary>
-        public List<string> GetValidNextPatterns(string currentPatternID, Direction direction)
-        {
-            var pattern = GetPattern(currentPatternID);
-            if (pattern == null) return new List<string>();
-
-            return pattern.GetValidNextPatterns(direction);
-        }
-
-        /// <summary>
-        /// 패턴 타입으로 패턴 목록 가져오기
-        /// </summary>
-        public List<TilemapPatternData> GetPatternsByType(TilemapPatternType type)
-        {
-            if (!_isInitialized) Initialize();
-
-            if (_typeCache.TryGetValue(type, out var patterns))
+            if (_shapeCache.TryGetValue(direction, out var patterns))
             {
                 return new List<TilemapPatternData>(patterns);
             }
@@ -143,20 +101,11 @@ namespace TS.LowLevel.Data.Config
         /// <summary>
         /// 랜덤 패턴 가져오기
         /// </summary>
-        public TilemapPatternData GetRandomPattern(TilemapPatternType? type = null)
+        public TilemapPatternData GetRandomPattern(PatternDirection direction)
         {
             if (!_isInitialized) Initialize();
 
-            List<TilemapPatternData> targetList;
-
-            if (type.HasValue)
-            {
-                targetList = GetPatternsByType(type.Value);
-            }
-            else
-            {
-                targetList = AllPatterns.Where(p => p != null).ToList();
-            }
+            List<TilemapPatternData> targetList = GetPatternsByShape(direction);
 
             if (targetList.Count == 0)
             {
@@ -165,23 +114,6 @@ namespace TS.LowLevel.Data.Config
             }
 
             return targetList[Random.Range(0, targetList.Count)];
-        }
-
-        /// <summary>
-        /// 특정 방향으로 연결 가능한 랜덤 패턴 가져오기
-        /// </summary>
-        public TilemapPatternData GetRandomNextPattern(string currentPatternID, Direction direction)
-        {
-            var validPatternIDs = GetValidNextPatterns(currentPatternID, direction);
-
-            if (validPatternIDs.Count == 0)
-            {
-                Debug.LogWarning($"[TilemapPatternRegistry] No valid next patterns for {currentPatternID} in direction {direction}");
-                return null;
-            }
-
-            var randomID = validPatternIDs[Random.Range(0, validPatternIDs.Count)];
-            return GetPattern(randomID);
         }
 
         /// <summary>
@@ -233,39 +165,14 @@ namespace TS.LowLevel.Data.Config
                 }
             }
 
-            // Connection 검증
-            foreach (var pattern in AllPatterns)
+            // InitialPattern 검증
+            if (string.IsNullOrEmpty(InitialPatternID))
             {
-                if (pattern == null) continue;
-
-                foreach (var connection in pattern.Connections)
-                {
-                    foreach (var nextPatternID in connection.ValidNextPatterns)
-                    {
-                        if (!AllPatterns.Any(p => p != null && p.PatternID == nextPatternID))
-                        {
-                            warnings.Add($"Pattern '{pattern.PatternID}' references non-existent pattern '{nextPatternID}' in {connection.Direction} connection");
-                        }
-                    }
-                }
+                warnings.Add("No initial pattern set! Game needs a starting pattern.");
             }
-
-            // SubScene 매핑 검증
-            foreach (var mapping in InitialMappings)
+            else if (!AllPatterns.Any(p => p != null && p.PatternID == InitialPatternID))
             {
-                if (string.IsNullOrEmpty(mapping.SubSceneName))
-                {
-                    warnings.Add("SubScene mapping has empty SubSceneName");
-                    continue;
-                }
-
-                foreach (var pattern in mapping.InitialPatterns)
-                {
-                    if (pattern == null)
-                    {
-                        warnings.Add($"SubScene '{mapping.SubSceneName}' has null pattern reference");
-                    }
-                }
+                errors.Add($"Initial pattern '{InitialPatternID}' does not exist in AllPatterns");
             }
 
             // 결과 출력
@@ -291,45 +198,6 @@ namespace TS.LowLevel.Data.Config
             _isInitialized = false;
         }
 #endif
-    }
-
-    /// <summary>
-    /// SubScene과 타일맵 패턴 매핑
-    /// </summary>
-    [System.Serializable]
-    public class SubScenePatternMapping
-    {
-        [Tooltip("SubScene 이름")]
-        public string SubSceneName;
-
-        [Tooltip("SubScene 로드 시 함께 로드할 초기 패턴들")]
-        public List<TilemapPatternData> InitialPatterns = new List<TilemapPatternData>();
-
-        [Tooltip("초기 패턴 로딩 옵션")]
-        public PatternLoadingOptions LoadingOptions;
-    }
-
-    /// <summary>
-    /// 패턴 로딩 옵션
-    /// </summary>
-    [System.Serializable]
-    public struct PatternLoadingOptions
-    {
-        [Tooltip("SubScene과 함께 로드할지 여부")]
-        public bool LoadWithSubScene;
-
-        [Tooltip("SubScene과 함께 언로드할지 여부")]
-        public bool UnloadWithSubScene;
-
-        [Tooltip("로딩 우선순위 (높을수록 먼저 로드)")]
-        public int Priority;
-
-        public static PatternLoadingOptions Default => new PatternLoadingOptions
-        {
-            LoadWithSubScene = true,
-            UnloadWithSubScene = true,
-            Priority = 100
-        };
     }
 
     /// <summary>

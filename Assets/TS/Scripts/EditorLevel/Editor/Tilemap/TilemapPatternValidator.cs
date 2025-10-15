@@ -83,7 +83,7 @@ namespace TS.EditorLevel.Editor.Tilemap
             EditorGUILayout.LabelField("패턴 데이터 무결성 검사 도구", EditorStyles.miniLabel);
             EditorGUILayout.Space(5);
             EditorGUILayout.HelpBox(
-                "패턴 ID 중복, Addressable 참조, Connection 유효성 등을 자동으로 검증합니다.",
+                "패턴 ID 중복, Addressable 참조, 6방향 연결 유효성, 사다리 제약, Shape 규칙 등을 자동으로 검증합니다.",
                 MessageType.Info
             );
             EditorGUILayout.Space(10);
@@ -93,7 +93,7 @@ namespace TS.EditorLevel.Editor.Tilemap
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Registry:", GUILayout.Width(70));
-            _registry = (TilemapPatternRegistry)EditorGUILayout.ObjectField(
+            _registry = (TilemapPatternRegistry) EditorGUILayout.ObjectField(
                 _registry,
                 typeof(TilemapPatternRegistry),
                 false
@@ -258,11 +258,15 @@ namespace TS.EditorLevel.Editor.Tilemap
 
             AddResult(ValidationResultType.Info, $"검증 시작: {_registry.name}", _registry);
 
+            // 기본 검증
             ValidateDuplicateIDs();
             ValidateAddressableReferences();
-            ValidateConnections();
-            ValidateSubSceneMappings();
             ValidatePatternCategories();
+
+            // 6방향 시스템 검증
+            ValidateInitialPattern();
+            ValidateSubSceneNames();
+            ValidateConnectionPoints();
 
             int errorCount = _validationResults.Count(r => r.Type == ValidationResultType.Error);
             int warningCount = _validationResults.Count(r => r.Type == ValidationResultType.Warning);
@@ -319,7 +323,70 @@ namespace TS.EditorLevel.Editor.Tilemap
             }
         }
 
-        private void ValidateConnections()
+        /// <summary>
+        /// 초기 패턴 설정 검증
+        /// </summary>
+        private void ValidateInitialPattern()
+        {
+            // InitialPatternID가 설정되었는지 확인
+            if (string.IsNullOrEmpty(_registry.InitialPatternID))
+            {
+                AddResult(
+                    ValidationResultType.Error,
+                    "초기 패턴 미설정",
+                    "Registry의 InitialPatternID가 설정되지 않았습니다. 게임 시작 시 로드할 패턴을 지정해야 합니다.",
+                    _registry
+                );
+                return;
+            }
+
+            // InitialPatternID가 실제로 존재하는지 확인
+            var initialPattern = _registry.AllPatterns.FirstOrDefault(p => p != null && p.PatternID == _registry.InitialPatternID);
+            if (initialPattern == null)
+            {
+                AddResult(
+                    ValidationResultType.Error,
+                    $"초기 패턴 '{_registry.InitialPatternID}' 미존재",
+                    "InitialPatternID로 지정된 패턴이 AllPatterns에 없습니다.",
+                    _registry
+                );
+            }
+            else
+            {
+                AddResult(
+                    ValidationResultType.Info,
+                    $"✅ 초기 패턴: '{_registry.InitialPatternID}'",
+                    null,
+                    initialPattern
+                );
+            }
+        }
+
+        /// <summary>
+        /// 각 패턴의 SubSceneName 검증
+        /// </summary>
+        private void ValidateSubSceneNames()
+        {
+            foreach (var pattern in _registry.AllPatterns)
+            {
+                if (pattern == null) continue;
+
+                if (string.IsNullOrEmpty(pattern.SubSceneName))
+                {
+                    AddResult(
+                        ValidationResultType.Warning,
+                        $"패턴 '{pattern.PatternID}': SubSceneName 미설정",
+                        "이 패턴은 SubScene을 로드하지 않습니다. 의도된 것이 아니라면 설정하세요.",
+                        pattern
+                    );
+                }
+            }
+        }
+
+        /// <summary>
+        /// 6방향 연결 지점의 유효성 검증
+        /// </summary>
+        private void ValidateConnectionPoints()
         {
             foreach (var pattern in _registry.AllPatterns)
             {
@@ -327,69 +394,45 @@ namespace TS.EditorLevel.Editor.Tilemap
 
                 foreach (var connection in pattern.Connections)
                 {
-                    foreach (var nextPatternID in connection.ValidNextPatterns)
+                    // LocalPosition 범위 검증 (패턴 그리드 내에 있어야 함)
+                    if (connection.LocalPosition.x < 0 || connection.LocalPosition.x >= pattern.GridSize.x)
                     {
-                        if (string.IsNullOrEmpty(nextPatternID))
-                        {
-                            AddResult(
-                                ValidationResultType.Warning,
-                                $"패턴 '{pattern.PatternID}': 빈 연결 패턴 ID",
-                                $"{connection.Direction} 방향의 ValidNextPatterns에 빈 문자열이 있습니다.",
-                                pattern
-                            );
-                            continue;
-                        }
+                        AddResult(
+                            ValidationResultType.Error,
+                            $"패턴 '{pattern.PatternID}': LocalPosition X 범위 초과",
+                            $"{connection.Direction} 방향 연결 지점의 X={connection.LocalPosition.x}가 그리드 범위(0-{pattern.GridSize.x - 1})를 벗어났습니다.",
+                            pattern
+                        );
+                    }
 
-                        if (!_registry.AllPatterns.Any(p => p != null && p.PatternID == nextPatternID))
+                    if (connection.LocalPosition.y < 0 || connection.LocalPosition.y >= pattern.GridSize.y)
+                    {
+                        AddResult(
+                            ValidationResultType.Error,
+                            $"패턴 '{pattern.PatternID}': LocalPosition Y 범위 초과",
+                            $"{connection.Direction} 방향 연결 지점의 Y={connection.LocalPosition.y}가 그리드 범위(0-{pattern.GridSize.y - 1})를 벗어났습니다.",
+                            pattern
+                        );
+                    }
+
+                    // IsLadder 방향 제약 검증 (사다리는 대각선 방향만 가능)
+                    if (connection.IsLadder)
+                    {
+                        bool isDiagonal = connection.Direction == PatternDirection.TopLeft ||
+                                          connection.Direction == PatternDirection.TopRight ||
+                                          connection.Direction == PatternDirection.BottomLeft ||
+                                          connection.Direction == PatternDirection.BottomRight;
+
+                        if (!isDiagonal)
                         {
                             AddResult(
                                 ValidationResultType.Error,
-                                $"패턴 '{pattern.PatternID}': 존재하지 않는 연결 패턴 '{nextPatternID}'",
-                                $"{connection.Direction} 방향으로 연결된 패턴이 레지스트리에 없습니다.",
+                                $"패턴 '{pattern.PatternID}': 잘못된 사다리 방향",
+                                $"{connection.Direction} 방향은 수평이므로 IsLadder=true일 수 없습니다. 사다리는 대각선 방향만 가능합니다.",
                                 pattern
                             );
                         }
                     }
-                }
-            }
-        }
-
-        private void ValidateSubSceneMappings()
-        {
-            foreach (var mapping in _registry.InitialMappings)
-            {
-                if (string.IsNullOrEmpty(mapping.SubSceneName))
-                {
-                    AddResult(
-                        ValidationResultType.Warning,
-                        "SubScene 매핑: 빈 SubSceneName",
-                        "SubScene 이름이 비어있는 매핑이 있습니다.",
-                        null
-                    );
-                    continue;
-                }
-
-                foreach (var pattern in mapping.InitialPatterns)
-                {
-                    if (pattern == null)
-                    {
-                        AddResult(
-                            ValidationResultType.Warning,
-                            $"SubScene '{mapping.SubSceneName}': null 패턴 참조",
-                            "InitialPatterns에 null 참조가 있습니다.",
-                            null
-                        );
-                    }
-                }
-
-                if (mapping.InitialPatterns.Count == 0)
-                {
-                    AddResult(
-                        ValidationResultType.Info,
-                        $"SubScene '{mapping.SubSceneName}': 초기 패턴이 없습니다.",
-                        "이 SubScene은 타일맵 패턴을 로드하지 않습니다.",
-                        null
-                    );
                 }
             }
         }

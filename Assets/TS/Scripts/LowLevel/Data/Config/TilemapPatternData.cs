@@ -6,13 +6,13 @@ namespace TS.LowLevel.Data.Config
 {
     /// <summary>
     /// 타일맵 패턴 데이터 정의
-    /// 50x50 크기의 작은 타일맵 패턴을 정의하고 Addressables로 로드
+    /// 2D Side-Scrolling 게임용 패턴 시스템
     /// </summary>
     [CreateAssetMenu(fileName = "TilemapPattern", menuName = "TS/Tilemap/Pattern Data")]
     public class TilemapPatternData : ScriptableObject
     {
         [Header("Pattern Identification")]
-        [Tooltip("고유 패턴 ID (예: Forest_01, Cave_02)")]
+        [Tooltip("고유 패턴 ID")]
         public string PatternID;
 
         [Tooltip("패턴 표시 이름")]
@@ -22,16 +22,16 @@ namespace TS.LowLevel.Data.Config
         [TextArea(3, 5)]
         public string Description;
 
+        [Header("SubScene")]
+        [Tooltip("이 패턴이 속한 SubScene 이름")]
+        public string SubSceneName;
+
         [Header("Grid Configuration")]
-        [Tooltip("타일맵 그리드 크기 (기본: 50x50)")]
+        [Tooltip("타일맵 그리드 크기")]
         public Vector2Int GridSize = new Vector2Int(50, 50);
 
         [Tooltip("타일 크기 (월드 유닛)")]
         public Vector2 TileSize = new Vector2(1f, 1f);
-
-        [Header("Pattern Type")]
-        [Tooltip("패턴 타입 (Forest, Cave, Bridge 등)")]
-        public TilemapPatternType Type;
 
         [Header("Addressable Reference")]
         [Tooltip("타일맵 프리팹 Addressable 참조")]
@@ -52,38 +52,27 @@ namespace TS.LowLevel.Data.Config
         [Tooltip("다른 패턴과 연결 가능한 지점")]
         public List<ConnectionPoint> Connections = new List<ConnectionPoint>();
 
-        [Header("Visual Preview")]
-        [Tooltip("에디터 프리뷰용 썸네일")]
-        public Texture2D PreviewThumbnail;
-
         /// <summary>
         /// 패턴 월드 크기 계산 (GridSize * TileSize)
         /// </summary>
         public Vector2 WorldSize => new Vector2(GridSize.x * TileSize.x, GridSize.y * TileSize.y);
 
         /// <summary>
-        /// 특정 방향으로 연결 가능한 패턴 ID 목록 반환
+        /// 특정 방향의 활성화된 연결 지점이 있는지 확인
         /// </summary>
-        public List<string> GetValidNextPatterns(Direction direction)
+        public bool HasActiveConnection(PatternDirection direction)
         {
-            var connectionIndex = Connections.FindIndex(c => c.Direction == direction);
-
-            // 해당 방향의 연결이 없으면 빈 리스트 반환
-            if (connectionIndex < 0)
-                return new List<string>();
-
-            var connection = Connections[connectionIndex];
-
-            // ValidNextPatterns가 null이면 빈 리스트 반환
-            return connection.ValidNextPatterns ?? new List<string>();
+            return Connections.Exists(c => c.Direction == direction && c.IsActive);
         }
 
         /// <summary>
-        /// 특정 방향의 연결 지점이 있는지 확인
+        /// 특정 방향의 연결 지점 가져오기
         /// </summary>
-        public bool HasConnection(Direction direction)
+        public ConnectionPoint? GetConnection(PatternDirection direction)
         {
-            return Connections.Exists(c => c.Direction == direction);
+            int index = Connections.FindIndex(c => c.Direction == direction);
+            if (index < 0) return null;
+            return Connections[index];
         }
 
 #if UNITY_EDITOR
@@ -105,14 +94,24 @@ namespace TS.LowLevel.Data.Config
             if (GridSize.x <= 0) GridSize.x = 50;
             if (GridSize.y <= 0) GridSize.y = 50;
 
-            // Connections의 ValidNextPatterns 초기화 보장
+            // Connections 유효성 검증
             for (int i = 0; i < Connections.Count; i++)
             {
                 var connection = Connections[i];
-                if (connection.ValidNextPatterns == null)
+
+                // 사다리는 상/하 방향에만 허용
+                if (connection.IsLadder)
                 {
-                    connection.ValidNextPatterns = new List<string>();
-                    Connections[i] = connection; // struct이므로 다시 할당 필요
+                    bool isVertical = connection.Direction == PatternDirection.TopLeft ||
+                                      connection.Direction == PatternDirection.TopRight ||
+                                      connection.Direction == PatternDirection.BottomLeft ||
+                                      connection.Direction == PatternDirection.BottomRight;
+
+                    if (!isVertical)
+                    {
+                        connection.IsLadder = false;
+                        Connections[i] = connection;
+                    }
                 }
             }
         }
@@ -120,47 +119,37 @@ namespace TS.LowLevel.Data.Config
     }
 
     /// <summary>
-    /// 타일맵 패턴 타입
-    /// </summary>
-    public enum TilemapPatternType
-    {
-        Forest,      // 숲
-        Cave,        // 동굴
-        Bridge,      // 다리
-        Village,     // 마을
-        Dungeon,     // 던전
-        Boss,        // 보스방
-        Tutorial,    // 튜토리얼
-        Custom       // 커스텀
-    }
-
-    /// <summary>
-    /// 패턴 연결 지점 정의
+    /// 패턴 연결 지점 정의 (6방향)
     /// </summary>
     [System.Serializable]
     public struct ConnectionPoint
     {
-        [Tooltip("연결 방향")]
-        public Direction Direction;
+        [Tooltip("연결 방향 (6방향)")]
+        public PatternDirection Direction;
 
-        [Tooltip("연결 지점의 그리드 위치")]
-        public Vector2Int GridPosition;
-
-        [Tooltip("이 방향으로 연결 가능한 패턴 ID 목록")]
-        public List<string> ValidNextPatterns;
+        [Tooltip("패턴 내 정수형 연결 좌표")]
+        public Vector2Int LocalPosition;
 
         [Tooltip("연결 지점 활성화 여부")]
         public bool IsActive;
+
+        [Tooltip("사다리 연결 여부 (상/하 전용)")]
+        public bool IsLadder;
+
+        [Tooltip("연결된 패턴 ID (Port 연결)")]
+        public string LinkedPatternID;
     }
 
     /// <summary>
-    /// 4방향 정의
+    /// 6방향 정의 (2D Side-Scrolling)
     /// </summary>
-    public enum Direction
+    public enum PatternDirection
     {
-        North,  // 북 (위)
-        South,  // 남 (아래)
-        East,   // 동 (오른쪽)
-        West    // 서 (왼쪽)
+        TopLeft,     // 좌상단
+        TopRight,    // 우상단
+        Left,        // 좌
+        Right,       // 우
+        BottomLeft,  // 좌하단
+        BottomRight  // 우하단
     }
 }

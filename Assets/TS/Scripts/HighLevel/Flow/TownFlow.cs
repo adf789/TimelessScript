@@ -42,7 +42,7 @@ public class TownFlow : BaseFlow
 
         try
         {
-            await TilemapStreamingManager.Instance.LoadInitialPatterns(subSceneName);
+            await TilemapStreamingManager.Instance.LoadInitialPattern(subSceneName);
             Debug.Log($"[TownFlow] Tilemap patterns loaded successfully for {subSceneName}");
         }
         catch (System.Exception ex)

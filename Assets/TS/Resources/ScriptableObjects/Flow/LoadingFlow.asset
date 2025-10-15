@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: LoadingFlow
   m_EditorClassIdentifier: 
   uis: 
+  loadTilemapPatterns: 1
+  tilemapSubSceneName: BaseTown

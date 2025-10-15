@@ -180,47 +180,83 @@ namespace TS.HighLevel.Manager
         #region Pattern Loading
 
         /// <summary>
-        /// SubScene 초기 패턴 로드
+        /// 초기 패턴 로드 (단일 시작 패턴)
         /// </summary>
-        public async UniTask LoadInitialPatterns(string subSceneName)
+        public async UniTask<GameObject> LoadInitialPattern(string patternID, Vector2Int gridPosition = default)
         {
             if (!_isInitialized)
             {
                 Debug.LogError("[TilemapStreamingManager] Not initialized!");
-                return;
-            }
-
-            var patterns = patternRegistry.GetPatternsForSubScene(subSceneName);
-
-            if (patterns.Count == 0)
-            {
-                Debug.LogWarning($"[TilemapStreamingManager] No initial patterns found for SubScene: {subSceneName}");
-                return;
+                return null;
             }
 
             if (showDebugInfo)
             {
-                Debug.Log($"[TilemapStreamingManager] Loading {patterns.Count} initial patterns for {subSceneName}");
+                Debug.Log($"[TilemapStreamingManager] Loading initial pattern: {patternID} at {gridPosition}");
             }
 
-            // 모든 초기 패턴 로드
-            var loadTasks = new List<UniTask>();
-            for (int i = 0; i < patterns.Count; i++)
-            {
-                var pattern = patterns[i];
-                if (pattern == null) continue;
-
-                // 첫 번째 패턴은 원점(0,0), 나머지는 순차 배치
-                var gridOffset = i == 0 ? Vector2Int.zero : new Vector2Int(i, 0);
-                loadTasks.Add(LoadPattern(pattern.PatternID, gridOffset));
-            }
-
-            // 모든 로딩 완료 대기
-            await UniTask.WhenAll(loadTasks);
+            var instance = await LoadPattern(patternID, gridPosition);
 
             if (showDebugInfo)
             {
-                Debug.Log($"[TilemapStreamingManager] Initial patterns loaded: {_loadedPatterns.Count}");
+                Debug.Log($"[TilemapStreamingManager] Initial pattern loaded: {patternID}");
+            }
+
+            return instance;
+        }
+
+        /// <summary>
+        /// 노드 기반 패턴 로드
+        /// </summary>
+        public async UniTask<GameObject> LoadPatternNode(LowLevel.Data.Runtime.TilemapPatternNode node)
+        {
+            if (node == null)
+            {
+                Debug.LogError("[TilemapStreamingManager] Cannot load null node!");
+                return null;
+            }
+
+            if (node.IsLoaded && node.LoadedInstance != null)
+            {
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[TilemapStreamingManager] Node already loaded: {node.PatternID}");
+                }
+                return node.LoadedInstance;
+            }
+
+            // 패턴 로드
+            var instance = await LoadPattern(node.PatternID, node.WorldGridPosition);
+
+            if (instance != null)
+            {
+                node.IsLoaded = true;
+                node.LoadedInstance = instance;
+
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[TilemapStreamingManager] Node loaded: {node.PatternID} at {node.WorldGridPosition}");
+                }
+            }
+
+            return instance;
+        }
+
+        /// <summary>
+        /// 노드 언로드
+        /// </summary>
+        public async UniTask UnloadPatternNode(LowLevel.Data.Runtime.TilemapPatternNode node)
+        {
+            if (node == null) return;
+
+            await UnloadPattern(node.PatternID, node.WorldGridPosition);
+
+            node.IsLoaded = false;
+            node.LoadedInstance = null;
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"[TilemapStreamingManager] Node unloaded: {node.PatternID}");
             }
         }
 

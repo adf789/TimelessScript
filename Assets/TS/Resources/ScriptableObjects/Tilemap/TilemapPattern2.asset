@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9bb10135347b324da745d98067f8138, type: 3}
-  m_Name: TilemapPattern
+  m_Name: TilemapPattern2
   m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternData
-  PatternID: BaseTown
-  DisplayName: BaseTown
+  PatternID: 1000002
+  DisplayName: 1000002
   Description: 
   SubSceneName: TownActor
   GridSize: {x: 50, y: 50}
@@ -28,8 +28,9 @@ MonoBehaviour:
   UnloadDistance: 100
   PreloadDistance: 150
   Connections:
-  - Direction: 0
+  - Direction: 5
     LocalPosition: {x: 0, y: 0}
     IsActive: 1
     IsLadder: 0
-    LinkedPatternID: 1000002
+    LinkedPatternID: 1000001
+  PreviewThumbnail: {fileID: 0}

@@ -48,7 +48,7 @@ public class LoadingFlow : BaseFlow
         try
         {
             // 초기 패턴 로드
-            await TilemapStreamingManager.Instance.LoadInitialPatterns(subSceneName);
+            await TilemapStreamingManager.Instance.LoadInitialPattern(subSceneName);
 
             Debug.Log($"[LoadingFlow] Tilemap patterns loaded successfully for {subSceneName}");
         }
