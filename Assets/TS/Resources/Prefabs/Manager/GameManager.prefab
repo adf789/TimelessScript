@@ -97,10 +97,10 @@ MonoBehaviour:
   targetCamera: {fileID: 8340294928188985847}
   maxLoadedPatterns: 9
   updateInterval: 0.5
-  enableAutoStreaming: 1
+  enableAutoStreaming: 0
   loadBufferSize: 20
+  unloadMargin: 10
   maxConcurrentLoads: 3
-  usePriority: 1
   showDebugInfo: 1
   debugColor: {r: 0, g: 1, b: 0, a: 1}
   showCameraBounds: 1

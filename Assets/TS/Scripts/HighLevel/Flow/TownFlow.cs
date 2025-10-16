@@ -16,11 +16,8 @@ public class TownFlow : BaseFlow
         // 1. Scene 로드
         await OpenScene();
 
-        // 2. Tilemap 패턴 로드 (옵션)
-        if (loadTilemapPatterns)
-        {
-            await LoadTilemapPatterns();
-        }
+        // 2. Tilemap 패턴 로드
+        await LoadTilemapPatterns();
 
         // 3. UI 오픈
         OpenUI();
@@ -34,21 +31,7 @@ public class TownFlow : BaseFlow
             return;
         }
 
-        string subSceneName = string.IsNullOrEmpty(tilemapSubSceneName)
-            ? State.ToString()
-            : tilemapSubSceneName;
-
-        Debug.Log($"[TownFlow] Loading tilemap patterns for SubScene: {subSceneName}");
-
-        try
-        {
-            await TilemapStreamingManager.Instance.LoadInitialPattern(subSceneName);
-            Debug.Log($"[TownFlow] Tilemap patterns loaded successfully for {subSceneName}");
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[TownFlow] Failed to load tilemap patterns: {ex.Message}");
-        }
+        TilemapStreamingManager.Instance.SetEnableAutoStreaming(true);
     }
 
     public override async UniTask Exit()

@@ -5,6 +5,7 @@
 ## Project Description
 - 2D Side-Scrolling Slmulation
 - Control Mouse or Touch
+- Mobile Environment
 
 ## 📋 Quick Reference
 

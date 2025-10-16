@@ -35,7 +35,7 @@ namespace TS.HighLevel.Manager
         [Header("Streaming Settings")]
         [SerializeField] private int maxLoadedPatterns = 9;
         [SerializeField] private float updateInterval = 0.5f;
-        [SerializeField] private bool enableAutoStreaming = true;
+        [SerializeField] private bool enableAutoStreaming = false;
         [SerializeField] private float loadBufferSize = 20f;
         [SerializeField] private float unloadMargin = 10f; // 언로드 여유 거리 (히스테리시스)
 
@@ -172,7 +172,7 @@ namespace TS.HighLevel.Manager
 
         public void SetCameraPosition(Vector2 position) => _cameraPosition = position;
         public void SetCameraSize(float size) => _lastCameraSize = size;
-
+        public void SetEnableAutoStreaming(bool value) => enableAutoStreaming = value;
         #endregion
 
         #region Camera Update
@@ -213,53 +213,6 @@ namespace TS.HighLevel.Manager
             UpdateStreamingByCameraView().Forget();
             ProcessLoadQueue().Forget();
             _lastUpdateTime = Time.time;
-        }
-
-        #endregion
-
-        #region Pattern Loading - Public API
-
-        public async UniTask<GameObject> LoadInitialPattern(string patternID, Vector2Int gridPosition = default)
-        {
-            if (!_isInitialized)
-            {
-                Debug.LogError("[TilemapStreamingManager] Not initialized!");
-                return null;
-            }
-
-            LogDebug($"Loading initial pattern: {patternID} at {gridPosition}");
-
-            var instance = await LoadPattern(patternID, gridPosition);
-
-            LogDebug($"Initial pattern loaded: {patternID}");
-
-            return instance;
-        }
-
-        public async UniTask<GameObject> LoadPatternNode(LowLevel.Data.Runtime.TilemapPatternNode node)
-        {
-            if (node == null)
-            {
-                Debug.LogError("[TilemapStreamingManager] Cannot load null node!");
-                return null;
-            }
-
-            if (node.IsLoaded && node.LoadedInstance != null)
-            {
-                LogDebug($"Node already loaded: {node.PatternID}");
-                return node.LoadedInstance;
-            }
-
-            var instance = await LoadPattern(node.PatternID, node.WorldGridPosition);
-
-            if (instance != null)
-            {
-                node.IsLoaded = true;
-                node.LoadedInstance = instance;
-                LogDebug($"Node loaded: {node.PatternID} at {node.WorldGridPosition}");
-            }
-
-            return instance;
         }
 
         #endregion
@@ -474,7 +427,8 @@ namespace TS.HighLevel.Manager
 
             try
             {
-                await UnloadSubScene(loaded, key);
+                // 서브씬 언로드 제외
+                // await UnloadSubScene(loaded, key);
                 UnloadTilemap(loaded);
                 SaveToHistory(loaded, key);
 
@@ -584,7 +538,7 @@ namespace TS.HighLevel.Manager
         /// </summary>
         public async UniTask UpdateStreamingByCameraView()
         {
-            if (!_isInitialized || targetCamera == null) return;
+            if (!_isInitialized || targetCamera == null || !enableAutoStreaming) return;
 
             SetCameraPosition(targetCamera.transform.position);
 
@@ -595,16 +549,16 @@ namespace TS.HighLevel.Manager
             await UnloadPatternsOutsideCameraView(unloadBounds);
         }
 
-        private async UniTask LoadPatternsInCameraView(Bounds cameraBounds)
+        private async UniTask LoadPatternsInCameraView(Rect cameraRect)
         {
             // 로드된 패턴이 없으면 히스토리에서 복구
             if (_loadedPatterns.Count == 0)
             {
-                await LoadPatternFromHistory(cameraBounds);
+                await LoadPatternFromHistory(cameraRect);
                 return;
             }
 
-            var patternsToLoad = FindNeighborPatternsToLoad(cameraBounds);
+            var patternsToLoad = FindNeighborPatternsToLoad(cameraRect);
 
             foreach (var (patternID, offset) in patternsToLoad)
             {
@@ -617,7 +571,7 @@ namespace TS.HighLevel.Manager
             }
         }
 
-        private List<(string patternID, Vector2Int offset)> FindNeighborPatternsToLoad(Bounds cameraBounds)
+        private List<(string patternID, Vector2Int offset)> FindNeighborPatternsToLoad(Rect cameraRect)
         {
             var result = new List<(string, Vector2Int)>();
             var check = new HashSet<string>();
@@ -645,7 +599,7 @@ namespace TS.HighLevel.Manager
                     }
 
                     var patternCenter = CalculatePatternCenter(pattern, neighborOffset);
-                    if (cameraBounds.Contains(patternCenter))
+                    if (cameraRect.Contains(patternCenter))
                     {
                         result.Add((connection.LinkedPatternID, neighborOffset));
                     }
@@ -655,13 +609,13 @@ namespace TS.HighLevel.Manager
             return result;
         }
 
-        private async UniTask UnloadPatternsOutsideCameraView(Bounds cameraBounds)
+        private async UniTask UnloadPatternsOutsideCameraView(Rect cameraRect)
         {
             var patternsToUnload = new List<LoadedPattern>();
 
             foreach (var loaded in _loadedPatterns.Values)
             {
-                if (ShouldUnloadByCamera(loaded, cameraBounds))
+                if (ShouldUnloadByCamera(loaded, cameraRect))
                 {
                     patternsToUnload.Add(loaded);
                 }
@@ -682,15 +636,15 @@ namespace TS.HighLevel.Manager
 
         #region History Recovery
 
-        private async UniTask LoadPatternFromHistory(Bounds cameraBounds)
+        private async UniTask LoadPatternFromHistory(Rect cameraRect)
         {
             if (_unloadedPatternHistory.Count == 0)
             {
-                await LoadInitialPatternFallback(cameraBounds);
+                await LoadInitialPatternFallback(cameraRect);
                 return;
             }
 
-            var closestHistory = FindClosestHistoryInBounds(cameraBounds);
+            var closestHistory = FindClosestHistoryInBounds(cameraRect);
 
             if (closestHistory != null)
             {
@@ -699,11 +653,11 @@ namespace TS.HighLevel.Manager
             }
             else
             {
-                await LoadInitialPatternFallback(cameraBounds);
+                await LoadInitialPatternFallback(cameraRect);
             }
         }
 
-        private PatternHistory FindClosestHistoryInBounds(Bounds cameraBounds)
+        private PatternHistory FindClosestHistoryInBounds(Rect cameraRect)
         {
             PatternHistory closest = null;
             float closestDistance = float.MaxValue;
@@ -715,7 +669,7 @@ namespace TS.HighLevel.Manager
 
                 var patternCenter = CalculatePatternCenter(pattern, history.GridOffset);
 
-                if (cameraBounds.Contains(patternCenter))
+                if (cameraRect.Contains(patternCenter))
                 {
                     float distance = Vector3.Distance(_cameraPosition, patternCenter);
                     if (distance < closestDistance)
@@ -729,7 +683,7 @@ namespace TS.HighLevel.Manager
             return closest;
         }
 
-        private async UniTask LoadInitialPatternFallback(Bounds cameraBounds)
+        private async UniTask LoadInitialPatternFallback(Rect cameraRect)
         {
             if (string.IsNullOrEmpty(patternRegistry.InitialPatternID))
             {
@@ -747,14 +701,14 @@ namespace TS.HighLevel.Manager
 
             var initialPatternCenter = CalculatePatternCenter(initialPattern, Vector2Int.zero);
 
-            if (cameraBounds.Contains(initialPatternCenter))
+            if (cameraRect.Contains(initialPatternCenter))
             {
                 LogDebug($"Loading fallback initial pattern: {patternRegistry.InitialPatternID}");
                 await LoadPattern(patternRegistry.InitialPatternID, Vector2Int.zero);
             }
             else
             {
-                LogDebug($"Initial pattern is outside camera bounds ({initialPatternCenter}). Skipping load.");
+                LogDebug($"Initial pattern is outside camera rect ({initialPatternCenter}). Skipping load.");
             }
         }
 
@@ -823,10 +777,15 @@ namespace TS.HighLevel.Manager
             );
         }
 
+        private Rect CalculatePatternBounds(TilemapPatternData pattern, Vector2Int gridOffset)
+        {
+            return new Rect(CalculatePatternCenter(pattern, gridOffset), pattern.WorldSize);
+        }
+
         /// <summary>
         /// 로드 범위 계산 (카메라 + loadBufferSize)
         /// </summary>
-        private Bounds GetCameraBounds()
+        private Rect GetCameraBounds()
         {
             return GetCameraBoundsWithBuffer(loadBufferSize);
         }
@@ -835,21 +794,21 @@ namespace TS.HighLevel.Manager
         /// 언로드 범위 계산 (카메라 + loadBufferSize + unloadMargin)
         /// 히스테리시스를 통해 경계에서 떨림 방지
         /// </summary>
-        private Bounds GetCameraUnloadBounds()
+        private Rect GetCameraUnloadBounds()
         {
             return GetCameraBoundsWithBuffer(loadBufferSize + unloadMargin);
         }
 
-        private Bounds GetCameraBoundsWithBuffer(float bufferSize)
+        private Rect GetCameraBoundsWithBuffer(float bufferSize)
         {
             if (targetCamera == null || !targetCamera.orthographic)
-                return new Bounds(_cameraPosition, Vector3.one * DEFAULT_CAMERA_BOUNDS_SIZE);
+                return new Rect(_cameraPosition, Vector3.one * DEFAULT_CAMERA_BOUNDS_SIZE);
 
             float height = targetCamera.orthographicSize * CAMERA_SIZE_MULTIPLIER;
             float width = height * targetCamera.aspect;
             var size = new Vector3(width + bufferSize * CAMERA_SIZE_MULTIPLIER, height + bufferSize * CAMERA_SIZE_MULTIPLIER, 0f);
 
-            return new Bounds(_cameraPosition, size);
+            return new Rect(_cameraPosition, size);
         }
 
         private float GetDistanceToPattern(LoadedPattern pattern, Vector3 position)
@@ -858,7 +817,7 @@ namespace TS.HighLevel.Manager
             return Vector3.Distance(position, patternCenter);
         }
 
-        private bool ShouldUnloadByCamera(LoadedPattern pattern, Bounds cameraBounds)
+        private bool ShouldUnloadByCamera(LoadedPattern pattern, Rect cameraRect)
         {
             var patternCenter = CalculatePatternCenter(pattern.PatternData, pattern.GridOffset);
             return !cameraBounds.Contains(patternCenter);
