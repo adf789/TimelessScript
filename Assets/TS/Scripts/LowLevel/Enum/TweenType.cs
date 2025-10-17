@@ -1,11 +1,8 @@
-namespace TS.LowLevel
+public enum TweenType
 {
-    public enum TweenType
-    {
-        None,
-        Position,
-        Rotation,
-        Scale,
-        Alpha
-    }
+    None,
+    Position,
+    Rotation,
+    Scale,
+    Alpha
 }

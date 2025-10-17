@@ -16,21 +16,32 @@ MonoBehaviour:
   DisplayName: 1000002
   Description: 
   SubSceneName: TownActor
-  GridSize: {x: 50, y: 50}
-  TileSize: {x: 1, y: 1}
+  gridSize: {x: 10, y: 10}
   TilemapPrefab:
     m_AssetGUID: 
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  SubScene:
+    Id:
+      GlobalId:
+        SceneObjectIdentifier0: 0
+        SceneObjectIdentifier1: 0
+        AssetGUID:
+          Value:
+            x: 0
+            y: 0
+            z: 0
+            w: 0
+        IdentifierType: 0
+      GenerationType: 0
   LoadPriority: 50
   UnloadDistance: 100
   PreloadDistance: 150
   Connections:
   - Direction: 5
-    LocalPosition: {x: 0, y: 0}
+    Position: 0
     IsActive: 1
     IsLadder: 0
     LinkedPatternID: 1000001
-  PreviewThumbnail: {fileID: 0}

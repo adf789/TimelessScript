@@ -16,8 +16,7 @@ MonoBehaviour:
   DisplayName: BaseTown
   Description: 
   SubSceneName: TownActor
-  GridSize: {x: 50, y: 50}
-  TileSize: {x: 1, y: 1}
+  gridSize: {x: 10, y: 10}
   TilemapPrefab:
     m_AssetGUID: adc2087ca96785c449e008188386ce26
     m_SubObjectName: 
@@ -42,7 +41,7 @@ MonoBehaviour:
   PreloadDistance: 150
   Connections:
   - Direction: 0
-    LocalPosition: {x: 0, y: 0}
+    Position: 0
     IsActive: 1
     IsLadder: 0
     LinkedPatternID: 1000002
