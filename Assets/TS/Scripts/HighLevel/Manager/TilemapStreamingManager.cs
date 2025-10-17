@@ -60,7 +60,7 @@ namespace TS.HighLevel.Manager
         private readonly HashSet<string> _loadingKeys = new HashSet<string>();
 
         // 카메라 추적
-        private Vector3 _cameraPosition;
+        private Vector2 _cameraPosition;
         private float _lastCameraSize;
         private float _lastUpdateTime;
 
@@ -348,7 +348,7 @@ namespace TS.HighLevel.Manager
                 return null;
             }
 
-            instance.transform.position = CalculateWorldPosition(patternData, gridOffset);
+            instance.transform.position = CalculatePatternCenter(patternData, gridOffset);
             instance.name = $"TilemapPattern_{key}";
 
             return instance;
@@ -497,7 +497,7 @@ namespace TS.HighLevel.Manager
             LogDebug("All patterns unloaded");
         }
 
-        public async UniTask UnloadDistantPatterns(Vector3 position, int countToUnload = 1)
+        public async UniTask UnloadDistantPatterns(Vector2 position, int countToUnload = 1)
         {
             var distantPatterns = FindDistantPatterns(position, countToUnload);
 
@@ -507,7 +507,7 @@ namespace TS.HighLevel.Manager
             }
         }
 
-        private List<LoadedPattern> FindDistantPatterns(Vector3 position, int count)
+        private List<LoadedPattern> FindDistantPatterns(Vector2 position, int count)
         {
             var patterns = new List<LoadedPattern>(_loadedPatterns.Values);
             patterns.Sort((a, b) =>
@@ -542,11 +542,11 @@ namespace TS.HighLevel.Manager
 
             SetCameraPosition(targetCamera.transform.position);
 
-            var loadBounds = GetCameraBounds();
-            var unloadBounds = GetCameraUnloadBounds();
+            var loadRect = GetCameraRect();
+            var unloadRect = GetCameraUnloadRect();
 
-            await LoadPatternsInCameraView(loadBounds);
-            await UnloadPatternsOutsideCameraView(unloadBounds);
+            await LoadPatternsInCameraView(loadRect);
+            await UnloadPatternsOutsideCameraView(unloadRect);
         }
 
         private async UniTask LoadPatternsInCameraView(Rect cameraRect)
@@ -667,11 +667,11 @@ namespace TS.HighLevel.Manager
                 var pattern = patternRegistry.GetPattern(history.PatternID);
                 if (pattern == null) continue;
 
-                var patternCenter = CalculatePatternCenter(pattern, history.GridOffset);
+                var patternRect = CalculatePatternRect(pattern, history.GridOffset);
 
-                if (cameraRect.Contains(patternCenter))
+                if (Utility.Geometry.IsAABBOverlap(in cameraRect, in patternRect))
                 {
-                    float distance = Vector3.Distance(_cameraPosition, patternCenter);
+                    float distance = Vector3.SqrMagnitude(_cameraPosition - patternRect.center);
                     if (distance < closestDistance)
                     {
                         closestDistance = distance;
@@ -759,33 +759,26 @@ namespace TS.HighLevel.Manager
             };
         }
 
-        private Vector3 CalculatePatternCenter(TilemapPatternData pattern, Vector2Int gridOffset)
+        private Vector2 CalculatePatternCenter(TilemapPatternData pattern, Vector2Int gridOffset)
         {
-            return new Vector3(
-                gridOffset.x * pattern.WorldSize.x + pattern.WorldSize.x * 0.5f,
-                gridOffset.y * pattern.WorldSize.y + pattern.WorldSize.y * 0.5f,
-                0
-            );
-        }
-
-        private Vector3 CalculateWorldPosition(TilemapPatternData pattern, Vector2Int gridOffset)
-        {
-            return new Vector3(
+            return new Vector2(
                 gridOffset.x * pattern.WorldSize.x,
-                gridOffset.y * pattern.WorldSize.y,
-                0
+                gridOffset.y * pattern.WorldSize.y
             );
         }
 
-        private Rect CalculatePatternBounds(TilemapPatternData pattern, Vector2Int gridOffset)
+        private Rect CalculatePatternRect(TilemapPatternData pattern, Vector2Int gridOffset)
         {
-            return new Rect(CalculatePatternCenter(pattern, gridOffset), pattern.WorldSize);
+            float x = gridOffset.x * pattern.WorldSize.x - pattern.WorldSize.x * 0.5f;
+            float y = gridOffset.y * pattern.WorldSize.y - pattern.WorldSize.y * 0.5f;
+
+            return new Rect(x, y, pattern.WorldSize.x, pattern.WorldSize.y);
         }
 
         /// <summary>
         /// 로드 범위 계산 (카메라 + loadBufferSize)
         /// </summary>
-        private Rect GetCameraBounds()
+        private Rect GetCameraRect()
         {
             return GetCameraBoundsWithBuffer(loadBufferSize);
         }
@@ -794,7 +787,7 @@ namespace TS.HighLevel.Manager
         /// 언로드 범위 계산 (카메라 + loadBufferSize + unloadMargin)
         /// 히스테리시스를 통해 경계에서 떨림 방지
         /// </summary>
-        private Rect GetCameraUnloadBounds()
+        private Rect GetCameraUnloadRect()
         {
             return GetCameraBoundsWithBuffer(loadBufferSize + unloadMargin);
         }
@@ -802,25 +795,24 @@ namespace TS.HighLevel.Manager
         private Rect GetCameraBoundsWithBuffer(float bufferSize)
         {
             if (targetCamera == null || !targetCamera.orthographic)
-                return new Rect(_cameraPosition, Vector3.one * DEFAULT_CAMERA_BOUNDS_SIZE);
+                return CreateRect(_cameraPosition, Vector3.one * DEFAULT_CAMERA_BOUNDS_SIZE);
 
             float height = targetCamera.orthographicSize * CAMERA_SIZE_MULTIPLIER;
             float width = height * targetCamera.aspect;
-            var size = new Vector3(width + bufferSize * CAMERA_SIZE_MULTIPLIER, height + bufferSize * CAMERA_SIZE_MULTIPLIER, 0f);
-
-            return new Rect(_cameraPosition, size);
+            var size = new Vector3(width + bufferSize * CAMERA_SIZE_MULTIPLIER, height + bufferSize * CAMERA_SIZE_MULTIPLIER);
+            return CreateRect(_cameraPosition, size);
         }
 
-        private float GetDistanceToPattern(LoadedPattern pattern, Vector3 position)
+        private float GetDistanceToPattern(LoadedPattern pattern, Vector2 position)
         {
             var patternCenter = CalculatePatternCenter(pattern.PatternData, pattern.GridOffset);
-            return Vector3.Distance(position, patternCenter);
+            return Vector2.SqrMagnitude(position - patternCenter);
         }
 
         private bool ShouldUnloadByCamera(LoadedPattern pattern, Rect cameraRect)
         {
-            var patternCenter = CalculatePatternCenter(pattern.PatternData, pattern.GridOffset);
-            return !cameraBounds.Contains(patternCenter);
+            var patternRect = CalculatePatternRect(pattern.PatternData, pattern.GridOffset);
+            return !Utility.Geometry.IsAABBOverlap(in cameraRect, in patternRect);
         }
 
         #endregion
@@ -845,6 +837,9 @@ namespace TS.HighLevel.Manager
             var key = GetPatternKey(patternID, gridOffset);
             return _loadedPatterns.ContainsKey(key);
         }
+
+        public Rect CreateRect(in Vector2 position, in Vector2 size)
+        => new Rect(position - size * 0.5f, size);
 
         private void LogDebug(string message)
         {
@@ -896,14 +891,14 @@ namespace TS.HighLevel.Manager
             Gizmos.DrawWireCube(_cameraPosition, new Vector3(width, height, 0f));
 
             // 로드 범위 (버퍼 포함)
-            var loadBounds = GetCameraBounds();
+            var loadRect = GetCameraRect();
             Gizmos.color = new Color(0f, 1f, 0f, 0.3f); // 녹색
-            Gizmos.DrawWireCube(loadBounds.center, loadBounds.size);
+            Gizmos.DrawWireCube(loadRect.center, loadRect.size);
 
             // 언로드 범위 (버퍼 + 마진 포함)
-            var unloadBounds = GetCameraUnloadBounds();
+            var unloadRect = GetCameraUnloadRect();
             Gizmos.color = new Color(1f, 0.5f, 0f, 0.2f); // 주황색
-            Gizmos.DrawWireCube(unloadBounds.center, unloadBounds.size);
+            Gizmos.DrawWireCube(unloadRect.center, unloadRect.size);
         }
 
         #endregion

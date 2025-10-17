@@ -16,23 +16,24 @@ namespace Utility
         /// <param name="minB">사각형 B의 최소 지점 (좌측 하단)</param>
         /// <param name="maxB">사각형 B의 최대 지점 (우측 상단)</param>
         /// <returns>겹치면 true, 그렇지 않으면 false</returns>
-        public static bool IsAABBOverlap(float2 minA, float2 maxA, float2 minB, float2 maxB)
+        public static bool IsAABBOverlap(in float2 minA, in float2 maxA, in float2 minB, in float2 maxB)
+        => IsAABBOverlap(minA.x, minA.y, maxA.x, maxA.y, minB.x, minB.y, maxB.x, maxB.y);
+
+        public static bool IsAABBOverlap(in Rect a, in Rect b)
+        => IsAABBOverlap(a.xMin, a.yMin, a.xMax, a.yMax, b.xMin, b.yMin, b.xMax, b.yMax);
+
+        private static bool IsAABBOverlap(float minX1, float minY1, float maxX1, float maxY1, float minX2, float minY2, float maxX2, float maxY2)
         {
-            // A의 오른쪽 끝이 B의 왼쪽 끝보다 왼쪽에 있거나,
-            // A의 왼쪽 끝이 B의 오른쪽 끝보다 오른쪽에 있으면 겹치지 않음.
-            if (maxA.x < minB.x || minA.x > maxB.x)
+            if (maxX1 < minX2 || minX1 > maxX2)
             {
                 return false;
             }
 
-            // A의 위쪽 끝이 B의 아래쪽 끝보다 아래에 있거나,
-            // A의 아래쪽 끝이 B의 위쪽 끝보다 위에 있으면 겹치지 않음.
-            if (maxA.y < minB.y || minA.y > maxB.y)
+            if (maxY1 < minY2 || minY1 > maxY2)
             {
                 return false;
             }
 
-            // 위의 모든 조건을 통과하면 겹치는 것임.
             return true;
         }
 
