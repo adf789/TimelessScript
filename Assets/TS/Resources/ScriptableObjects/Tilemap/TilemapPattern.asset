@@ -42,6 +42,3 @@ MonoBehaviour:
   Connections:
   - Direction: 0
     Position: 0
-    IsActive: 1
-    IsLadder: 0
-    LinkedPatternID: 1000002

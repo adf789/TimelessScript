@@ -9,15 +9,11 @@ Unity DOTS (ECS, Burst, Job System)를 활용한 고성능 2D 시뮬레이션 �
 ## 기술 스택
 
 **Core**
-- Unity 6000.2.0b12
-- Unity Entities (DOTS) 1.3.14
+- Unity 6000.2.7f2
+- Unity Entities (DOTS)
 - Burst Compiler
 - Job System
 - UniTask
-
-**Rendering**
-- Universal Render Pipeline 17.2.0
-- Custom 2D Physics System
 
 ## 아키텍처
 
@@ -34,9 +30,9 @@ LowLevel        데이터 레이어 (Component, Enum, Model)
 ```
 
 **계층별 주요 구성:**
-- **LowLevel**: 27개 IComponentData, 열거형, 데이터 모델
-- **MiddleLevel**: 21개 Burst Job (물리, 스폰, 행동, 애니메이션)
-- **HighLevel**: 9개 ECS System, Manager 클래스, Flow 관리
+- **LowLevel**: IComponentData, 열거형, 데이터 모델
+- **MiddleLevel**: Burst Job (물리, 스폰, 행동, 애니메이션)
+- **HighLevel**: ECS System, Manager 클래스, Flow 관리
 - **EditorLevel**: 커스텀 에디터 윈도우 및 검증 도구
 
 ## 핵심 시스템
@@ -74,7 +70,6 @@ Assets/TS/
 │   ├── HighLevel/          System 및 Manager
 │   └── EditorLevel/        에디터 도구
 ├── Resources/              리소스 파일
-└── Prefabs/               프리팹 에셋
 ```
 
 ## 성능 최적화
@@ -99,21 +94,14 @@ Intro (인트로) → Loading (리소스 로드) → Town (메인 게임)
 ```
 
 **주요 Manager:**
-- GameManager: 게임 전역 관리, 카메라 드래그
+- GameManager: 게임 전역 관리
 - FlowManager: 게임 상태 전환 (GameState.Intro/Loading/Town)
+- CameraManager: 카메라 드래그
 
 ## 개발 환경
 
 **필수 요구사항:**
-- Unity 6000.2.0b12 이상
-- .NET 9.0
-- Visual Studio 2022 또는 Rider
-
-**설치:**
-1. Unity 6000.2.0b12 설치
-2. 프로젝트 열기
-3. UniTask 자동 설치 확인
-4. Town 씬 실행
+- Unity 6000.2.7f2 이상
 
 ## 주요 컴포넌트
 
@@ -153,24 +141,6 @@ Simulation:
     ↓
   AnimationSystem (애니메이션)
 ```
-
-## 에디터 도구
-
-**Scene Manager Window** (Ctrl+Alt+S)
-- 모든 씬 목록 및 관리
-- 씬 열기/Play 모드 시작
-- Build Settings 필터링
-
-**Spawn System Validator**
-- 스폰 시스템 검증
-- 샘플 설정 생성
-
-## 프로젝트 통계
-
-- ECS Systems: 9개
-- Burst Jobs: 21개
-- IComponentData: 27개
-- 총 스크립트: 200+개
 
 ## 참고 자료
 
