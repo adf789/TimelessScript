@@ -352,22 +352,22 @@ public class TilemapPatternValidator : EditorWindow
             foreach (var connection in pattern.Connections)
             {
                 // LocalPosition 범위 검증 (패턴 그리드 내에 있어야 함)
-                if (connection.Position < 0 || connection.Position >= pattern.GridSize.x)
+                if (connection.Position < 0 || connection.Position >= _registry.GridSize.x)
                 {
                     AddResult(
                         ValidationResultType.Error,
                         $"패턴 '{pattern.PatternID}': LocalPosition X 범위 초과",
-                        $"{connection.Direction} 방향 연결 지점의 X={connection.Position}가 그리드 범위(0-{pattern.GridSize.x - 1})를 벗어났습니다.",
+                        $"{connection.Direction} 방향 연결 지점의 X={connection.Position}가 그리드 범위(0-{_registry.GridSize.x - 1})를 벗어났습니다.",
                         pattern
                     );
                 }
 
-                if (connection.Position < 0 || connection.Position >= pattern.GridSize.y)
+                if (connection.Position < 0 || connection.Position >= _registry.GridSize.y)
                 {
                     AddResult(
                         ValidationResultType.Error,
                         $"패턴 '{pattern.PatternID}': LocalPosition Y 범위 초과",
-                        $"{connection.Direction} 방향 연결 지점의 Y={connection.Position}가 그리드 범위(0-{pattern.GridSize.y - 1})를 벗어났습니다.",
+                        $"{connection.Direction} 방향 연결 지점의 Y={connection.Position}가 그리드 범위(0-{_registry.GridSize.y - 1})를 벗어났습니다.",
                         pattern
                     );
                 }

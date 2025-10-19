@@ -19,7 +19,6 @@ public class TilemapPatternPreview : EditorWindow
     private PreviewPattern _selectedPattern;
 
     private bool _showGrid = true;
-    private bool _showConnections = true;
     private bool _showLabels = true;
     private bool _enableSnapping = true;
 
@@ -112,7 +111,6 @@ public class TilemapPatternPreview : EditorWindow
         EditorGUILayout.LabelField("Preview Options", EditorStyles.boldLabel);
 
         _showGrid = EditorGUILayout.Toggle("Show Grid", _showGrid);
-        _showConnections = EditorGUILayout.Toggle("Show Connections", _showConnections);
         _showLabels = EditorGUILayout.Toggle("Show Labels", _showLabels);
         _enableSnapping = EditorGUILayout.Toggle("Enable Snapping", _enableSnapping);
 
@@ -244,27 +242,18 @@ public class TilemapPatternPreview : EditorWindow
         {
             DrawPatternInScene(preview, preview == _selectedPattern);
         }
-
-        // 연결 지점 그리기
-        if (_showConnections)
-        {
-            foreach (var preview in _previewPatterns)
-            {
-                DrawConnectionsInScene(preview);
-            }
-        }
     }
 
     private void DrawPatternInScene(PreviewPattern preview, bool isSelected)
     {
         var data = preview.Data;
         var worldPos = new Vector3(
-            _previewOffset.x + preview.GridOffset.x * data.GridSize.x * _previewScale,
-            _previewOffset.y + preview.GridOffset.y * data.GridSize.y * _previewScale,
+            _previewOffset.x + preview.GridOffset.x * _registry.GridSize.x * _previewScale,
+            _previewOffset.y + preview.GridOffset.y * _registry.GridSize.y * _previewScale,
             0
         );
 
-        var size = new Vector3(data.GridSize.x * _previewScale, data.GridSize.y * _previewScale, 0);
+        var size = new Vector3(_registry.GridSize.x * _previewScale, _registry.GridSize.y * _previewScale, 0);
 
         // 패턴 경계 그리기 (Shape별 색상)
         if (isSelected)
@@ -281,9 +270,9 @@ public class TilemapPatternPreview : EditorWindow
         if (_showGrid)
         {
             Handles.color = _gridColor;
-            Vector3 offset = new Vector3(-data.GridSize.x * 0.5f, -data.GridSize.y * 0.5f, 0f);
+            Vector3 offset = new Vector3(-_registry.GridSize.x * 0.5f, -_registry.GridSize.y * 0.5f, 0f);
             // 가로선
-            for (int y = 0; y <= data.GridSize.y; y++)
+            for (int y = 0; y <= _registry.GridSize.y; y++)
             {
                 Vector3 start = worldPos + new Vector3(0, y * _previewScale, 0);
                 Vector3 end = worldPos + new Vector3(size.x, y * _previewScale, 0);
@@ -294,7 +283,7 @@ public class TilemapPatternPreview : EditorWindow
                 Handles.DrawLine(start, end);
             }
             // 세로선
-            for (int x = 0; x <= data.GridSize.x; x++)
+            for (int x = 0; x <= _registry.GridSize.x; x++)
             {
                 Vector3 start = worldPos + new Vector3(x * _previewScale, 0, 0);
                 Vector3 end = worldPos + new Vector3(x * _previewScale, size.y, 0);
@@ -309,111 +298,8 @@ public class TilemapPatternPreview : EditorWindow
         // 레이블 그리기
         if (_showLabels)
         {
-            Handles.Label(worldPos + size * 0.5f, $"{data.PatternID}\n{data.GridSize.x}x{data.GridSize.y}");
+            Handles.Label(worldPos + size * 0.5f, $"{data.PatternID}\n{_registry.GridSize.x}x{_registry.GridSize.y}");
         }
-    }
-
-    private void DrawConnectionsInScene(PreviewPattern preview)
-    {
-        var data = preview.Data;
-        var worldPos = new Vector3(
-            _previewOffset.x + preview.GridOffset.x * data.GridSize.x * _previewScale,
-            _previewOffset.y + preview.GridOffset.y * data.GridSize.y * _previewScale,
-            0
-        );
-
-        foreach (var connection in data.Connections)
-        {
-            // 연결 포인트 지점 위치
-            var position = GetConnectionPosition(in connection, in data);
-
-            // LocalPosition 기반 연결 지점 계산
-            Vector3 connectionPoint = worldPos + new Vector3(
-                position.x * _previewScale - data.GridSize.x * 0.5f + IntDefine.DEFAULT_TILE_SIZE * 0.5f,
-                position.y * _previewScale - data.GridSize.y * 0.5f + IntDefine.DEFAULT_TILE_SIZE * 0.5f,
-                0
-            );
-
-            // 방향 벡터 계산 (6방향)
-            Vector3 direction = GetDirectionVector(connection.Direction);
-
-            // 색상 설정 (사다리는 노란색)
-            Handles.color = _connectionColor;
-
-            // 연결 지점 표시
-            float discSize = 2f;
-            Handles.DrawSolidDisc(connectionPoint, Vector3.forward, discSize);
-
-            // 방향 화살표
-            float arrowLength = 10f;
-            Handles.DrawLine(connectionPoint, connectionPoint + direction * arrowLength);
-            Handles.ConeHandleCap(0, connectionPoint + direction * arrowLength,
-                Quaternion.LookRotation(Vector3.forward, direction), 3f, EventType.Repaint);
-
-            // 사다리 표시 레이블
-            if (_showLabels)
-            {
-                Handles.Label(connectionPoint + direction * (arrowLength + 5f), "Ladder");
-            }
-        }
-    }
-
-    private float2 GetConnectionPosition(in ConnectionPoint connection, in TilemapPatternData data)
-    {
-        float x = 0;
-        float y = 0;
-
-        switch (connection.Direction)
-        {
-            case PatternDirection.Left:
-            case PatternDirection.Right:
-                {
-                    y = connection.Position;
-
-                    if (connection.Direction == PatternDirection.Left)
-                        x = 0;
-                    else
-                        x = data.GridSize.x - 1;
-                }
-                break;
-
-            case PatternDirection.TopLeft:
-            case PatternDirection.TopRight:
-            case PatternDirection.BottomLeft:
-            case PatternDirection.BottomRight:
-                {
-                    // 왼쪽 기준
-                    if (connection.Direction == PatternDirection.TopLeft
-                    || connection.Direction == PatternDirection.BottomLeft)
-                        x = connection.Position;
-                    // 오른쪽 기준
-                    else
-                        x = data.GridSize.x - connection.Position - 1;
-
-                    if (connection.Direction == PatternDirection.TopLeft
-                    || connection.Direction == PatternDirection.TopRight)
-                        y = data.GridSize.y - 1;
-                    else
-                        y = 0;
-                }
-                break;
-        }
-
-        return new float2(x, y);
-    }
-
-    private Vector3 GetDirectionVector(PatternDirection direction)
-    {
-        return direction switch
-        {
-            PatternDirection.TopLeft => new Vector3(-0.7071f, 0.7071f, 0),      // 대각선 좌상
-            PatternDirection.TopRight => new Vector3(0.7071f, 0.7071f, 0),      // 대각선 우상
-            PatternDirection.Left => Vector3.left,
-            PatternDirection.Right => Vector3.right,
-            PatternDirection.BottomLeft => new Vector3(-0.7071f, -0.7071f, 0),  // 대각선 좌하
-            PatternDirection.BottomRight => new Vector3(0.7071f, -0.7071f, 0),  // 대각선 우하
-            _ => Vector3.zero
-        };
     }
 
     private void FindRegistry()

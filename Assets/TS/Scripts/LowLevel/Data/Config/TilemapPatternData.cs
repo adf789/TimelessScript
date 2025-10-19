@@ -25,10 +25,6 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("이 패턴이 속한 SubScene 이름")]
     public string SubSceneName;
 
-    [Header("Grid Configuration")]
-    [Tooltip("타일맵 그리드 크기")]
-    public Vector2Int gridSize = new Vector2Int(50, 50);
-
     [Header("Addressable Reference")]
     [Tooltip("타일맵 프리팹 Addressable 참조")]
     public AssetReference TilemapPrefab;
@@ -36,25 +32,9 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("씬 엔티티 Addressable 참조")]
     public EntitySceneReference SubScene;
 
-    [Header("Streaming Settings")]
-    [Tooltip("로딩 우선순위 (높을수록 먼저 로드)")]
-    [Range(0, 100)]
-    public int LoadPriority = 50;
-
-    [Tooltip("플레이어로부터 이 거리 이상이면 언로드 (월드 유닛)")]
-    public float UnloadDistance = 100f;
-
-    [Tooltip("미리 로드할 거리 (월드 유닛)")]
-    public float PreloadDistance = 150f;
-
     [Header("Connection Points")]
     [Tooltip("다른 패턴과 연결 가능한 지점")]
     public List<ConnectionPoint> Connections = new List<ConnectionPoint>();
-
-    /// <summary>
-    /// 패턴 월드 크기 계산 (GridSize * TileSize)
-    /// </summary>
-    public Vector2 GridSize => gridSize;
 
     /// <summary>
     /// 특정 방향의 활성화된 연결 지점이 있는지 확인
@@ -88,10 +68,6 @@ public class TilemapPatternData : ScriptableObject
         {
             DisplayName = PatternID;
         }
-
-        // GridSize가 0 이하면 기본값으로 설정
-        if (GridSize.x <= 0) gridSize.x = 1;
-        if (GridSize.y <= 0) gridSize.y = 1;
     }
 #endif
 }
@@ -110,14 +86,12 @@ public struct ConnectionPoint
 }
 
 /// <summary>
-/// 6방향 정의 (2D Side-Scrolling)
+/// 4방향 정의 (2D Side-Scrolling)
 /// </summary>
 public enum PatternDirection
 {
-    TopLeft,     // 좌상단
-    TopRight,    // 우상단
+    Top,         // 상단
+    Bottom,      // 하단
     Left,        // 좌
     Right,       // 우
-    BottomLeft,  // 좌하단
-    BottomRight  // 우하단
 }

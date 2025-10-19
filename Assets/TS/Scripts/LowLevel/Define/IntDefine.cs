@@ -7,5 +7,6 @@ public class IntDefine
 
     #region DEFAULT
     public const int DEFAULT_TILE_SIZE = 1;
+    public const int DEFAULT_MAP_PATTERN_DIRECTION = 4;
     #endregion DEFAULT
 }

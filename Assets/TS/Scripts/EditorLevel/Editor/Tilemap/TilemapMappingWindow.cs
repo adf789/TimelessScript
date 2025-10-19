@@ -262,7 +262,7 @@ public class TilemapMappingWindow : EditorWindow
         EditorGUILayout.LabelField("Basic Information", EditorStyles.boldLabel);
         EditorGUILayout.LabelField($"Pattern ID: {pattern.PatternID}");
         EditorGUILayout.LabelField($"Display Name: {pattern.DisplayName}");
-        EditorGUILayout.LabelField($"Grid Size: {pattern.GridSize.x} x {pattern.GridSize.y}");
+        EditorGUILayout.LabelField($"Grid Size: {_registry.GridSize.x} x {_registry.GridSize.y}");
 
         EditorGUILayout.Space(10);
 
@@ -384,9 +384,9 @@ public class TilemapMappingWindow : EditorWindow
             int maxPosition = 0;
             if (_newPortDirection == PatternDirection.Left
             || _newPortDirection == PatternDirection.Right)
-                maxPosition = (int) pattern.GridSize.y - 1;
+                maxPosition = _registry.GridSize.y - 1;
             else
-                maxPosition = (int) pattern.GridSize.x - 1;
+                maxPosition = _registry.GridSize.x - 1;
 
             _newPortPosition = Mathf.Clamp(_newPortPosition, 0, maxPosition);
 
@@ -432,91 +432,6 @@ public class TilemapMappingWindow : EditorWindow
     }
 
     /// <summary>
-    /// Port 양방향 연결
-    /// </summary>
-    private void ConnectPortBidirectional(TilemapPatternData sourcePattern, int sourcePortIndex, TilemapPatternData targetPattern)
-    {
-        var sourceConn = sourcePattern.Connections[sourcePortIndex];
-        var oppositeDirection = GetOppositeDirection(sourceConn.Direction);
-
-        // Source → Target 연결
-        Undo.RecordObject(sourcePattern, "Connect Port Bidirectional");
-        var updatedSourceConn = sourceConn;
-        sourcePattern.Connections[sourcePortIndex] = updatedSourceConn;
-        EditorUtility.SetDirty(sourcePattern);
-
-        // Target에서 반대 방향 Port 찾기 또는 생성
-        int targetPortIndex = targetPattern.Connections.FindIndex(c => c.Direction == oppositeDirection);
-
-        if (targetPortIndex >= 0)
-        {
-            // 기존 Port가 있으면 활성화 및 연결
-            Undo.RecordObject(targetPattern, "Connect Port Bidirectional");
-            var targetConn = targetPattern.Connections[targetPortIndex];
-            targetPattern.Connections[targetPortIndex] = targetConn;
-            EditorUtility.SetDirty(targetPattern);
-
-            Debug.Log($"[TilemapMappingWindow] 양방향 연결 완료: {sourcePattern.PatternID}.{sourceConn.Direction} ↔ {targetPattern.PatternID}.{oppositeDirection}");
-        }
-        else
-        {
-            // 반대 Port가 없으면 자동 생성
-            Undo.RecordObject(targetPattern, "Create Opposite Port");
-
-            var newTargetConn = new ConnectionPoint
-            {
-                Direction = oppositeDirection,
-                Position = 0, // 기본값
-            };
-
-            targetPattern.Connections.Add(newTargetConn);
-            EditorUtility.SetDirty(targetPattern);
-
-            Debug.Log($"[TilemapMappingWindow] 반대 Port 자동 생성 및 연결: {targetPattern.PatternID}.{oppositeDirection} → {sourcePattern.PatternID}");
-        }
-    }
-
-    /// <summary>
-    /// 반대 방향 Port 계산
-    /// TopLeft ↔ BottomRight, TopRight ↔ BottomLeft, Left ↔ Right
-    /// </summary>
-    private PatternDirection GetOppositeDirection(PatternDirection direction)
-    {
-        return direction switch
-        {
-            PatternDirection.TopLeft => PatternDirection.BottomRight,
-            PatternDirection.TopRight => PatternDirection.BottomLeft,
-            PatternDirection.Left => PatternDirection.Right,
-            PatternDirection.Right => PatternDirection.Left,
-            PatternDirection.BottomLeft => PatternDirection.TopRight,
-            PatternDirection.BottomRight => PatternDirection.TopLeft,
-            _ => direction
-        };
-    }
-
-    /// <summary>
-    /// 특정 Port 방향과 연결 가능한 패턴 목록 반환
-    /// </summary>
-    private List<TilemapPatternData> GetCompatiblePatterns(TilemapPatternData currentPattern, PatternDirection portDirection)
-    {
-        var oppositeDirection = GetOppositeDirection(portDirection);
-        var compatiblePatterns = new List<TilemapPatternData>();
-
-        foreach (var pattern in _registry.AllPatterns)
-        {
-            if (pattern == null || pattern == currentPattern) continue;
-
-            // 반대 방향 Port를 가진 패턴만 연결 가능
-            if (pattern.HasActiveConnection(oppositeDirection))
-            {
-                compatiblePatterns.Add(pattern);
-            }
-        }
-
-        return compatiblePatterns;
-    }
-
-    /// <summary>
     /// Port 연결 상태 표시 아이콘
     /// </summary>
     private string GetConnectionIcon(ConnectionPoint connection)
@@ -531,12 +446,10 @@ public class TilemapMappingWindow : EditorWindow
     {
         return direction switch
         {
-            PatternDirection.TopLeft => "좌상단",
-            PatternDirection.TopRight => "우상단",
+            PatternDirection.Top => "상단",
+            PatternDirection.Bottom => "하단",
             PatternDirection.Left => "좌측",
             PatternDirection.Right => "우측",
-            PatternDirection.BottomLeft => "좌하단",
-            PatternDirection.BottomRight => "우하단",
             _ => direction.ToString()
         };
     }

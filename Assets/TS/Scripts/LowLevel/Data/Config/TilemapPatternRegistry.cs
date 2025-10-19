@@ -17,11 +17,17 @@ public class TilemapPatternRegistry : ScriptableObject
     [Tooltip("Shape별로 분류된 패턴")]
     public List<PatternCategory> Categories = new List<PatternCategory>();
 
+    [Header("Grid Configuration")]
+    [Tooltip("타일맵 그리드 크기")]
+    [SerializeField]
+    private Vector2Int gridSize = new Vector2Int(50, 50);
+
+    public Vector2Int GridSize => gridSize;
+
     // 런타임 캐시
     private Dictionary<string, TilemapPatternData> _patternCache;
     private Dictionary<PatternDirection, List<TilemapPatternData>> _shapeCache;
     private bool _isInitialized = false;
-
     /// <summary>
     /// 레지스트리 초기화 (런타임에 최초 1회 호출)
     /// </summary>
@@ -180,6 +186,10 @@ public class TilemapPatternRegistry : ScriptableObject
     {
         // 에디터에서 값이 변경될 때마다 캐시 무효화
         _isInitialized = false;
+
+        // GridSize가 0 이하면 기본값으로 설정
+        if (gridSize.x <= 0) gridSize.x = 1;
+        if (gridSize.y <= 0) gridSize.y = 1;
     }
 #endif
 }

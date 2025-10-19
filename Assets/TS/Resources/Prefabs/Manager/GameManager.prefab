@@ -93,17 +93,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e366938a1312f604c96eaacc852883cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HighLevel::TS.HighLevel.Manager.TilemapStreamingManager
-  patternRegistry: {fileID: 11400000, guid: 92ee9a66da269db4b856a3366d7dde89, type: 2}
-  targetCamera: {fileID: 8340294928188985847}
-  maxLoadedPatterns: 9
-  updateInterval: 0.5
-  enableAutoStreaming: 0
-  loadBufferSize: 20
-  unloadMargin: 10
-  maxConcurrentLoads: 3
-  showDebugInfo: 1
-  debugColor: {r: 0, g: 1, b: 0, a: 1}
-  showCameraBounds: 1
+  _patternRegistry: {fileID: 11400000, guid: 92ee9a66da269db4b856a3366d7dde89, type: 2}
+  _targetCamera: {fileID: 8340294928188985847}
+  _maxLoadedPatterns: 9
+  _updateInterval: 0.5
+  _enableAutoStreaming: 0
+  _loadBufferSize: 5
+  _unloadMargin: 3
+  _maxConcurrentLoads: 3
+  _showDebugInfo: 1
+  _debugColor: {r: 0, g: 1, b: 0, a: 1}
+  _showCameraBounds: 1
 --- !u!1 &6512728254771524658
 GameObject:
   m_ObjectHideFlags: 0
