@@ -43,7 +43,12 @@ public partial struct ControlSystem : ISystem
             if (!CheckPossibleControlTarget(ref state, in pickedTarget))
                 return;
 
+            if (controlTarget != Entity.Null && controlTarget != pickedTarget.Self)
+                ToggleEmphasis(ref state, controlTarget, false);
+
             controlTarget = pickedTarget.Self;
+
+            ToggleEmphasis(ref state, controlTarget, true);
 
             Debug.Log($"Select {pickedTarget.Name}");
 
@@ -51,7 +56,7 @@ public partial struct ControlSystem : ISystem
         }
 
         // 목표 타겟 설정
-        if (!SetTarget(ref state, pickedTarget))
+        if (!SetTarget(ref state, in pickedTarget))
             return;
 
         // 이동에 필요한 값 설정
@@ -294,5 +299,26 @@ public partial struct ControlSystem : ISystem
         actorComponent.RestoreMove.Target = actorComponent.Move.Target;
         actorComponent.RestoreMove.TargetDataID = actorComponent.Move.TargetDataID;
         actorComponent.RestoreMove.TargetType = actorComponent.Move.TargetType; actorComponent.RestoreMove.Position = touchPosition;
+    }
+
+    private void ToggleEmphasis(ref SystemState state, in Entity entity, bool isOn)
+    {
+        var obj = SystemAPI.GetComponentRO<TSObjectComponent>(entity);
+
+        // 엔티티 존재 유무 체크
+        if (!obj.IsValid)
+            return;
+
+        // 렌더링 엔티티 존재 유무 체크
+        if (obj.ValueRO.RendererEntity == Entity.Null)
+            return;
+
+        var renderer = SystemAPI.GetComponentRW<SpriteRendererComponent>(obj.ValueRO.RendererEntity);
+
+        // 렌더러 컴포넌트 체크
+        if (!renderer.IsValid)
+            return;
+
+        renderer.ValueRW.IsEmphasis = isOn;
     }
 }
