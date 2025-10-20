@@ -196,6 +196,19 @@ public class ResourcesTypeRegistry : ScriptableObject
     }
 
     /// <summary>
+    /// Load asset using type-specific ResourcesPath with Name
+    /// </summary>
+    public async UniTask<V> LoadAsyncWithName<T, V>(string name) where T : UnityEngine.Object where V : T
+    {
+        var resourcesPath = GetResourcesPath<T>();
+
+        if (resourcesPath == null)
+            return null;
+
+        return await resourcesPath.LoadByNameAsync<V>(name);
+    }
+
+    /// <summary>
     /// Add type mapping
     /// </summary>
     public bool AddTypeMapping(Type type, ResourcesPath resourcesPath, string customDisplayName = null)

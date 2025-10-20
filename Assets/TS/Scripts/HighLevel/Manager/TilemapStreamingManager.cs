@@ -23,9 +23,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Inspector Fields
 
-    [Header("Registry")]
-    [SerializeField] private TilemapPatternRegistry _patternRegistry;
-
     [Header("Camera Reference")]
     [SerializeField] private Camera _targetCamera;
 
@@ -47,6 +44,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     #endregion
 
     #region Private Fields
+    // 패턴 데이터
+    private TilemapPatternRegistry _patternRegistry;
 
     // 패턴 캐시
     private readonly Dictionary<string, LoadedPattern> _loadedPatterns = new Dictionary<string, LoadedPattern>();
@@ -100,11 +99,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Initialization
 
-    public void Initialize()
+    public async void Initialize()
     {
         if (_isInitialized) return;
 
-        LoadMapDatas();
+        await LoadMapDatas();
 
         if (!ValidateRegistry()) return;
         if (!InitializeCamera()) return;
@@ -117,8 +116,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         LogDebug($"Initialized. Camera: {_targetCamera?.name}, MaxPatterns: {_maxLoadedPatterns}, UpdateInterval: {_updateInterval}s");
     }
 
-    public void LoadMapDatas()
+    public async UniTask LoadMapDatas()
     {
+        _patternRegistry = await ResourcesTypeRegistry.Get()
+        .LoadAsyncWithName<ScriptableObject, TilemapPatternRegistry>("TilemapPatternRegistry");
+
         // 테스트 데이터
         var basePosition = new Vector2Int(0, 0);
         var basePattern = new TilemapPatternNode("BaseTown", basePosition);
@@ -561,59 +563,26 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private async UniTask LoadPatternsInCameraView(Rect cameraRect)
     {
-        // 로드된 패턴이 없으면 히스토리에서 복구
-        if (_loadedPatterns.Count == 0)
+        float gridHalfWidth = _patternRegistry.GridSize.x * 0.5f;
+        float gridHalfHeight = _patternRegistry.GridSize.y * 0.5f;
+
+        for (float y = cameraRect.yMin; y <= cameraRect.yMax; y += _patternRegistry.GridSize.y)
         {
-            await LoadPatternFromHistory(cameraRect);
-            return;
-        }
-
-        var patternsToLoad = FindNeighborPatternsToLoad(cameraRect);
-
-        foreach (var (patternID, offset) in patternsToLoad)
-        {
-            await LoadPattern(patternID, offset);
-        }
-
-        if (patternsToLoad.Count > 0)
-        {
-            LogDebug($"Auto-loaded {patternsToLoad.Count} neighbor patterns in camera view");
-        }
-    }
-
-    private List<(string patternID, Vector2Int offset)> FindNeighborPatternsToLoad(Rect cameraRect)
-    {
-        var result = new List<(string, Vector2Int)>();
-        var check = new HashSet<string>();
-
-        foreach (var loaded in _loadedPatterns.Values)
-        {
-            foreach (var connection in loaded.PatternData.Connections)
+            for (float x = cameraRect.xMin; x <= cameraRect.xMax; x += _patternRegistry.GridSize.x)
             {
-                var neighborOffset = CalculateNeighborOffset(loaded.GridOffset, connection.Direction);
-                // var key = GetPatternKey(connection.LinkedPatternID, neighborOffset);
+                int integerX = (int) ((x + gridHalfWidth) / _patternRegistry.GridSize.x);
+                int integerY = (int) ((y + gridHalfHeight) / _patternRegistry.GridSize.y);
+                var position = new Vector2Int(integerX, integerY);
 
-                // if (check.Contains(key) || IsPatternLoaded(connection.LinkedPatternID, neighborOffset))
-                //     continue;
+                if (mapDatas.TryGetValue(position, out var node))
+                {
+                    if (node.IsLoaded)
+                        continue;
 
-                // check.Add(key);
-
-                // var pattern = patternRegistry.GetPattern(connection.LinkedPatternID);
-                // if (pattern == null)
-                // {
-                //     LogDebug($"Linked pattern not found in registry: {connection.LinkedPatternID}");
-                //     continue;
-                // }
-
-                // var patternCenter = CalculatePatternCenter(pattern, neighborOffset);
-                // if (cameraRect.Contains(patternCenter))
-                // {
-                //     result.Add((connection.LinkedPatternID, neighborOffset));
-                // }
+                    await LoadPattern(node.PatternID, position);
+                }
             }
         }
-
-        return result;
     }
 
     private async UniTask UnloadPatternsOutsideCameraView(Rect cameraRect)
@@ -637,73 +606,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         {
             LogDebug($"Auto-unloaded {patternsToUnload.Count} patterns outside camera view");
         }
-    }
-
-    #endregion
-
-    #region History Recovery
-
-    private async UniTask LoadPatternFromHistory(Rect cameraRect)
-    {
-        if (_unloadedPatternHistory.Count == 0)
-        {
-            await LoadInitialPatternFallback(cameraRect);
-            return;
-        }
-
-        var closestHistory = FindClosestHistoryInBounds(in cameraRect);
-
-        if (closestHistory != null)
-        {
-            LogDebug($"Loading pattern from history: {closestHistory.PatternID} at {closestHistory.GridOffset}");
-            await LoadPattern(closestHistory.PatternID, closestHistory.GridOffset);
-        }
-    }
-
-    private async UniTask LoadInitialPatternFallback(Rect cameraRect)
-    {
-        // 좌상단
-        float gridHalfWidth = _patternRegistry.GridSize.x * 0.5f;
-        float gridHalfHeight = _patternRegistry.GridSize.y * 0.5f;
-
-        for (float y = cameraRect.yMin; y <= cameraRect.yMax; y += _patternRegistry.GridSize.y)
-        {
-            for (float x = cameraRect.xMin; x <= cameraRect.xMax; x += _patternRegistry.GridSize.x)
-            {
-                int integerX = (int) ((cameraRect.xMin + gridHalfWidth) / _patternRegistry.GridSize.x);
-                int integerY = (int) ((cameraRect.yMax + gridHalfHeight) / _patternRegistry.GridSize.y);
-                var position = new Vector2Int(integerX, integerY);
-
-                if (mapDatas.TryGetValue(position, out var node))
-                    await LoadPattern(node.PatternID, position);
-            }
-        }
-    }
-
-    private PatternHistory FindClosestHistoryInBounds(in Rect cameraRect)
-    {
-        PatternHistory closest = null;
-        float closestDistance = float.MaxValue;
-
-        foreach (var history in _unloadedPatternHistory.Values)
-        {
-            var pattern = _patternRegistry.GetPattern(history.PatternID);
-            if (pattern == null) continue;
-
-            var patternRect = CalculatePatternRect(history.GridOffset);
-
-            if (Utility.Geometry.IsAABBOverlap(in cameraRect, in patternRect))
-            {
-                float distance = Vector3.SqrMagnitude(_cameraPosition - patternRect.center);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closest = history;
-                }
-            }
-        }
-
-        return closest;
     }
 
     #endregion

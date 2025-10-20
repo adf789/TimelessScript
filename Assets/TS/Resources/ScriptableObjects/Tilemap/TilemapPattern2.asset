@@ -17,7 +17,7 @@ MonoBehaviour:
   Description: 
   SubSceneName: TownActor
   TilemapPrefab:
-    m_AssetGUID: 
+    m_AssetGUID: ffccf122668ebae429d601c43407abbb
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
@@ -25,19 +25,16 @@ MonoBehaviour:
   SubScene:
     Id:
       GlobalId:
-        SceneObjectIdentifier0: 0
+        SceneObjectIdentifier0: 102900000
         SceneObjectIdentifier1: 0
         AssetGUID:
           Value:
-            x: 0
-            y: 0
-            z: 0
-            w: 0
-        IdentifierType: 0
-      GenerationType: 0
-  LoadPriority: 50
-  UnloadDistance: 100
-  PreloadDistance: 150
+            x: 2505125418
+            y: 1322630723
+            z: 1716045708
+            w: 3746884898
+        IdentifierType: 1
+      GenerationType: 4
   Connections:
   - Direction: 1
     Position: 0

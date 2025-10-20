@@ -48,6 +48,9 @@ MonoBehaviour:
   - guid: 2dcc3f488332e5f43a085fc0e99253ce
     assetPath: Assets/TS/Resources/ScriptableObjects/Flow/TownFlow.asset
     displayName: TownFlow
+  - guid: 92ee9a66da269db4b856a3366d7dde89
+    assetPath: Assets/TS/Resources/ScriptableObjects/Tilemap/TilemapPatternRegistry.asset
+    displayName: TilemapPatternRegistry
 --- !u!114 &-3992443798061177277
 MonoBehaviour:
   m_ObjectHideFlags: 0
