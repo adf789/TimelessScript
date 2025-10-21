@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "704930983551",
-    "project_id": "timelessscript-b736d",
-    "storage_bucket": "timelessscript-b736d.firebasestorage.app"
+    "project_number": "569836369661",
+    "firebase_url": "https://timelessscript-c5219-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "timelessscript-c5219",
+    "storage_bucket": "timelessscript-c5219.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:704930983551:android:569a115bca28a46ff4194a",
+        "mobilesdk_app_id": "1:569836369661:android:e859d010ad08004b547094",
         "android_client_info": {
           "package_name": "com.home.timelessscript"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCfG39_0c-obU7sqQbKZ-yi5WbyGNYVgZw"
+          "current_key": "AIzaSyAOkLS8dnJYM5rJ4ikOLylcXdCgZA8tCvE"
         }
       ],
       "services": {

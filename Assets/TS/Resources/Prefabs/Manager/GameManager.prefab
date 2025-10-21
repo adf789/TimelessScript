@@ -36,6 +36,7 @@ Transform:
   - {fileID: 7394863741112358117}
   - {fileID: 8429119617147981413}
   - {fileID: 623617490417127964}
+  - {fileID: 8076629231346354}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6250044982121014311
@@ -284,6 +285,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad985da99bcdab44aa951d16f187db72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &8236792390278604963
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8076629231346354}
+  - component: {fileID: 5594159093777001577}
+  m_Layer: 0
+  m_Name: AuthManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8076629231346354
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8236792390278604963}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3214262558968597275}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5594159093777001577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8236792390278604963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a77fe51144c0c564fa6776ce4ed5870e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HighLevel::TS.HighLevel.Manager.AuthManager
 --- !u!1001 &2853081750336065482
 PrefabInstance:
   m_ObjectHideFlags: 0
