@@ -9,11 +9,7 @@ public class GameDataManager : BaseManager<GameDataManager>
 
     void Start()
     {
-        // Firebase가 준비될 때까지 대기
-        if (FirebaseInitializeSupport.Instance.IsFirebaseReady)
-        {
-            dbRef = FirebaseInitializeSupport.Instance.DBReference;
-        }
+
     }
 
     // 데이터 저장

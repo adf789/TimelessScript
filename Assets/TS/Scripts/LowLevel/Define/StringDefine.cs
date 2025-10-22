@@ -19,4 +19,10 @@ public class StringDefine
     public const float AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE = 0.2f;
     public const float AUTO_MOVE_MINIMUM_DISTANCE = 0.5f;
     #endregion
+
+    #region PREF_KEY
+    public const string KEY_PREFS_ACCOUNT_GOOGLE_ID = "Google_Id";
+    public const string KEY_PREFS_ACCOUNT_FACEBOOK_ID = "Facebook_Id";
+    public const string KEY_PREFS_ACCOUNT_APPLE_ID = "Apple_Id";
+    #endregion
 }

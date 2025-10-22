@@ -1,0 +1,2 @@
+Please visit our wiki for setup instructions: https://github.com/hippogamesunity/SimpleSignIn/wiki/Apple
+3rd party lib notice: BouncyCastle.Crypto is used under MIT license: https://www.bouncycastle.org/licence.html

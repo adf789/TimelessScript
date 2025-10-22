@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3776f1bd18e76c5458fe42ea58050c95, type: 3}
+  m_Name: GoogleAuthSettings
+  m_EditorClassIdentifier: 
+  Id: Default
+  ClientIdGeneric: 1071286734204-nuk04lpi696g0lkhh90dtuoke2pitqib.apps.googleusercontent.com
+  CustomUriSchemeGeneric: com.nerdystar.game.housingproject
+  ClientIdWindows: 1071286734204-nuk04lpi696g0lkhh90dtuoke2pitqib.apps.googleusercontent.com
+  ClientSecretWindows: 
+  CustomUriSchemeWindows: com.nerdystar.game.housingproject
+  ClientIdWebGL: 1071286734204-eca73vduhqcn13bfj8rugrphv09k29t6.apps.googleusercontent.com
+  ClientSecretWebGL: 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
+  ClientIdDesktop: 1071286734204-po1febghfh7onu9hqe05pvs3v6gf023j.apps.googleusercontent.com
+  ClientSecretDesktop: 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
+  AccessScopes:
+  - openid
+  - email
+  - profile
+  ManualCancellation: 0
+  UseSafariViewController: 1
