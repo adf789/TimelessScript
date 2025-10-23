@@ -1,11 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/firebase_database_url,@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_web_client_id">
-  <string name="firebase_database_url" translatable="false">https://timelessscript-c5219-default-rtdb.asia-southeast1.firebasedatabase.app</string>
-  <string name="gcm_defaultSenderId" translatable="false">569836369661</string>
-  <string name="google_storage_bucket" translatable="false">timelessscript-c5219.firebasestorage.app</string>
-  <string name="project_id" translatable="false">timelessscript-c5219</string>
-  <string name="google_api_key" translatable="false">AIzaSyAOkLS8dnJYM5rJ4ikOLylcXdCgZA8tCvE</string>
-  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAOkLS8dnJYM5rJ4ikOLylcXdCgZA8tCvE</string>
-  <string name="google_app_id" translatable="false">1:569836369661:android:e859d010ad08004b547094</string>
-  <string name="default_web_client_id" translatable="false">569836369661-n7vfjmoglr0l48fojbm3vevsrqfnvfp1.apps.googleusercontent.com</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/firebase_database_url,@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_android_client_id,@string/default_web_client_id">
+  <string name="firebase_database_url" translatable="false">https://timelessscript-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+  <string name="gcm_defaultSenderId" translatable="false">474661179553</string>
+  <string name="google_storage_bucket" translatable="false">timelessscript.firebasestorage.app</string>
+  <string name="project_id" translatable="false">timelessscript</string>
+  <string name="google_api_key" translatable="false">AIzaSyDTg1Tn-kOr_TyN0Nn8OJq6OqJahuW12PA</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDTg1Tn-kOr_TyN0Nn8OJq6OqJahuW12PA</string>
+  <string name="google_app_id" translatable="false">1:474661179553:android:71b3b70f12725012e460e0</string>
+  <string name="default_android_client_id" translatable="false">474661179553-6bvum0drhp0mdjok81pijigk1msbpgtc.apps.googleusercontent.com</string>
+  <string name="default_web_client_id" translatable="false">474661179553-9ielrj215k3hm75hno3rvdb5b54sdp0l.apps.googleusercontent.com</string>
 </resources>

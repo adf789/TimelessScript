@@ -15,10 +15,10 @@ public class GameManager : BaseManager<GameManager>
     {
         Application.runInBackground = true;
 
-        AuthManager.Instance.RequestGoogleLogin(() =>
+        AuthManager.Instance.SignInAsync(() =>
         {
             FlowManager.Instance.ChangeFlow(GameState.Intro).Forget();
-        });
+        }).Forget();
     }
 
     [ContextMenu("Test")]

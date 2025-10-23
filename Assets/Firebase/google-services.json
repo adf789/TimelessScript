@@ -1,34 +1,42 @@
 {
   "project_info": {
-    "project_number": "569836369661",
-    "firebase_url": "https://timelessscript-c5219-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "timelessscript-c5219",
-    "storage_bucket": "timelessscript-c5219.firebasestorage.app"
+    "project_number": "474661179553",
+    "firebase_url": "https://timelessscript-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "timelessscript",
+    "storage_bucket": "timelessscript.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:569836369661:android:e859d010ad08004b547094",
+        "mobilesdk_app_id": "1:474661179553:android:71b3b70f12725012e460e0",
         "android_client_info": {
           "package_name": "com.home.timelessscript"
         }
       },
       "oauth_client": [
         {
-          "client_id": "569836369661-n7vfjmoglr0l48fojbm3vevsrqfnvfp1.apps.googleusercontent.com",
+          "client_id": "474661179553-6bvum0drhp0mdjok81pijigk1msbpgtc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.home.timelessscript",
+            "certificate_hash": "7f1d4d82ef84429b8dd366635c508ca45a5db4bc"
+          }
+        },
+        {
+          "client_id": "474661179553-9ielrj215k3hm75hno3rvdb5b54sdp0l.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAOkLS8dnJYM5rJ4ikOLylcXdCgZA8tCvE"
+          "current_key": "AIzaSyDTg1Tn-kOr_TyN0Nn8OJq6OqJahuW12PA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "569836369661-n7vfjmoglr0l48fojbm3vevsrqfnvfp1.apps.googleusercontent.com",
+              "client_id": "474661179553-9ielrj215k3hm75hno3rvdb5b54sdp0l.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
