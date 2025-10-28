@@ -8,9 +8,6 @@ public class CameraManager : BaseManager<CameraManager>
     [Header("드래그 타겟")]
     [SerializeField]
     private BoxCollider2D _dragRange = null;
-    [Header("드래그 패딩(상,하,좌,우)")]
-    [SerializeField]
-    private Vector4 _dragPadding = Vector4.zero;
     [Header("드래그 범위 제한 유무")]
     [SerializeField]
     private bool _isLimitDragX = true;

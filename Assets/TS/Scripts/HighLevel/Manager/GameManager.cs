@@ -15,15 +15,31 @@ public class GameManager : BaseManager<GameManager>
     {
         Application.runInBackground = true;
 
-        AuthManager.Instance.SignInAsync(() =>
-        {
-            FlowManager.Instance.ChangeFlow(GameState.Intro).Forget();
-        }).Forget();
+        Login().Forget();
     }
 
-    [ContextMenu("Test")]
-    public void TestCode()
+    private async UniTask Login()
     {
-        FlowManager.Instance.ChangeFlow(GameState.Loading).Forget();
+        await DatabaseManager.Instance.InitializeFirebaseAsync();
+
+        if (await AuthManager.Instance.LoadUserDataFromDatabase())
+        {
+            Debug.Log($"계정 로드 성공: {AuthManager.Instance.PlayerId}");
+        }
+        else
+        {
+            if (await AuthManager.Instance.SignInAsync())
+            {
+                Debug.Log($"계정 가입 성공: {AuthManager.Instance.PlayerId}");
+
+                await AuthManager.Instance.SaveUserDataToDatabase();
+
+                FlowManager.Instance.ChangeFlow(GameState.Intro).Forget();
+            }
+            else
+            {
+                Debug.LogError("로그인에 실패했습니다.");
+            }
+        }
     }
 }

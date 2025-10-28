@@ -18,15 +18,15 @@ using UnityEngine.Networking;
 
 public class AuthManager : BaseManager<AuthManager>
 {
-    private bool isAuthenticated;
-    private string playerId;
-    private string playerName;
+    private AuthSetting _authSetting;
+    private bool _isAuthenticated;
+    private string _playerId;
+    private string _playerName;
 
 #if UNITY_EDITOR
-    private AuthSetting authSetting;
-    private const string AuthorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-    private const string TokenEndpoint = "https://oauth2.googleapis.com/token";
-    private const string UserInfoEndpoint = "https://openidconnect.googleapis.com/v1/userinfo";
+    private const string _authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
+    private const string _tokenEndpoint = "https://oauth2.googleapis.com/token";
+    private const string _userInfoEndpoint = "https://openidconnect.googleapis.com/v1/userinfo";
 
     private string _redirectUri;
     private string _state;
@@ -37,24 +37,24 @@ public class AuthManager : BaseManager<AuthManager>
     /// <summary>
     /// 구글 플레이 게임즈 로그인 상태
     /// </summary>
-    public bool IsAuthenticated => isAuthenticated;
+    public bool IsAuthenticated => _isAuthenticated;
 
     /// <summary>
     /// 현재 로그인한 플레이어 ID
     /// </summary>
-    public string PlayerId => playerId;
+    public string PlayerId => _playerId;
 
     /// <summary>
     /// 현재 로그인한 플레이어 이름
     /// </summary>
-    public string PlayerName => playerName;
+    public string PlayerName => _playerName;
 
     private async void Awake()
     {
 #if UNITY_EDITOR
         Debug.Log("[AuthManager][EDITOR] Google OAuth authentication system initialized");
 
-        authSetting = await ResourcesTypeRegistry.Get().LoadAsyncWithName<ScriptableObject, AuthSetting>("AuthSetting");
+        _authSetting = await ResourcesTypeRegistry.Get().LoadAsyncWithName<ScriptableObject, AuthSetting>("AuthSetting");
 #elif UNITY_ANDROID
         InitializeGooglePlayGames();
 #else
@@ -70,7 +70,6 @@ public class AuthManager : BaseManager<AuthManager>
 #endif
     }
 
-#if UNITY_ANDROID
     /// <summary>
     /// Google Play Games 초기화
     /// </summary>
@@ -81,42 +80,48 @@ public class AuthManager : BaseManager<AuthManager>
 
         Debug.Log("[AuthManager] Google Play Games initialized");
     }
-#endif
 
     /// <summary>
     /// Google Play Games 자동 로그인 시도
     /// </summary>
     public async UniTask<bool> SignInSilentlyAsync()
     {
-#if UNITY_EDITOR
-        // 에디터에서는 자동 로그인 불가 (OAuth는 항상 수동 브라우저 인증 필요)
-        Debug.Log("[AuthManager][EDITOR] Silent sign-in not supported. Please use SignInAsync()");
-        await UniTask.Yield();
-        return false;
-#elif UNITY_ANDROID
-        var tcs = new UniTaskCompletionSource<bool>();
-
-        PlayGamesPlatform.Instance.Authenticate(status =>
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
         {
-            if (status == SignInStatus.Success)
-            {
-                UpdatePlayerInfo();
-                Debug.Log($"[AuthManager] Silent sign-in successful. Player: {playerName} (ID: {playerId})");
-                tcs.TrySetResult(true);
-            }
-            else
-            {
-                Debug.Log($"[AuthManager] Silent sign-in failed: {status}");
-                tcs.TrySetResult(false);
-            }
-        });
+            // 에디터에서는 자동 로그인 불가 (OAuth는 항상 수동 브라우저 인증 필요)
+            Debug.Log("[AuthManager][EDITOR] Silent sign-in not supported. Please use SignInAsync()");
+            await UniTask.Yield();
+            return false;
+        }
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
+        {
+            var tcs = new UniTaskCompletionSource<bool>();
 
-        return await tcs.Task;
-#else
-        Debug.LogWarning("[AuthManager] Sign-in not supported on this platform");
-        await UniTask.Yield();
-        return false;
-#endif
+            PlayGamesPlatform.Instance.Authenticate(status =>
+            {
+                if (status == SignInStatus.Success)
+                {
+                    _playerId = PlayGamesPlatform.Instance.GetUserId();
+                    _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
+
+                    Debug.Log($"[AuthManager] Silent sign-in successful. Player: {_playerName} (ID: {_playerId})");
+                    tcs.TrySetResult(true);
+                }
+                else
+                {
+                    Debug.Log($"[AuthManager] Silent sign-in failed: {status}");
+                    tcs.TrySetResult(false);
+                }
+            });
+
+            return await tcs.Task;
+        }
+        else
+        {
+            Debug.LogWarning("[AuthManager] Sign-in not supported on this platform");
+            await UniTask.Yield();
+            return false;
+        }
     }
 
     /// <summary>
@@ -124,62 +129,69 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public async UniTask<bool> SignInAsync(Action onEventFinished = null)
     {
-#if UNITY_EDITOR
-        if (string.IsNullOrEmpty(authSetting.EditorClientId) || string.IsNullOrEmpty(authSetting.EditorClientSecret))
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
         {
-            Debug.LogError("[AuthManager][EDITOR] Client ID and Client Secret must be set in Inspector!");
+            if (string.IsNullOrEmpty(_authSetting.EditorClientId) || string.IsNullOrEmpty(_authSetting.EditorClientSecret))
+            {
+                Debug.LogError("[AuthManager][EDITOR] Client ID and Client Secret must be set in Inspector!");
+                return false;
+            }
+
+            try
+            {
+                Debug.Log("[AuthManager][EDITOR] Starting Google OAuth sign-in...");
+
+                var success = await EditorGoogleOAuthSignIn();
+
+                if (success)
+                {
+                    Debug.Log($"[AuthManager][EDITOR] Sign-in successful. Player: {_playerName} (ID: {_playerId})");
+                    onEventFinished?.Invoke();
+                }
+                else
+                {
+                    Debug.LogError("[AuthManager][EDITOR] Sign-in failed");
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager][EDITOR] Sign-in error: {ex.Message}");
+                return false;
+            }
+        }
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
+        {
+            var tcs = new UniTaskCompletionSource<bool>();
+
+            PlayGamesPlatform.Instance.ManuallyAuthenticate(status =>
+            {
+                if (status == SignInStatus.Success)
+                {
+                    _playerId = PlayGamesPlatform.Instance.GetUserId();
+                    _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
+
+                    Debug.Log($"[AuthManager] Sign-in successful. Player: {_playerName} (ID: {_playerId})");
+                    tcs.TrySetResult(true);
+
+                    onEventFinished?.Invoke();
+                }
+                else
+                {
+                    Debug.LogError($"[AuthManager] Sign-in failed: {status}");
+                    tcs.TrySetResult(false);
+                }
+            });
+
+            return await tcs.Task;
+        }
+        else
+        {
+            Debug.LogWarning("[AuthManager] Sign-in not supported on this platform");
+            await UniTask.Yield();
             return false;
         }
-
-        try
-        {
-            Debug.Log("[AuthManager][EDITOR] Starting Google OAuth sign-in...");
-
-            var success = await EditorGoogleOAuthSignIn();
-
-            if (success)
-            {
-                Debug.Log($"[AuthManager][EDITOR] Sign-in successful. Player: {playerName} (ID: {playerId})");
-                onEventFinished?.Invoke();
-            }
-            else
-            {
-                Debug.LogError("[AuthManager][EDITOR] Sign-in failed");
-            }
-
-            return success;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[AuthManager][EDITOR] Sign-in error: {ex.Message}");
-            return false;
-        }
-#elif UNITY_ANDROID
-        var tcs = new UniTaskCompletionSource<bool>();
-
-        PlayGamesPlatform.Instance.ManuallyAuthenticate(status =>
-        {
-            if (status == SignInStatus.Success)
-            {
-                UpdatePlayerInfo();
-                Debug.Log($"[AuthManager] Sign-in successful. Player: {playerName} (ID: {playerId})");
-                tcs.TrySetResult(true);
-
-                onEventFinished?.Invoke();
-            }
-            else
-            {
-                Debug.LogError($"[AuthManager] Sign-in failed: {status}");
-                tcs.TrySetResult(false);
-            }
-        });
-
-        return await tcs.Task;
-#else
-        Debug.LogWarning("[AuthManager] Sign-in not supported on this platform");
-        await UniTask.Yield();
-        return false;
-#endif
     }
 
     /// <summary>
@@ -187,13 +199,108 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public bool IsPlayerAuthenticated()
     {
-#if UNITY_EDITOR
-        return isAuthenticated;
-#elif UNITY_ANDROID
-        return PlayGamesPlatform.Instance.IsAuthenticated();
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
+            return _isAuthenticated;
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
+            return PlayGamesPlatform.Instance.IsAuthenticated();
+        else
+            return false;
+    }
+
+    /// <summary>
+    /// 유저 데이터를 Firebase Database에 저장
+    /// </summary>
+    public async UniTask<bool> SaveUserDataToDatabase()
+    {
+        if (!_isAuthenticated)
+        {
+            Debug.LogWarning("[AuthManager] User is not authenticated. Cannot save data.");
+            return false;
+        }
+
+        if (!DatabaseManager.Instance.IsInitialized)
+        {
+            Debug.LogWarning("[AuthManager] DatabaseManager not initialized.");
+            return false;
+        }
+
+        try
+        {
+            // 유저 데이터 구조 생성
+            var userData = new System.Collections.Generic.Dictionary<string, object>
+            {
+                { "playerId", _playerId },
+                { "playerName", _playerName },
+                { "lastLogin", System.DateTime.UtcNow.ToString("o") }
+            };
+
+            // Firebase Database에 저장 (users/{playerId} 경로)
+            string path = $"users/{_playerId}";
+            bool success = await DatabaseManager.Instance.SetDataAsync(path, userData);
+
+            if (success)
+            {
+                Debug.Log($"[AuthManager] User data saved to Firebase: {_playerName}");
+            }
+
+            return success;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Failed to save user data: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Firebase Database에서 유저 데이터 로드
+    /// </summary>
+    public async UniTask<bool> LoadUserDataFromDatabase()
+    {
+        if (!_isAuthenticated)
+        {
+            Debug.LogWarning("[AuthManager] User is not authenticated. Cannot load data.");
+            return false;
+        }
+
+        if (!DatabaseManager.Instance.IsInitialized)
+        {
+            Debug.LogWarning("[AuthManager] DatabaseManager not initialized.");
+            return false;
+        }
+
+        try
+        {
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+            string path = $"users/{_playerId}";
+            var snapshot = await DatabaseManager.Instance.GetDataAsync(path);
+
+            if (snapshot != null && snapshot.Exists)
+            {
+                // 데이터 파싱
+                var playerName = snapshot.Child("playerName").Value?.ToString();
+                var lastLogin = snapshot.Child("lastLogin").Value?.ToString();
+
+                Debug.Log($"[AuthManager] User data loaded from Firebase");
+                Debug.Log($"[AuthManager] Name: {playerName}, Last Login: {lastLogin}");
+
+                return true;
+            }
+            else
+            {
+                Debug.LogWarning($"[AuthManager] No user data found for {_playerId}");
+                return false;
+            }
 #else
-        return false;
+            await UniTask.Yield();
+            return false;
 #endif
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Failed to load user data: {ex.Message}");
+            return false;
+        }
     }
 
     /// <summary>
@@ -201,30 +308,33 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public void UnlockAchievement(string achievementId, Action<bool> callback = null)
     {
-        if (!isAuthenticated)
+        if (!_isAuthenticated)
         {
             Debug.LogWarning("[AuthManager] User is not authenticated");
             callback?.Invoke(false);
             return;
         }
 
-#if UNITY_EDITOR
-        Debug.Log($"[AuthManager][EDITOR] Achievement unlocked (simulated): {achievementId}");
-        callback?.Invoke(true);
-#elif UNITY_ANDROID
-        PlayGamesPlatform.Instance.ReportProgress(achievementId, 100.0, success =>
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
         {
-            if (success)
+            Debug.Log($"[AuthManager][EDITOR] Achievement unlocked (simulated): {achievementId}");
+            callback?.Invoke(true);
+        }
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
+        {
+            PlayGamesPlatform.Instance.ReportProgress(achievementId, 100.0, success =>
             {
-                Debug.Log($"[AuthManager] Achievement unlocked: {achievementId}");
-            }
-            else
-            {
-                Debug.LogError($"[AuthManager] Failed to unlock achievement: {achievementId}");
-            }
-            callback?.Invoke(success);
-        });
-#endif
+                if (success)
+                {
+                    Debug.Log($"[AuthManager] Achievement unlocked: {achievementId}");
+                }
+                else
+                {
+                    Debug.LogError($"[AuthManager] Failed to unlock achievement: {achievementId}");
+                }
+                callback?.Invoke(success);
+            });
+        }
     }
 
     /// <summary>
@@ -232,30 +342,33 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public void PostScoreToLeaderboard(string leaderboardId, long score, Action<bool> callback = null)
     {
-        if (!isAuthenticated)
+        if (!_isAuthenticated)
         {
             Debug.LogWarning("[AuthManager] User is not authenticated");
             callback?.Invoke(false);
             return;
         }
 
-#if UNITY_EDITOR
-        Debug.Log($"[AuthManager][EDITOR] Score posted to leaderboard (simulated) {leaderboardId}: {score}");
-        callback?.Invoke(true);
-#elif UNITY_ANDROID
-        PlayGamesPlatform.Instance.ReportScore(score, leaderboardId, success =>
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
         {
-            if (success)
+            Debug.Log($"[AuthManager][EDITOR] Score posted to leaderboard (simulated) {leaderboardId}: {score}");
+            callback?.Invoke(true);
+        }
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
+        {
+            PlayGamesPlatform.Instance.ReportScore(score, leaderboardId, success =>
             {
-                Debug.Log($"[AuthManager] Score posted to leaderboard {leaderboardId}: {score}");
-            }
-            else
-            {
-                Debug.LogError($"[AuthManager] Failed to post score to leaderboard: {leaderboardId}");
-            }
-            callback?.Invoke(success);
-        });
-#endif
+                if (success)
+                {
+                    Debug.Log($"[AuthManager] Score posted to leaderboard {leaderboardId}: {score}");
+                }
+                else
+                {
+                    Debug.LogError($"[AuthManager] Failed to post score to leaderboard: {leaderboardId}");
+                }
+                callback?.Invoke(success);
+            });
+        }
     }
 
     /// <summary>
@@ -263,17 +376,16 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public void ShowAchievementsUI()
     {
-        if (!isAuthenticated)
+        if (!_isAuthenticated)
         {
             Debug.LogWarning("[AuthManager] User is not authenticated");
             return;
         }
 
-#if UNITY_EDITOR
-        Debug.Log("[AuthManager][EDITOR] Showing Achievements UI (simulated)");
-#elif UNITY_ANDROID
-        PlayGamesPlatform.Instance.ShowAchievementsUI();
-#endif
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
+            Debug.Log("[AuthManager][EDITOR] Showing Achievements UI (simulated)");
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
+            PlayGamesPlatform.Instance.ShowAchievementsUI();
     }
 
     /// <summary>
@@ -281,31 +393,34 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public void ShowLeaderboardUI(string leaderboardId = null)
     {
-        if (!isAuthenticated)
+        if (!_isAuthenticated)
         {
             Debug.LogWarning("[AuthManager] User is not authenticated");
             return;
         }
 
-#if UNITY_EDITOR
-        if (string.IsNullOrEmpty(leaderboardId))
+        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
         {
-            Debug.Log("[AuthManager][EDITOR] Showing all Leaderboards UI (simulated)");
+            if (string.IsNullOrEmpty(leaderboardId))
+            {
+                Debug.Log("[AuthManager][EDITOR] Showing all Leaderboards UI (simulated)");
+            }
+            else
+            {
+                Debug.Log($"[AuthManager][EDITOR] Showing Leaderboard UI for {leaderboardId} (simulated)");
+            }
         }
-        else
+        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
         {
-            Debug.Log($"[AuthManager][EDITOR] Showing Leaderboard UI for {leaderboardId} (simulated)");
+            if (string.IsNullOrEmpty(leaderboardId))
+            {
+                PlayGamesPlatform.Instance.ShowLeaderboardUI();
+            }
+            else
+            {
+                PlayGamesPlatform.Instance.ShowLeaderboardUI(leaderboardId);
+            }
         }
-#elif UNITY_ANDROID
-        if (string.IsNullOrEmpty(leaderboardId))
-        {
-            PlayGamesPlatform.Instance.ShowLeaderboardUI();
-        }
-        else
-        {
-            PlayGamesPlatform.Instance.ShowLeaderboardUI(leaderboardId);
-        }
-#endif
     }
 
 #if UNITY_EDITOR
@@ -317,7 +432,7 @@ public class AuthManager : BaseManager<AuthManager>
     private async UniTask<bool> EditorGoogleOAuthSignIn()
     {
         // 1. Loopback flow 초기화 (고정 포트 사용)
-        _redirectUri = $"http://localhost:{authSetting.EditorRedirectPort}/";
+        _redirectUri = $"http://localhost:{_authSetting.EditorRedirectPort}/";
         _state = Guid.NewGuid().ToString("N");
         _codeVerifier = Guid.NewGuid().ToString("N");
 
@@ -331,7 +446,7 @@ public class AuthManager : BaseManager<AuthManager>
         }
         catch (HttpListenerException ex)
         {
-            Debug.LogError($"[AuthManager][EDITOR] Failed to start HttpListener on port {authSetting.EditorRedirectPort}. " +
+            Debug.LogError($"[AuthManager][EDITOR] Failed to start HttpListener on port {_authSetting.EditorRedirectPort}. " +
                            $"Port may be in use. Error: {ex.Message}");
             return false;
         }
@@ -339,10 +454,10 @@ public class AuthManager : BaseManager<AuthManager>
         // 3. Authorization URL 생성 및 브라우저 열기
         var codeChallenge = CreateCodeChallenge(_codeVerifier);
         var scopes = "openid email profile";
-        var authUrl = $"{AuthorizationEndpoint}?response_type=code" +
+        var authUrl = $"{_authorizationEndpoint}?response_type=code" +
                       $"&scope={Uri.EscapeDataString(scopes)}" +
                       $"&redirect_uri={Uri.EscapeDataString(_redirectUri)}" +
-                      $"&client_id={authSetting.EditorClientId}" +
+                      $"&client_id={_authSetting.EditorClientId}" +
                       $"&state={_state}" +
                       $"&code_challenge={codeChallenge}" +
                       $"&code_challenge_method=S256";
@@ -439,12 +554,12 @@ public class AuthManager : BaseManager<AuthManager>
         var form = new WWWForm();
         form.AddField("code", code);
         form.AddField("redirect_uri", _redirectUri);
-        form.AddField("client_id", authSetting.EditorClientId);
-        form.AddField("client_secret", authSetting.EditorClientSecret);
+        form.AddField("client_id", _authSetting.EditorClientId);
+        form.AddField("client_secret", _authSetting.EditorClientSecret);
         form.AddField("code_verifier", _codeVerifier);
         form.AddField("grant_type", "authorization_code");
 
-        using var request = UnityWebRequest.Post(TokenEndpoint, form);
+        using var request = UnityWebRequest.Post(_tokenEndpoint, form);
         await request.SendWebRequest();
 
         if (request.result != UnityWebRequest.Result.Success)
@@ -469,7 +584,7 @@ public class AuthManager : BaseManager<AuthManager>
 
     private async UniTask<bool> GetUserInfo(string accessToken)
     {
-        using var request = UnityWebRequest.Get(UserInfoEndpoint);
+        using var request = UnityWebRequest.Get(_userInfoEndpoint);
         request.SetRequestHeader("Authorization", $"Bearer {accessToken}");
         await request.SendWebRequest();
 
@@ -489,9 +604,9 @@ public class AuthManager : BaseManager<AuthManager>
 
         if (subMatch.Success && nameMatch.Success)
         {
-            playerId = subMatch.Groups[1].Value;
-            playerName = nameMatch.Groups[1].Value;
-            isAuthenticated = true;
+            _playerId = subMatch.Groups[1].Value;
+            _playerName = nameMatch.Groups[1].Value;
+            _isAuthenticated = true;
 
             if (emailMatch.Success)
             {

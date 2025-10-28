@@ -34,5 +34,5 @@
         "**/*.dll": true,
         "**/*.exe": true
     },
-    "dotnet.defaultSolution": "TimelessScript.sln"
+    "dotnet.defaultSolution": "TimelessScript.slnx"
 }

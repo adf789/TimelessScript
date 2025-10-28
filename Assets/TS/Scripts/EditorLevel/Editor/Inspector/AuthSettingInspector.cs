@@ -6,7 +6,7 @@ using UnityEditor;
 /// AuthSetting 커스텀 인스펙터 - 암호화/복호화 UI 제공
 /// </summary>
 [CustomEditor(typeof(AuthSetting))]
-public class AuthSettingEditor : UnityEditor.Editor
+public class AuthSettingInspector : Editor
 {
     private bool isDecrypted = false;
     private string tempClientId = "";

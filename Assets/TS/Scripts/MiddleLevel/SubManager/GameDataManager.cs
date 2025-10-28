@@ -2,15 +2,10 @@ using UnityEngine;
 using Firebase.Database;
 using System.Threading.Tasks;
 
-public class GameDataManager : BaseManager<GameDataManager>
+public class GameDataManager : SubBaseManager<GameDataManager>
 {
     private DatabaseReference dbRef;
     private string userId = "player001"; // 실제로는 고유 ID 사용
-
-    void Start()
-    {
-
-    }
 
     // 데이터 저장
     public async Task SaveGameData(GameData data)

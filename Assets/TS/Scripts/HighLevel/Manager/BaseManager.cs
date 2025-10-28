@@ -2,33 +2,33 @@ using UnityEngine;
 
 public class BaseManager<T> : BaseManager where T : BaseManager, new()
 {
-    private static T instance;
+    private static T _instance;
 
     public static T Instance
     {
         get
         {
-            if (instance == null)
+            if (_instance == null)
             {
-                instance = FindFirstObjectByType<T>();
+                _instance = FindFirstObjectByType<T>();
 
-                if(instance == null)
+                if (_instance == null)
                 {
                     System.Type type = typeof(T);
                     string objectName = type.Name;
                     GameObject newObject = new GameObject(objectName);
 
-                    instance = newObject.AddComponent<T>();
+                    _instance = newObject.AddComponent<T>();
                 }
             }
 
-            return instance;
+            return _instance;
         }
     }
 
     private void Awake()
     {
-        instance = this as T;
+        _instance = this as T;
     }
 }
 
