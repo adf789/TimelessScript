@@ -103,6 +103,7 @@ public class AuthManager : BaseManager<AuthManager>
                 {
                     _playerId = PlayGamesPlatform.Instance.GetUserId();
                     _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
+                    _isAuthenticated = true;
 
                     Debug.Log($"[AuthManager] Silent sign-in successful. Player: {_playerName} (ID: {_playerId})");
                     tcs.TrySetResult(true);
@@ -171,6 +172,7 @@ public class AuthManager : BaseManager<AuthManager>
                 {
                     _playerId = PlayGamesPlatform.Instance.GetUserId();
                     _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
+                    _isAuthenticated = true;
 
                     Debug.Log($"[AuthManager] Sign-in successful. Player: {_playerName} (ID: {_playerId})");
                     tcs.TrySetResult(true);
