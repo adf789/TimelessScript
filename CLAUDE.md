@@ -18,10 +18,28 @@
 
 ### Core Patterns
 - **Managers**: `BaseManager<T>` singleton (MonoBehaviour)
+- **SubManagers**: `SubBaseManager<T>` singleton (Non-MonoBehaviour)
 - **Flows**: `BaseFlow` state management
 - **Resources**: Type-based registry with `ResourcesPath` attribute
 - **Physics**: Custom `LightweightPhysics2D`
 - **ECS**: Hybrid authoring + runtime separation
+
+### Singleton Naming Convention
+| Type | Base Class | Suffix | Location | Use Case |
+|------|-----------|--------|----------|----------|
+| MonoBehaviour Singleton | `BaseManager<T>` | `Manager` | HighLevel/Manager | GameObject lifecycle, Start/Update, scene objects |
+| Non-MonoBehaviour Singleton | `SubBaseManager<T>` | `SubManager` | MiddleLevel/SubManager | Pure data/logic, no GameObject needed |
+
+**Examples**:
+```csharp
+// ✅ MonoBehaviour Singleton
+public class GameManager : BaseManager<GameManager> { }
+public class ProceduralMapManager : BaseManager<ProceduralMapManager> { }
+
+// ✅ Non-MonoBehaviour Singleton
+public class DatabaseSubManager : SubBaseManager<DatabaseSubManager> { }
+public class GameDataSubManager : SubBaseManager<GameDataSubManager> { }
+```
 
 ---
 
@@ -187,6 +205,11 @@ Before_Code_Generation:
   - "ScriptableObject 데이터인가? → LowLevel"
   - "Editor 전용인가? → #if UNITY_EDITOR 필수"
 
+Singleton_Naming:
+  - "MonoBehaviour 싱글톤? → BaseManager<T> + ~Manager 접미사"
+  - "Non-MonoBehaviour 싱글톤? → SubBaseManager<T> + ~SubManager 접미사"
+  - "GameObject 필요? → Manager | 불필요? → SubManager"
+
 Struct_Usage:
   - "Null 체크 불가 → FindIndex 사용"
   - "List 필드 → OnValidate()에서 초기화"
@@ -232,6 +255,7 @@ Example:
 - [ ] Assembly 레벨 적절한가?
 - [ ] 의존성 방향 올바른가? (하위 → 상위만)
 - [ ] MonoBehaviour vs ScriptableObject 선택 맞나?
+- [ ] **싱글톤 네이밍 규칙 준수하나?** (Manager/SubManager 접미사)
 - [ ] Struct null 체크 없나?
 - [ ] List/Collection 초기화 됐나?
 - [ ] `#if UNITY_EDITOR` 래핑 됐나? (EditorLevel)

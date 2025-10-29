@@ -423,7 +423,6 @@ public class AuthManager : BaseManager<AuthManager>
         }
     }
 
-#if UNITY_EDITOR
     // ==================== 에디터 전용 Google OAuth 구현 ====================
 
     /// <summary>
@@ -431,6 +430,7 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     private async UniTask<bool> EditorGoogleOAuthSignIn()
     {
+#if UNITY_EDITOR
         // 1. Loopback flow 초기화 (고정 포트 사용)
         _redirectUri = $"http://localhost:{_authSetting.EditorRedirectPort}/";
         _state = Guid.NewGuid().ToString("N");
@@ -481,8 +481,12 @@ public class AuthManager : BaseManager<AuthManager>
 
         // 6. UserInfo 요청
         return await GetUserInfo(accessToken);
+#else
+        return true;
+#endif
     }
 
+#if UNITY_EDITOR
     private string CreateCodeChallenge(string codeVerifier)
     {
         using var sha256 = SHA256.Create();
