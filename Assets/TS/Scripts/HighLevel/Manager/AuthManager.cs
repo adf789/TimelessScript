@@ -210,7 +210,7 @@ public class AuthManager : BaseManager<AuthManager>
     }
 
     /// <summary>
-    /// 유저 데이터를 Firebase Database에 저장
+    /// 유저 데이터를 Firebase Firestore에 저장
     /// </summary>
     public async UniTask<bool> SaveUserDataToDatabase()
     {
@@ -220,9 +220,9 @@ public class AuthManager : BaseManager<AuthManager>
             return false;
         }
 
-        if (!DatabaseManager.Instance.IsInitialized)
+        if (!DatabaseSubManager.Instance.IsInitialized)
         {
-            Debug.LogWarning("[AuthManager] DatabaseManager not initialized.");
+            Debug.LogWarning("[AuthManager] DatabaseSubManager not initialized.");
             return false;
         }
 
@@ -236,13 +236,12 @@ public class AuthManager : BaseManager<AuthManager>
                 { "lastLogin", System.DateTime.UtcNow.ToString("o") }
             };
 
-            // Firebase Database에 저장 (users/{playerId} 경로)
-            string path = $"users/{_playerId}";
-            bool success = await DatabaseManager.Instance.SetDataAsync(path, userData);
+            // Firebase Firestore에 저장 (users 컬렉션의 {playerId} 문서)
+            bool success = await DatabaseSubManager.Instance.SetDocumentAsync("users", _playerId, userData);
 
             if (success)
             {
-                Debug.Log($"[AuthManager] User data saved to Firebase: {_playerName}");
+                Debug.Log($"[AuthManager] User data saved to Firestore: {_playerName}");
             }
 
             return success;
@@ -255,7 +254,7 @@ public class AuthManager : BaseManager<AuthManager>
     }
 
     /// <summary>
-    /// Firebase Database에서 유저 데이터 로드
+    /// Firebase Firestore에서 유저 데이터 로드
     /// </summary>
     public async UniTask<bool> LoadUserDataFromDatabase()
     {
@@ -265,25 +264,26 @@ public class AuthManager : BaseManager<AuthManager>
             return false;
         }
 
-        if (!DatabaseManager.Instance.IsInitialized)
+        if (!DatabaseSubManager.Instance.IsInitialized)
         {
-            Debug.LogWarning("[AuthManager] DatabaseManager not initialized.");
+            Debug.LogWarning("[AuthManager] DatabaseSubManager not initialized.");
             return false;
         }
 
         try
         {
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
-            string path = $"users/{_playerId}";
-            var snapshot = await DatabaseManager.Instance.GetDataAsync(path);
+            // Firestore에서 문서 읽기 (users 컬렉션의 {playerId} 문서)
+            var snapshot = await DatabaseSubManager.Instance.GetDocumentAsync("users", _playerId);
 
             if (snapshot != null && snapshot.Exists)
             {
-                // 데이터 파싱
-                var playerName = snapshot.Child("playerName").Value?.ToString();
-                var lastLogin = snapshot.Child("lastLogin").Value?.ToString();
+                // Firestore 데이터 파싱
+                var data = snapshot.ToDictionary();
+                var playerName = data.ContainsKey("playerName") ? data["playerName"]?.ToString() : null;
+                var lastLogin = data.ContainsKey("lastLogin") ? data["lastLogin"]?.ToString() : null;
 
-                Debug.Log($"[AuthManager] User data loaded from Firebase");
+                Debug.Log($"[AuthManager] User data loaded from Firestore");
                 Debug.Log($"[AuthManager] Name: {playerName}, Last Login: {lastLogin}");
 
                 return true;

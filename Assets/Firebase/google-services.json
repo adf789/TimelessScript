@@ -15,16 +15,12 @@
       },
       "oauth_client": [
         {
-          "client_id": "474661179553-6bvum0drhp0mdjok81pijigk1msbpgtc.apps.googleusercontent.com",
+          "client_id": "474661179553-vnjqvd87115mr90jh5jo0spdefa1qbu4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.home.timelessscript",
             "certificate_hash": "7f1d4d82ef84429b8dd366635c508ca45a5db4bc"
           }
-        },
-        {
-          "client_id": "474661179553-9ielrj215k3hm75hno3rvdb5b54sdp0l.apps.googleusercontent.com",
-          "client_type": 3
         }
       ],
       "api_key": [
@@ -36,7 +32,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "474661179553-9ielrj215k3hm75hno3rvdb5b54sdp0l.apps.googleusercontent.com",
+              "client_id": "474661179553-ge0gk4s88b3p49s7ngok4n21sbgjg424.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
