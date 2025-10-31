@@ -30,9 +30,8 @@ public partial class PickedSystem : SystemBase
         // Get the singleton for read-write access.
         var targetHolder = SystemAPI.GetSingletonRW<TargetHolderComponent>();
 
-        // 1. Reset the target in the singleton.
+        // 1. Reset the target in the singleton and deselect all previously selected entities.
         targetHolder.ValueRW.Target = default;
-
         var currentlyPickedEntity = Entity.Null;
 
         // 2. Find the highest priority entity at the touch position.
@@ -50,7 +49,7 @@ public partial class PickedSystem : SystemBase
             }
         }
 
-        // 3. If an entity is picked, update the singleton with its physics component.
+        // 3. If an entity is picked, update the singleton and mark it as selected.
         if (currentlyPickedEntity != Entity.Null)
         {
             if (SystemAPI.HasComponent<TSObjectComponent>(currentlyPickedEntity))

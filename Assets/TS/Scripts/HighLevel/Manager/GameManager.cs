@@ -15,7 +15,8 @@ public class GameManager : BaseManager<GameManager>
     {
         Application.runInBackground = true;
 
-        Login().Forget();
+        // Login().Forget();
+        FlowManager.Instance.ChangeFlow(GameState.Intro).Forget();
     }
 
     private async UniTask Login()

@@ -138,7 +138,8 @@ public class ResourcesTypeRegistry : ScriptableObject
     /// </summary>
     public ResourcesPath GetResourcesPath(Type type)
     {
-        if (typeToPathCache == null) RefreshCache();
+        if (typeToPathCache == null)
+            RefreshCache();
 
         if (typeToPathCache.TryGetValue(type, out var resourcesPath))
         {

@@ -441,7 +441,7 @@ MonoBehaviour:
   tweenData:
     tweenType: 1
     easingType: 0
-    duration: 1
+    duration: 2
     delay: 0
     loop: 0
     pingPong: 0
@@ -471,7 +471,7 @@ MonoBehaviour:
     delay: 0
     loop: 0
     pingPong: 0
-    startValue: {x: 1, y: 0, z: 0}
+    startValue: {x: 1, y: 1, z: 1}
     endValue: {x: 0, y: 0, z: 0}
     elapsed: 0
     isReversing: 0

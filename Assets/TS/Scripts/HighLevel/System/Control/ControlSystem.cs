@@ -43,12 +43,23 @@ public partial struct ControlSystem : ISystem
             if (!CheckPossibleControlTarget(ref state, in pickedTarget))
                 return;
 
-            if (controlTarget != Entity.Null && controlTarget != pickedTarget.Self)
-                ToggleEmphasis(ref state, controlTarget, false);
+            // 이전 컨트롤 대상 선택 비활성화
+            if (controlTarget != Entity.Null
+            && SystemAPI.HasComponent<SelectionComponent>(controlTarget))
+            {
+                var selection = SystemAPI.GetComponentRW<SelectionComponent>(controlTarget);
+                selection.ValueRW.IsSelected = false;
+            }
 
             controlTarget = pickedTarget.Self;
 
-            ToggleEmphasis(ref state, controlTarget, true);
+            // 현재 컨트롤 대상 선택 활성화
+            if (controlTarget != Entity.Null
+            && SystemAPI.HasComponent<SelectionComponent>(controlTarget))
+            {
+                var selection = SystemAPI.GetComponentRW<SelectionComponent>(controlTarget);
+                selection.ValueRW.IsSelected = true;
+            }
 
             Debug.Log($"Select {pickedTarget.Name}");
 
@@ -299,26 +310,5 @@ public partial struct ControlSystem : ISystem
         actorComponent.RestoreMove.Target = actorComponent.Move.Target;
         actorComponent.RestoreMove.TargetDataID = actorComponent.Move.TargetDataID;
         actorComponent.RestoreMove.TargetType = actorComponent.Move.TargetType; actorComponent.RestoreMove.Position = touchPosition;
-    }
-
-    private void ToggleEmphasis(ref SystemState state, in Entity entity, bool isOn)
-    {
-        var obj = SystemAPI.GetComponentRO<TSObjectComponent>(entity);
-
-        // 엔티티 존재 유무 체크
-        if (!obj.IsValid)
-            return;
-
-        // 렌더링 엔티티 존재 유무 체크
-        if (obj.ValueRO.RendererEntity == Entity.Null)
-            return;
-
-        var renderer = SystemAPI.GetComponentRW<SpriteRendererComponent>(obj.ValueRO.RendererEntity);
-
-        // 렌더러 컴포넌트 체크
-        if (!renderer.IsValid)
-            return;
-
-        renderer.ValueRW.IsEmphasis = isOn;
     }
 }

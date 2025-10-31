@@ -324,6 +324,10 @@ PrefabInstance:
       propertyPath: spawnParent
       value: 
       objectReference: {fileID: 164978728}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: spawnObjectPrefab
+      value: 
+      objectReference: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
     - target: {fileID: 7020263473415740244, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: m_Size.x
       value: 20
@@ -494,6 +498,10 @@ PrefabInstance:
       propertyPath: maxSpawnCount
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: spawnObjectPrefab
+      value: 
+      objectReference: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -684,9 +692,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 3268465435861632508, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  lifeTime: 30
+  lifeTime: 0
   layerOffset: 0
-  maxSpawnCount: 30
+  maxSpawnCount: 2
   spawnCooldown: 2
   minSpawnDistance: 2
 --- !u!114 &1736684050
@@ -905,6 +913,10 @@ PrefabInstance:
       propertyPath: spawnParent
       value: 
       objectReference: {fileID: 164978728}
+    - target: {fileID: 5324830892724034587, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
+      propertyPath: spawnObjectPrefab
+      value: 
+      objectReference: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
     - target: {fileID: 7020263473415740244, guid: 4bd34a3e4a910064d9b0984108596e0b, type: 3}
       propertyPath: m_Size.x
       value: 20

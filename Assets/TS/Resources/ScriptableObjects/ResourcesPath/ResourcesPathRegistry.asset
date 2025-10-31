@@ -215,7 +215,7 @@ MonoBehaviour:
     resourcesPath: {fileID: -7861702888844971944}
     typeColor: {r: 0.52000004, g: 0.36, b: 0.64, a: 1}
     isActive: 1
-  - typeName: BaseTable, Game.MiddleLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - typeName: BaseTable, MiddleLevel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     displayName: Table
     resourcesPath: {fileID: 592521724022874513}
     typeColor: {r: 0.45000002, g: 0.62, b: 0.81, a: 1}

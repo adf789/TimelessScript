@@ -70,7 +70,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private void Start()
     {
-        Initialize();
+        // Initialize();
+
     }
 
     private void Update()
@@ -274,7 +275,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (_loadedPatterns.TryGetValue(key, out var loaded))
         {
-            LogDebug($"Pattern already loaded: {key}");
             instance = loaded.TilemapInstance;
             return true;
         }

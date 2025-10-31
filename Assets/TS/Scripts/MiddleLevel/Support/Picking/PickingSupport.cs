@@ -254,13 +254,13 @@ public class PickingSupport : MonoBehaviour
         if (pixelPerfectCamera == null)
         {
             pickingCamera.orthographicSize = Mathf.Clamp(
-                pickingCamera.orthographicSize - scrollY * GetZoomSpeed() * Time.deltaTime,
+                pickingCamera.orthographicSize + scrollY * GetZoomSpeed() * Time.deltaTime,
                 GetMinZoom(), GetMaxZoom());
         }
         else
         {
             pixelPerfectCamera.assetsPPU = (int) Mathf.Clamp(
-                pixelPerfectCamera.assetsPPU - scrollY * GetZoomSpeed() * Time.deltaTime,
+                pixelPerfectCamera.assetsPPU + scrollY * GetZoomSpeed() * Time.deltaTime,
                 GetMinZoom(), GetMaxZoom());
         }
 
@@ -318,13 +318,13 @@ public class PickingSupport : MonoBehaviour
         if (pixelPerfectCamera == null)
         {
             pickingCamera.orthographicSize = Mathf.Clamp(
-                pickingCamera.orthographicSize - delta * GetZoomSpeed() * Time.deltaTime,
+                pickingCamera.orthographicSize + delta * GetZoomSpeed() * Time.deltaTime,
                 GetMinZoom(), GetMaxZoom());
         }
         else
         {
             pixelPerfectCamera.assetsPPU = (int) Mathf.Clamp(
-                pixelPerfectCamera.assetsPPU - delta * GetZoomSpeed() * Time.deltaTime,
+                pixelPerfectCamera.assetsPPU + delta * GetZoomSpeed() * Time.deltaTime,
                 GetMinZoom(), GetMaxZoom());
         }
 

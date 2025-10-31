@@ -342,11 +342,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
         }
     }
 
-    public void ToggleOutline(bool enabled)
-    {
-        rendererMaterial.SetFloat("_OutlineEnabled", enabled ? 1 : 0);
-    }
-
     public void SetSpriteSheetImages(List<(AnimationState state, Sprite[] sprites)> spritePairs)
     {
         if (loadedSprites == null)
