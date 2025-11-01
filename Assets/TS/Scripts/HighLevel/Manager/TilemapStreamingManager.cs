@@ -70,7 +70,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private void Start()
     {
-        // Initialize();
+        Initialize();
 
     }
 
@@ -121,7 +121,13 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         _patternRegistry = await ResourcesTypeRegistry.Get()
         .LoadAsyncWithName<ScriptableObject, TilemapPatternRegistry>("TilemapPatternRegistry");
+    }
 
+    /// <summary>
+    /// 테스트용
+    /// </summary>
+    public void SetTestMapData()
+    {
         // 테스트 데이터
         var basePosition = new Vector2Int(0, 0);
         var basePattern = new TilemapPatternNode("BaseTown", basePosition);

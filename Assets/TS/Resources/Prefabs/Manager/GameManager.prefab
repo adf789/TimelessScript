@@ -97,7 +97,7 @@ MonoBehaviour:
   _targetCamera: {fileID: 8340294928188985847}
   _maxLoadedPatterns: 9
   _updateInterval: 0.5
-  _enableAutoStreaming: 0
+  _enableAutoStreaming: 1
   _loadBufferSize: 5
   _unloadMargin: 3
   _maxConcurrentLoads: 3

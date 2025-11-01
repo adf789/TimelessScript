@@ -21,10 +21,6 @@ public class TilemapPatternData : ScriptableObject
     [TextArea(3, 5)]
     public string Description;
 
-    [Header("SubScene")]
-    [Tooltip("이 패턴이 속한 SubScene 이름")]
-    public string SubSceneName;
-
     [Header("Addressable Reference")]
     [Tooltip("타일맵 프리팹 Addressable 참조")]
     public AssetReference TilemapPrefab;

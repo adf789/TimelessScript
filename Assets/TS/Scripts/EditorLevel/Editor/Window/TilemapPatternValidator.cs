@@ -328,7 +328,7 @@ public class TilemapPatternValidator : EditorWindow
         {
             if (pattern == null) continue;
 
-            if (string.IsNullOrEmpty(pattern.SubSceneName))
+            if (!pattern.SubScene.IsReferenceValid)
             {
                 AddResult(
                     ValidationResultType.Warning,

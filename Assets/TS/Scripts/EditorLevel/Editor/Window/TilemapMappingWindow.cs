@@ -217,9 +217,9 @@ public class TilemapMappingWindow : EditorWindow
             EditorGUILayout.EndHorizontal();
 
             // SubScene indicator
-            if (!string.IsNullOrEmpty(pattern.SubSceneName))
+            if (pattern.SubScene.IsReferenceValid)
             {
-                EditorGUILayout.LabelField($"SubScene: {pattern.SubSceneName}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"SubScene: {pattern.SubScene.ToString()}", EditorStyles.miniLabel);
             }
             else
             {
@@ -267,15 +267,7 @@ public class TilemapMappingWindow : EditorWindow
         EditorGUILayout.Space(10);
 
         // SubScene setting
-        EditorGUILayout.LabelField("SubScene Settings", EditorStyles.boldLabel);
-        EditorGUI.BeginChangeCheck();
-        var newSubSceneName = EditorGUILayout.TextField("SubScene Name", pattern.SubSceneName);
-        if (EditorGUI.EndChangeCheck())
-        {
-            Undo.RecordObject(pattern, "Change SubScene Name");
-            pattern.SubSceneName = newSubSceneName;
-            EditorUtility.SetDirty(pattern);
-        }
+        EditorGUILayout.LabelField("SubScene Registry:", GUILayout.Width(70));
 
         EditorGUILayout.Space(10);
 

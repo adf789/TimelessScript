@@ -30,6 +30,7 @@ public class TownFlow : BaseFlow
             return;
         }
 
+        TilemapStreamingManager.Instance.SetTestMapData();
         TilemapStreamingManager.Instance.SetEnableAutoStreaming(true);
     }
 

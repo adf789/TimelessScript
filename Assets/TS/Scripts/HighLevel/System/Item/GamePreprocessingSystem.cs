@@ -12,7 +12,7 @@ public partial class GamePreprocessingSystem : SystemBase
 
     protected override void OnCreate()
     {
-        RequireForUpdate<SpawnConfigComponent>();
+
     }
 
     protected override void OnUpdate()
