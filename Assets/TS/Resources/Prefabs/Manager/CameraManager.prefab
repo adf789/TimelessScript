@@ -154,7 +154,7 @@ MonoBehaviour:
   maxSize: 25
   pixelZoomSpeed: 10000
   pixelMinSize: 17
-  pixelMaxSize: 30
+  pixelMaxSize: 60
 --- !u!114 &5880341917412959436
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -662,6 +662,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dragSpeed: 0.03
   _dragRange: {fileID: 2063329127576903750}
-  _dragPadding: {x: 0, y: 0, z: 0, w: 0}
   _isLimitDragX: 1
   _isLimitDragY: 1

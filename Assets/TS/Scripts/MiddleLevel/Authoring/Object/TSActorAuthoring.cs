@@ -38,20 +38,14 @@ public class TSActorAuthoring : TSObjectAuthoring
 
             AddBuffer<InteractBuffer>(entity);
 
-            // Add selection components
-            AddComponent(entity, new SelectionComponent()
-            {
-                IsSelected = false
-            });
-
             // 베이킹 시 GameObject 참조를 명시적으로 등록
             if (authoring._select != null)
             {
                 DependsOn(authoring._select);  // 의존성 명시
 
-                AddComponentObject(entity, new SelectVisualComponent()
+                AddComponent(entity, new SelectVisualComponent()
                 {
-                    SelectVisual = authoring._select
+                    SelectVisual = GetEntity(authoring._select, TransformUsageFlags.None)
                 });
             }
         }

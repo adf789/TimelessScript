@@ -43,22 +43,27 @@ public partial struct ControlSystem : ISystem
             if (!CheckPossibleControlTarget(ref state, in pickedTarget))
                 return;
 
+            var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+            .CreateCommandBuffer(state.WorldUnmanaged);
+
             // 이전 컨트롤 대상 선택 비활성화
             if (controlTarget != Entity.Null
-            && SystemAPI.HasComponent<SelectionComponent>(controlTarget))
+            && SystemAPI.HasComponent<SelectVisualComponent>(controlTarget))
             {
-                var selection = SystemAPI.GetComponentRW<SelectionComponent>(controlTarget);
-                selection.ValueRW.IsSelected = false;
+                var selection = SystemAPI.GetComponentRW<SelectVisualComponent>(controlTarget);
+
+                ecb.AddComponent<Disabled>(selection.ValueRW.SelectVisual);
             }
 
             controlTarget = pickedTarget.Self;
 
             // 현재 컨트롤 대상 선택 활성화
             if (controlTarget != Entity.Null
-            && SystemAPI.HasComponent<SelectionComponent>(controlTarget))
+            && SystemAPI.HasComponent<SelectVisualComponent>(controlTarget))
             {
-                var selection = SystemAPI.GetComponentRW<SelectionComponent>(controlTarget);
-                selection.ValueRW.IsSelected = true;
+                var selection = SystemAPI.GetComponentRW<SelectVisualComponent>(controlTarget);
+
+                ecb.RemoveComponent<Disabled>(selection.ValueRW.SelectVisual);
             }
 
             Debug.Log($"Select {pickedTarget.Name}");
