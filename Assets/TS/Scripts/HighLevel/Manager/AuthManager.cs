@@ -20,7 +20,7 @@ public class AuthManager : BaseManager<AuthManager>
 {
     private AuthSetting _authSetting;
     private bool _isAuthenticated;
-    private string _playerId;
+    private string _playerID;
     private string _playerName;
 
 #if UNITY_EDITOR
@@ -42,7 +42,7 @@ public class AuthManager : BaseManager<AuthManager>
     /// <summary>
     /// 현재 로그인한 플레이어 ID
     /// </summary>
-    public string PlayerId => _playerId;
+    public string PlayerID => _playerID;
 
     /// <summary>
     /// 현재 로그인한 플레이어 이름
@@ -101,11 +101,11 @@ public class AuthManager : BaseManager<AuthManager>
             {
                 if (status == SignInStatus.Success)
                 {
-                    _playerId = PlayGamesPlatform.Instance.GetUserId();
+                    _playerID = PlayGamesPlatform.Instance.GetUserId();
                     _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
                     _isAuthenticated = true;
 
-                    Debug.Log($"[AuthManager] Silent sign-in successful. Player: {_playerName} (ID: {_playerId})");
+                    Debug.Log($"[AuthManager] Silent sign-in successful. Player: {_playerName} (ID: {_playerID})");
                     tcs.TrySetResult(true);
                 }
                 else
@@ -146,7 +146,7 @@ public class AuthManager : BaseManager<AuthManager>
 
                 if (success)
                 {
-                    Debug.Log($"[AuthManager][EDITOR] Sign-in successful. Player: {_playerName} (ID: {_playerId})");
+                    Debug.Log($"[AuthManager][EDITOR] Sign-in successful. Player: {_playerName} (ID: {_playerID})");
                     onEventFinished?.Invoke();
                 }
                 else
@@ -170,11 +170,11 @@ public class AuthManager : BaseManager<AuthManager>
             {
                 if (status == SignInStatus.Success)
                 {
-                    _playerId = PlayGamesPlatform.Instance.GetUserId();
+                    _playerID = PlayGamesPlatform.Instance.GetUserId();
                     _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
                     _isAuthenticated = true;
 
-                    Debug.Log($"[AuthManager] Sign-in successful. Player: {_playerName} (ID: {_playerId})");
+                    Debug.Log($"[AuthManager] Sign-in successful. Player: {_playerName} (ID: {_playerID})");
                     tcs.TrySetResult(true);
 
                     onEventFinished?.Invoke();
@@ -231,13 +231,13 @@ public class AuthManager : BaseManager<AuthManager>
             // 유저 데이터 구조 생성
             var userData = new System.Collections.Generic.Dictionary<string, object>
             {
-                { "playerId", _playerId },
+                { "playerId", _playerID },
                 { "playerName", _playerName },
                 { "lastLogin", System.DateTime.UtcNow.ToString("o") }
             };
 
             // Firebase Firestore에 저장 (users 컬렉션의 {playerId} 문서)
-            bool success = await DatabaseSubManager.Instance.SetDocumentAsync("users", _playerId, userData);
+            bool success = await DatabaseSubManager.Instance.SetDocumentAsync("users", _playerID, userData);
 
             if (success)
             {
@@ -274,7 +274,7 @@ public class AuthManager : BaseManager<AuthManager>
         {
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
             // Firestore에서 문서 읽기 (users 컬렉션의 {playerId} 문서)
-            var snapshot = await DatabaseSubManager.Instance.GetDocumentAsync("users", _playerId);
+            var snapshot = await DatabaseSubManager.Instance.GetDocumentAsync("users", _playerID);
 
             if (snapshot != null && snapshot.Exists)
             {
@@ -290,7 +290,7 @@ public class AuthManager : BaseManager<AuthManager>
             }
             else
             {
-                Debug.LogWarning($"[AuthManager] No user data found for {_playerId}");
+                Debug.LogWarning($"[AuthManager] No user data found for {_playerID}");
                 return false;
             }
 #else
@@ -610,7 +610,7 @@ public class AuthManager : BaseManager<AuthManager>
 
         if (subMatch.Success && nameMatch.Success)
         {
-            _playerId = subMatch.Groups[1].Value;
+            _playerID = subMatch.Groups[1].Value;
             _playerName = nameMatch.Groups[1].Value;
             _isAuthenticated = true;
 

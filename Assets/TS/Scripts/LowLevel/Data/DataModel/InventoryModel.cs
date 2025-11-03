@@ -1,11 +1,15 @@
 
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using UnityEngine;
 
 public class InventoryModel
 {
     public int ItemCount => items.Count;
 
     private Dictionary<uint, Item> items = new();
+
+    private IDictionary<string, object> _saveData;
 
     public void Add(uint itemID, long count)
     {
@@ -87,5 +91,20 @@ public class InventoryModel
     public void Clear()
     {
         items.Clear();
+    }
+
+    public IDictionary<string, object> ConvertToSaveData()
+    {
+        if (_saveData == null)
+            _saveData = new Dictionary<string, object>();
+
+        _saveData["items"] = JsonConvert.SerializeObject(items);
+
+        return _saveData;
+    }
+
+    public void ConvertFromSaveData(IDictionary<string, object> dic)
+    {
+        items = JsonConvert.DeserializeObject<Dictionary<uint, Item>>((string) dic["items"]);
     }
 }

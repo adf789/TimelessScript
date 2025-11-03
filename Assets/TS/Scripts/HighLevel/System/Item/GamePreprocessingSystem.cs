@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
@@ -89,7 +90,11 @@ public partial class GamePreprocessingSystem : SystemBase
         }
 
         if (collectItems.Count > 0)
+        {
             ObserverSubManager.Instance.NotifyObserver(new ShowCurrencyParam());
+
+            player.SaveInventory().Forget();
+        }
 
         collectItems.Clear();
     }

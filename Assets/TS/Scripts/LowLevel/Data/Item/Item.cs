@@ -1,3 +1,6 @@
+using System;
+
+[Serializable]
 public struct Item
 {
     public bool IsNull => ID == 0;

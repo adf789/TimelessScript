@@ -15,13 +15,17 @@ public class IntroScene : MonoBehaviour
 
         if (await AuthManager.Instance.SignInAsync())
         {
+            PlayerSubManager.Instance.SetPlayerID(AuthManager.Instance.PlayerID);
+
             if (await AuthManager.Instance.LoadUserDataFromDatabase())
             {
-                Debug.Log($"계정 로드 성공: {AuthManager.Instance.PlayerId}");
+                await PlayerSubManager.Instance.LoadInventory();
+
+                Debug.Log($"계정 로드 성공: {AuthManager.Instance.PlayerID}");
             }
             else
             {
-                Debug.Log($"계정 가입 성공: {AuthManager.Instance.PlayerId}");
+                Debug.Log($"계정 가입 성공: {AuthManager.Instance.PlayerID}");
 
                 await AuthManager.Instance.SaveUserDataToDatabase();
             }
