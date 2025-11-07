@@ -26,7 +26,7 @@ public class TilemapPatternRegistry : ScriptableObject
 
     // 런타임 캐시
     private Dictionary<string, TilemapPatternData> _patternCache;
-    private Dictionary<PatternDirection, List<TilemapPatternData>> _shapeCache;
+    private Dictionary<FourDirection, List<TilemapPatternData>> _shapeCache;
     private bool _isInitialized = false;
     /// <summary>
     /// 레지스트리 초기화 (런타임에 최초 1회 호출)
@@ -51,8 +51,8 @@ public class TilemapPatternRegistry : ScriptableObject
         }
 
         // Shape별 캐시 생성
-        _shapeCache = new Dictionary<PatternDirection, List<TilemapPatternData>>();
-        foreach (PatternDirection direction in System.Enum.GetValues(typeof(PatternDirection)))
+        _shapeCache = new Dictionary<FourDirection, List<TilemapPatternData>>();
+        foreach (FourDirection direction in System.Enum.GetValues(typeof(FourDirection)))
         {
             _shapeCache[direction] = AllPatterns.Where(p => p != null && p.Connections.Any(c => c.Direction == direction)).ToList();
         }
@@ -86,7 +86,7 @@ public class TilemapPatternRegistry : ScriptableObject
     /// <summary>
     /// 패턴 Shape으로 패턴 목록 가져오기
     /// </summary>
-    public List<TilemapPatternData> GetPatternsByShape(PatternDirection direction)
+    public List<TilemapPatternData> GetPatternsByShape(FourDirection direction)
     {
         if (!_isInitialized) Initialize();
 
@@ -101,7 +101,7 @@ public class TilemapPatternRegistry : ScriptableObject
     /// <summary>
     /// 랜덤 패턴 가져오기
     /// </summary>
-    public TilemapPatternData GetRandomPattern(PatternDirection direction)
+    public TilemapPatternData GetRandomPattern(FourDirection direction)
     {
         if (!_isInitialized) Initialize();
 

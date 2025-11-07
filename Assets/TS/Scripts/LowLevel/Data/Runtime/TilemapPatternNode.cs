@@ -38,23 +38,23 @@ public class TilemapPatternNode
     /// <summary>
     /// 특정 방향의 노드 가져오기
     /// </summary>
-    public TilemapPatternNode GetNodeInDirection(PatternDirection direction)
+    public TilemapPatternNode GetNodeInDirection(FourDirection direction)
     {
-        return LinkedNodes[(int) direction];
+        return LinkedNodes[(int)direction];
     }
 
     /// <summary>
     /// 특정 방향에 노드 설정
     /// </summary>
-    public void SetNodeInDirection(PatternDirection direction, TilemapPatternNode node)
+    public void SetNodeInDirection(FourDirection direction, TilemapPatternNode node)
     {
-        LinkedNodes[(int) direction] = node;
+        LinkedNodes[(int)direction] = node;
     }
 
     /// <summary>
     /// 특정 방향에 연결이 있는지 확인
     /// </summary>
-    public bool HasConnectionInDirection(PatternDirection direction)
+    public bool HasConnectionInDirection(FourDirection direction)
     {
         return GetNodeInDirection(direction) != null;
     }
