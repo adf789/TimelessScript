@@ -18,7 +18,7 @@ public class TilemapMappingWindow : EditorWindow
 
     // Port 추가 UI 상태
     private bool _showAddPortSection = false;
-    private PatternDirection _newPortDirection = PatternDirection.Right;
+    private FourDirection _newPortDirection = FourDirection.Right;
     private int _newPortPosition = 0;
 
     private GUIStyle _headerStyle;
@@ -26,7 +26,7 @@ public class TilemapMappingWindow : EditorWindow
     private GUIStyle _boxStyle;
     private GUIStyle _selectedBoxStyle;
 
-    [MenuItem("TS/Tilemap/Pattern Editor")]
+    [MenuItem("TS/Tilemap/Pattern Editor %&m")]
     public static void ShowWindow()
     {
         var window = GetWindow<TilemapMappingWindow>("Pattern Editor");
@@ -369,13 +369,13 @@ public class TilemapMappingWindow : EditorWindow
         {
             EditorGUILayout.BeginVertical(_boxStyle);
 
-            _newPortDirection = (PatternDirection) EditorGUILayout.EnumPopup("방향", _newPortDirection);
+            _newPortDirection = (FourDirection) EditorGUILayout.EnumPopup("방향", _newPortDirection);
             _newPortPosition = EditorGUILayout.IntField("Position", _newPortPosition);
 
             // 위치 제한 지정
             int maxPosition = 0;
-            if (_newPortDirection == PatternDirection.Left
-            || _newPortDirection == PatternDirection.Right)
+            if (_newPortDirection == FourDirection.Left
+            || _newPortDirection == FourDirection.Right)
                 maxPosition = _registry.GridSize.y - 1;
             else
                 maxPosition = _registry.GridSize.x - 1;
@@ -395,7 +395,7 @@ public class TilemapMappingWindow : EditorWindow
                 AddNewPort(pattern, _newPortDirection, _newPortPosition);
 
                 // 초기화
-                _newPortDirection = PatternDirection.Right;
+                _newPortDirection = FourDirection.Right;
                 _newPortPosition = 0;
             }
             EditorGUI.EndDisabledGroup();
@@ -407,7 +407,7 @@ public class TilemapMappingWindow : EditorWindow
     /// <summary>
     /// 새 Port 추가
     /// </summary>
-    private void AddNewPort(TilemapPatternData pattern, PatternDirection direction, int pos)
+    private void AddNewPort(TilemapPatternData pattern, FourDirection direction, int pos)
     {
         Undo.RecordObject(pattern, "Add New Port");
 
@@ -434,14 +434,14 @@ public class TilemapMappingWindow : EditorWindow
     /// <summary>
     /// Port 방향 이름을 한글로 변환
     /// </summary>
-    private string GetDirectionDisplayName(PatternDirection direction)
+    private string GetDirectionDisplayName(FourDirection direction)
     {
         return direction switch
         {
-            PatternDirection.Top => "상단",
-            PatternDirection.Bottom => "하단",
-            PatternDirection.Left => "좌측",
-            PatternDirection.Right => "우측",
+            FourDirection.Top => "상단",
+            FourDirection.Bottom => "하단",
+            FourDirection.Left => "좌측",
+            FourDirection.Right => "우측",
             _ => direction.ToString()
         };
     }

@@ -35,7 +35,7 @@ public class TilemapPatternData : ScriptableObject
     /// <summary>
     /// 특정 방향의 활성화된 연결 지점이 있는지 확인
     /// </summary>
-    public bool HasActiveConnection(PatternDirection direction)
+    public bool HasActiveConnection(FourDirection direction)
     {
         return Connections.Exists(c => c.Direction == direction);
     }
@@ -43,7 +43,7 @@ public class TilemapPatternData : ScriptableObject
     /// <summary>
     /// 특정 방향의 연결 지점 가져오기
     /// </summary>
-    public ConnectionPoint? GetConnection(PatternDirection direction)
+    public ConnectionPoint? GetConnection(FourDirection direction)
     {
         int index = Connections.FindIndex(c => c.Direction == direction);
         if (index < 0) return null;
@@ -75,19 +75,8 @@ public class TilemapPatternData : ScriptableObject
 public struct ConnectionPoint
 {
     [Tooltip("연결 방향 (6방향)")]
-    public PatternDirection Direction;
+    public FourDirection Direction;
 
     [Tooltip("패턴 내 정수형 연결 좌표")]
     public int Position;
-}
-
-/// <summary>
-/// 4방향 정의 (2D Side-Scrolling)
-/// </summary>
-public enum PatternDirection
-{
-    Top,         // 상단
-    Bottom,      // 하단
-    Left,        // 좌
-    Right,       // 우
 }

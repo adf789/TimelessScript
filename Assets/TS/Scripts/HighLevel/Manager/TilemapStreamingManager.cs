@@ -647,14 +647,14 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Calculation Helpers
 
-    private Vector2Int CalculateNeighborOffset(Vector2Int currentOffset, PatternDirection direction)
+    private Vector2Int CalculateNeighborOffset(Vector2Int currentOffset, FourDirection direction)
     {
         return direction switch
         {
-            PatternDirection.Top => new Vector2Int(currentOffset.x, currentOffset.y + 1),
-            PatternDirection.Bottom => new Vector2Int(currentOffset.x, currentOffset.y - 1),
-            PatternDirection.Left => new Vector2Int(currentOffset.x - 1, currentOffset.y),
-            PatternDirection.Right => new Vector2Int(currentOffset.x + 1, currentOffset.y),
+            FourDirection.Top => new Vector2Int(currentOffset.x, currentOffset.y + 1),
+            FourDirection.Bottom => new Vector2Int(currentOffset.x, currentOffset.y - 1),
+            FourDirection.Left => new Vector2Int(currentOffset.x - 1, currentOffset.y),
+            FourDirection.Right => new Vector2Int(currentOffset.x + 1, currentOffset.y),
             _ => currentOffset
         };
     }
