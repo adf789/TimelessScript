@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public class ObjectPoolSupport : MonoBehaviour
+public class ObjectPoolAddon : MonoBehaviour
 {
     public int LoadedCount => loadedObjects != null ? loadedObjects.Count : 0;
     [SerializeField] private string guid;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EffectManager : BaseManager<EffectManager>
 {
-    [SerializeField] private ObjectPoolSupport rewardEffectPool;
+    [SerializeField] private ObjectPoolAddon rewardEffectPool;
 
     void OnEnable()
     {
@@ -20,7 +20,7 @@ public class EffectManager : BaseManager<EffectManager>
 
         rewardEffect.transform.position = new Vector3(param.Position.x, param.Position.y);
 
-        if (rewardEffect.TryGetComponent(out RewardEffectSupport effectSupport))
-            effectSupport.Show(param.RewardCount);
+        if (rewardEffect.TryGetComponent(out RewardEffectAddon effectAddon))
+            effectAddon.Show(param.RewardCount);
     }
 }

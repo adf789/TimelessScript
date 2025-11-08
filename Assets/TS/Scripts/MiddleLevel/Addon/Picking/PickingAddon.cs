@@ -6,7 +6,7 @@ using UnityEngine.InputSystem.EnhancedTouch;
 using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Camera))]
-public class PickingSupport : MonoBehaviour
+public class PickingAddon : MonoBehaviour
 {
 
     #region Coding rule : Property
@@ -19,7 +19,7 @@ public class PickingSupport : MonoBehaviour
     [SerializeField, Header("터치 딜레이")] private float touchDelay = 0.1f;
     [SerializeField] private Camera pickingCamera;
     [SerializeField] private PixelPerfectCamera pixelPerfectCamera;
-    [SerializeField] private PickedSupport dragRange;
+    [SerializeField] private PickedAddon dragRange;
 
     [Header("Non-Pixel zoom")]
     [SerializeField] private float zoomSpeed = 10.0f;
@@ -36,8 +36,8 @@ public class PickingSupport : MonoBehaviour
     private float scrollY;
     private float touchTime;
 
-    private readonly LinkedList<PickedSupport> pickObjects = new();
-    private SortedSet<PickedSupport> prevOverlapObjects = new();
+    private readonly LinkedList<PickedAddon> pickObjects = new();
+    private SortedSet<PickedAddon> prevOverlapObjects = new();
     private Vector2 prevPosition;
 
     private bool isPickStart;
@@ -212,14 +212,14 @@ public class PickingSupport : MonoBehaviour
         ResetPickValues();
     }
 
-    private SortedSet<PickedSupport> GetPickTargets(Vector2 position)
+    private SortedSet<PickedAddon> GetPickTargets(Vector2 position)
     {
-        var targets = new SortedSet<PickedSupport>();
+        var targets = new SortedSet<PickedAddon>();
         if (EventSystem.current.IsPointerOverGameObject()) return targets;
 
         foreach (var collider in Physics2D.OverlapPointAll(position))
         {
-            if (collider != null && collider.TryGetComponent(out PickedSupport target))
+            if (collider != null && collider.TryGetComponent(out PickedAddon target))
                 targets.Add(target);
         }
 

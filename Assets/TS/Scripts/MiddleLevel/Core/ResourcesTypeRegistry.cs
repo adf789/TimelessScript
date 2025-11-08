@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(fileName = "New Resource Type Registry", menuName = "Scriptable Objects/Resource Type Registry")]
+[CreateAssetMenu(fileName = "New Resource Type Registry", menuName = "TS/Resources/Resource Type Registry")]
 public class ResourcesTypeRegistry : ScriptableObject
 {
     [System.Serializable]

@@ -3,8 +3,6 @@ using UnityEngine;
 using UnityEditor;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 
 public class ADBConnectorEditor : EditorWindow
 {

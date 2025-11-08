@@ -10,6 +10,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
     {
         UI,
         Data,
+        Addon,
         ECS,
         Table,
         Manager,
@@ -25,7 +26,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private Dictionary<CreateScriptType, BaseScriptCreator> creators = null;
     private static ScriptCreatorEditorWindow instance;
 
-    [MenuItem("TS/Create Script %e")] // Ctrl + E 단축키 설정
+    [MenuItem("TS/Create Script %&e")] // Ctrl + Shift + E 단축키 설정
     public static void ShowWindow()
     {
         var window = GetWindow<ScriptCreatorEditorWindow>("Unity Script Creator");
@@ -47,6 +48,10 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
             case CreateScriptType.Data:
                 creator = new DataScriptCreator();
+                break;
+
+            case CreateScriptType.Addon:
+                creator = new AddonScriptCreator();
                 break;
 
             case CreateScriptType.ECS:

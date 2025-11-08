@@ -6,6 +6,11 @@ using UnityEngine;
 
 public class TableScriptCreator : BaseScriptCreator
 {
+    private readonly string PATH_TABLE = "MiddleLevel/Table";
+    private readonly string PATH_DATA = "LowLevel/TableData";
+    private readonly string SUFFIX_TABLE = "Table";
+    private readonly string SUFFIX_DATA = "TableData";
+
     public override void Create(string addPath, string assetName)
     {
         if (string.IsNullOrEmpty(assetName))
@@ -14,8 +19,8 @@ public class TableScriptCreator : BaseScriptCreator
             return;
         }
 
-        string tablePath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/Table");
-        string tableDatapath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/TableData");
+        string tablePath = string.Format(StringDefine.PATH_SCRIPT, PATH_TABLE);
+        string tableDatapath = string.Format(StringDefine.PATH_SCRIPT, PATH_DATA);
 
         if (!string.IsNullOrEmpty(addPath))
             tablePath = Path.Combine(tablePath, addPath);
@@ -26,8 +31,8 @@ public class TableScriptCreator : BaseScriptCreator
         CreateDirectoryIfNotExist(tablePath);
         CreateDirectoryIfNotExist(tableDatapath);
 
-        CreateScript(tablePath, $"{assetName}Table", GenerateTableCode(assetName));
-        CreateScript(tableDatapath, $"{assetName}TableData", GenerateTableDataCode(assetName));
+        CreateScript(tablePath, $"{assetName}{SUFFIX_TABLE}", GenerateTableCode(assetName));
+        CreateScript(tableDatapath, $"{assetName}{SUFFIX_DATA}", GenerateTableDataCode(assetName));
     }
 
     public override List<string> GetFinalPaths(string addPath, string assetName)
@@ -35,18 +40,18 @@ public class TableScriptCreator : BaseScriptCreator
         var paths = new List<string>();
 
         // 테이블 경로
-        string tablePath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/Table");
+        string tablePath = string.Format(StringDefine.PATH_SCRIPT, PATH_TABLE);
 
         if (!string.IsNullOrEmpty(addPath))
             tablePath = Path.Combine(tablePath, addPath);
-        paths.Add($"{tablePath.Replace("\\", "/")}{assetName}Table.cs");
+        paths.Add($"{tablePath.Replace("\\", "/")}{assetName}{SUFFIX_TABLE}.cs");
 
         // 테이블 데이터 경로
-        string tableDataPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/TableData");
+        string tableDataPath = string.Format(StringDefine.PATH_SCRIPT, PATH_DATA);
 
         if (!string.IsNullOrEmpty(addPath))
             tableDataPath = Path.Combine(tableDataPath, addPath);
-        paths.Add($"{tableDataPath.Replace("\\", "/")}{assetName}TableData.cs");
+        paths.Add($"{tableDataPath.Replace("\\", "/")}{assetName}{SUFFIX_DATA}.cs");
 
         return paths;
     }
@@ -68,28 +73,25 @@ public class TableScriptCreator : BaseScriptCreator
                 EditorGUILayout.LabelField($"데이터 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
-                foreach (string path in finalPaths)
+                for (int i = 0; i < finalPaths.Count; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                        string normalizedPath = path.Replace("\\", "/");
+                        string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
+                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
+                        Color pathColor = GetPathColor(i);
+
+                        labelStyle.normal.textColor = pathColor;
 
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
                         EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
 
                         // 에디터 타입별 라벨 스타일
-                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-                        string fileName = Path.GetFileNameWithoutExtension(normalizedPath);
-                        if (fileName.EndsWith("Table"))
-                            labelStyle.normal.textColor = Color.cyan;
-                        else if (fileName.EndsWith("TableData"))
-                            labelStyle.normal.textColor = Color.aquamarine;
-
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
                         // Ping 버튼
-                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
                         {
                             PingFolder(folderPath);
@@ -112,8 +114,8 @@ public class TableScriptCreator : BaseScriptCreator
         return $@"
 using UnityEngine;
 
-[CreateAssetMenu(fileName = ""{name}Table"", menuName = ""Scriptable Objects/Table/{name}Table"")]
-public class {name}Table : BaseTable<{name}TableData>
+[CreateAssetMenu(fileName = ""{name}Table"", menuName = ""TS/Table/{name}Table"")]
+public class {name}{SUFFIX_TABLE} : BaseTable<{name}TableData>
 {{
 
 }}
@@ -125,7 +127,7 @@ public class {name}Table : BaseTable<{name}TableData>
         return $@"
 using UnityEngine;
 
-public class {name}TableData : BaseTableData
+public class {name}{SUFFIX_DATA} : BaseTableData
 {{
     
 }}

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "HomeFlow", menuName = "Scriptable Objects/Flow/Town Flow")]
+[CreateAssetMenu(fileName = "HomeFlow", menuName = "TS/Flow/Town Flow")]
 public class TownFlow : BaseFlow
 {
     [Header("Tilemap Settings")]

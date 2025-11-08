@@ -14,6 +14,11 @@ public class ManagerScriptCreator : BaseScriptCreator
 
     private ScriptType selectedType;
 
+    private readonly string PATH_MANAGER = "HighLevel/Manager";
+    private readonly string PATH_SUBMANAGER = "MiddleLevel/SubManager";
+    private readonly string SUFFIX_MANAGER = "Manager";
+    private readonly string SUFFIX_SUBMANAGER = "SubManager";
+
     public override void Create(string addPath, string assetName)
     {
         if (string.IsNullOrEmpty(assetName))
@@ -27,10 +32,10 @@ public class ManagerScriptCreator : BaseScriptCreator
         switch (selectedType)
         {
             case ScriptType.Manager:
-                path = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Manager");
+                path = string.Format(StringDefine.PATH_SCRIPT, PATH_MANAGER);
                 break;
             case ScriptType.SubManager:
-                path = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/SubManager");
+                path = string.Format(StringDefine.PATH_SCRIPT, PATH_SUBMANAGER);
                 break;
             default:
                 Debug.Log("정의되지 않은 타입입니다.");
@@ -45,10 +50,10 @@ public class ManagerScriptCreator : BaseScriptCreator
         switch (selectedType)
         {
             case ScriptType.Manager:
-                CreateScript(path, $"{assetName}Manager", GenerateManagerCode(assetName));
+                CreateScript(path, $"{assetName}{SUFFIX_MANAGER}", GenerateManagerCode(assetName));
                 break;
             case ScriptType.SubManager:
-                CreateScript(path, $"{assetName}SubManager", GenerateSubManagerCode(assetName));
+                CreateScript(path, $"{assetName}{SUFFIX_SUBMANAGER}", GenerateSubManagerCode(assetName));
                 break;
         }
     }
@@ -61,21 +66,21 @@ public class ManagerScriptCreator : BaseScriptCreator
         {
             case ScriptType.Manager:
                 {
-                    string path = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Manager");
+                    string path = string.Format(StringDefine.PATH_SCRIPT, PATH_MANAGER);
 
                     if (!string.IsNullOrEmpty(addPath))
                         path = Path.Combine(path, addPath);
-                    paths.Add($"{path.Replace("\\", "/")}{assetName}Manager.cs");
+                    paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX_MANAGER}.cs");
                 }
                 break;
 
             case ScriptType.SubManager:
                 {
-                    string path = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/SubManager");
+                    string path = string.Format(StringDefine.PATH_SCRIPT, PATH_SUBMANAGER);
 
                     if (!string.IsNullOrEmpty(addPath))
                         path = Path.Combine(path, addPath);
-                    paths.Add($"{path.Replace("\\", "/")}{assetName}SubManager.cs");
+                    paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX_SUBMANAGER}.cs");
                 }
                 break;
         }
@@ -100,28 +105,25 @@ public class ManagerScriptCreator : BaseScriptCreator
                 EditorGUILayout.LabelField($"데이터 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
-                foreach (string path in finalPaths)
+                for (int i = 0; i < finalPaths.Count; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                        string normalizedPath = path.Replace("\\", "/");
+                        string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
+                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
+                        Color pathColor = GetPathColor(i);
+
+                        labelStyle.normal.textColor = pathColor;
 
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
                         EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
 
                         // 에디터 타입별 라벨 스타일
-                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-                        string fileName = Path.GetFileNameWithoutExtension(normalizedPath);
-                        if (fileName.EndsWith("Manager"))
-                            labelStyle.normal.textColor = Color.aliceBlue;
-                        else if (fileName.EndsWith("SubManager"))
-                            labelStyle.normal.textColor = Color.azure;
-
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
                         // Ping 버튼
-                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
                         {
                             PingFolder(folderPath);
@@ -166,7 +168,7 @@ public class ManagerScriptCreator : BaseScriptCreator
     private string GenerateManagerCode(string name)
     {
         return $@"
-public class {name}Manager : BaseManager<{name}Manager>
+public class {name}{SUFFIX_MANAGER} : BaseManager<{name}Manager>
 {{
 
 }}
@@ -176,7 +178,7 @@ public class {name}Manager : BaseManager<{name}Manager>
     private string GenerateSubManagerCode(string name)
     {
         return $@"
-public class {name}SubManager : SubBaseManager<{name}SubManager>
+public class {name}{SUFFIX_SUBMANAGER} : SubBaseManager<{name}SubManager>
 {{
 
 }}

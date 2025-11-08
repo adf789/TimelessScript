@@ -5,8 +5,10 @@ public class IntDefine
     public const int TIME_MILLISECONDS_HALF_ONE = 500;
     #endregion TIME
 
-    #region DEFAULT
-    public const int DEFAULT_TILE_SIZE = 1;
-    public const int DEFAULT_MAP_PATTERN_DIRECTION = 4;
-    #endregion DEFAULT
+    #region MAP
+    public const int MAP_PATTERN_DIRECTION = 4;
+    public const int MAP_GRID_SIZE = 1;
+    public const int MAP_TOTAL_GRID_WIDTH = 50;
+    public const int MAP_TOTAL_GRID_HEIGHT = 16;
+    #endregion MAP
 }

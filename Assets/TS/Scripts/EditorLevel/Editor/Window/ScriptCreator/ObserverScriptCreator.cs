@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class ObserverScriptCreator : BaseScriptCreator
 {
+    private readonly string PATH = "LowLevel/Observer";
+    private readonly string SUFFIX = "Param";
+
     public override void Create(string addPath, string assetName)
     {
         if (string.IsNullOrEmpty(assetName))
@@ -14,24 +17,24 @@ public class ObserverScriptCreator : BaseScriptCreator
             return;
         }
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Observer");
+        string path = string.Format(StringDefine.PATH_SCRIPT, PATH);
 
         if (!string.IsNullOrEmpty(addPath))
             path = Path.Combine(path, addPath);
 
         CreateDirectoryIfNotExist(path);
-        CreateScript(path, $"{assetName}Param", GenerateObserverParamCode(assetName));
+        CreateScript(path, $"{assetName}{SUFFIX}", GenerateObserverParamCode(assetName));
     }
 
     public override List<string> GetFinalPaths(string addPath, string assetName)
     {
         var paths = new List<string>();
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Observer");
+        string path = string.Format(StringDefine.PATH_SCRIPT, PATH);
 
         if (!string.IsNullOrEmpty(addPath))
             path = Path.Combine(path, addPath);
-        paths.Add($"{path.Replace("\\", "/")}{assetName}Param.cs");
+        paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX}.cs");
 
         return paths;
     }
@@ -53,25 +56,25 @@ public class ObserverScriptCreator : BaseScriptCreator
                 EditorGUILayout.LabelField($"옵저버 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
-                foreach (string path in finalPaths)
+                for (int i = 0; i < finalPaths.Count; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                        string normalizedPath = path.Replace("\\", "/");
+                        string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
+                        Color pathColor = GetPathColor(i);
+                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
+
+                        labelStyle.normal.textColor = pathColor;
 
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
                         EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
 
                         // 에디터 타입별 라벨 스타일
-                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-
-                        labelStyle.normal.textColor = Color.blue;
-
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
                         // Ping 버튼
-                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
                         {
                             PingFolder(folderPath);
@@ -92,7 +95,7 @@ public class ObserverScriptCreator : BaseScriptCreator
     private string GenerateObserverParamCode(string name)
     {
         return $@"
-public struct {name}Param : IObserverParam
+public struct {name}{SUFFIX} : IObserverParam
 {{
 
 }}

@@ -7,11 +7,19 @@ using UnityEngine;
 
 public abstract class BaseScriptCreator : Editor
 {
+    private readonly Color[] _colors = new Color[]
+    {
+        Color.cyan,
+Color.orange,
+Color.lightCoral,
+Color.springGreen,
+Color.whiteSmoke,
+    };
 
     public abstract void Create(string addPath, string assetName);
     public virtual void DrawCustomOptions() { }
     public virtual void OnAfterReload() { }
-    
+
     // 경로 미리보기 관련 메서드들
     public virtual List<string> GetFinalPaths(string addPath, string assetName) { return new List<string>(); }
     public virtual void DrawPathPreview(string addPath, string assetName) { }
@@ -116,7 +124,7 @@ public abstract class BaseScriptCreator : Editor
             Debug.Log($"빈 폴더 삭제됨: {folderPath}");
         }
     }
-    
+
     // Ping 기능을 위한 유틸리티 메서드
     protected virtual void PingFolder(string folderPath)
     {
@@ -144,14 +152,14 @@ public abstract class BaseScriptCreator : Editor
         // 폴더가 존재하지 않으면 생성 여부 확인
         if (!Directory.Exists(assetsRelativePath) && !AssetDatabase.IsValidFolder(assetsRelativePath))
         {
-            if (EditorUtility.DisplayDialog("폴더 생성", 
-                $"폴더가 존재하지 않습니다.\n'{assetsRelativePath}'\n\n폴더를 생성하시겠습니까?", 
+            if (EditorUtility.DisplayDialog("폴더 생성",
+                $"폴더가 존재하지 않습니다.\n'{assetsRelativePath}'\n\n폴더를 생성하시겠습니까?",
                 "생성", "취소"))
             {
                 // 폴더 생성
                 string[] pathParts = assetsRelativePath.Split('/');
                 string currentPath = pathParts[0]; // "Assets"
-                
+
                 for (int i = 1; i < pathParts.Length; i++)
                 {
                     string newPath = currentPath + "/" + pathParts[i];
@@ -161,7 +169,7 @@ public abstract class BaseScriptCreator : Editor
                     }
                     currentPath = newPath;
                 }
-                
+
                 AssetDatabase.Refresh();
                 Debug.Log($"폴더 생성 완료: {assetsRelativePath}");
             }
@@ -184,5 +192,16 @@ public abstract class BaseScriptCreator : Editor
         {
             Debug.LogWarning($"폴더 객체를 찾을 수 없습니다: {assetsRelativePath}");
         }
+    }
+
+    protected Color GetPathColor(int index)
+    {
+        if (_colors == null || _colors.Length == 0)
+            return Color.white;
+
+        if (_colors.Length <= index || index < 0)
+            return Color.white;
+
+        return _colors[index];
     }
 }

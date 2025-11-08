@@ -4,7 +4,7 @@ using UnityEngine;
 /// OAuth 인증 설정 (암호화된 민감 정보 저장)
 /// Git에는 암호화된 값만 저장되며, 로컬 키로 복호화
 /// </summary>
-[CreateAssetMenu(fileName = "AuthSetting", menuName = "Scriptable Objects/AuthSetting")]
+[CreateAssetMenu(fileName = "AuthSetting", menuName = "TS/Authentication/AuthSetting")]
 public class AuthSetting : ScriptableObject
 {
     // 런타임에서 복호화된 값을 반환

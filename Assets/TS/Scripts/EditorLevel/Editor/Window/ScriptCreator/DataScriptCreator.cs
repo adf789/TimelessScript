@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class DataScriptCreator : BaseScriptCreator
 {
+    private readonly string PATH = "LowLevel/Data";
+    private readonly string SUFFIX = "Addon";
+
     public override void Create(string addPath, string assetName)
     {
         if (string.IsNullOrEmpty(assetName))
@@ -14,24 +17,24 @@ public class DataScriptCreator : BaseScriptCreator
             return;
         }
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Data");
+        string path = string.Format(StringDefine.PATH_SCRIPT, PATH);
 
         if (!string.IsNullOrEmpty(addPath))
             path = Path.Combine(path, addPath);
 
         CreateDirectoryIfNotExist(path);
-        CreateScript(path, assetName, GenerateDataCode(assetName));
+        CreateScript(path, assetName, GenerateCode(assetName));
     }
 
     public override List<string> GetFinalPaths(string addPath, string assetName)
     {
         var paths = new List<string>();
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Data");
+        string path = string.Format(StringDefine.PATH_SCRIPT, PATH);
 
         if (!string.IsNullOrEmpty(addPath))
             path = Path.Combine(path, addPath);
-        paths.Add($"{path.Replace("\\", "/")}{assetName}.cs");
+        paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX}.cs");
 
         return paths;
     }
@@ -53,11 +56,12 @@ public class DataScriptCreator : BaseScriptCreator
                 EditorGUILayout.LabelField($"데이터 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
-                foreach (string path in finalPaths)
+                for (int i = 0; i < finalPaths.Count; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                        string normalizedPath = path.Replace("\\", "/");
+                        string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        Color pathColor = GetPathColor(i);
 
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
@@ -65,8 +69,8 @@ public class DataScriptCreator : BaseScriptCreator
 
                         // 에디터 타입별 라벨 스타일
                         GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-                        
-                        labelStyle.normal.textColor = Color.blue;
+
+                        labelStyle.normal.textColor = pathColor;
 
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
@@ -89,10 +93,10 @@ public class DataScriptCreator : BaseScriptCreator
         EditorGUILayout.Space();
     }
 
-    private string GenerateDataCode(string name)
+    private string GenerateCode(string name)
     {
         return $@"
-public struct {name}
+public struct {name}{SUFFIX}
 {{
 
 }}

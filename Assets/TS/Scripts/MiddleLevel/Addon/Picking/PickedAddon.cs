@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class PickedSupport : MonoBehaviour, IComparable<PickedSupport>
+public class PickedAddon : MonoBehaviour, IComparable<PickedAddon>
 {
     //============================================================
     //=========    Coding rule에 맞춰서 작업 바랍니다.   =========
@@ -25,7 +25,7 @@ public class PickedSupport : MonoBehaviour, IComparable<PickedSupport>
     [Header("우선 순위 아래는 무시")]
     [SerializeField]
     private bool isIgnoreLowOrder;
-    
+
     [Header("버튼 다운")]
     [SerializeField]
     private UnityEvent<PickingData> onEventPointDown = null;
@@ -166,7 +166,7 @@ public class PickedSupport : MonoBehaviour, IComparable<PickedSupport>
         return true;
     }
 
-    public int CompareTo(PickedSupport other)
+    public int CompareTo(PickedAddon other)
     {
         int value = other.pickOrder.CompareTo(pickOrder);
 
@@ -190,10 +190,10 @@ public class PickedSupport : MonoBehaviour, IComparable<PickedSupport>
 
         isClickDelay = true;
 
-        if(await UniTask.Delay(clickDelayMilliSeconds, cancellationToken: TokenPool.Get(GetHashCode())).SuppressCancellationThrow())
+        if (await UniTask.Delay(clickDelayMilliSeconds, cancellationToken: TokenPool.Get(GetHashCode())).SuppressCancellationThrow())
             return;
 
-        if(this)
+        if (this)
             isClickDelay = false;
     }
 
@@ -222,7 +222,7 @@ public class PickedSupport : MonoBehaviour, IComparable<PickedSupport>
 
             holdDelay += Time.deltaTime * IntDefine.TIME_MILLISECONDS_ONE;
 
-            if(holdDelay >= holdDelayMilliSeconds)
+            if (holdDelay >= holdDelayMilliSeconds)
             {
                 IsCallHoldEvent = OnEventHold(data);
                 return;

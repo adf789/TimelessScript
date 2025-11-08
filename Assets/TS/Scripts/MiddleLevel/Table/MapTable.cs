@@ -1,7 +1,7 @@
 
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "MapTable", menuName = "Scriptable Objects/Table/MapTable")]
+[CreateAssetMenu(fileName = "MapTable", menuName = "TS/Table/MapTable")]
 public class MapTable : BaseTable<MapTableData>
 {
 

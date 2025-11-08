@@ -123,6 +123,32 @@ public class MyManager : BaseManager<MyManager>
 }
 ```
 
+### Variable Naming Convention
+**멤버 변수는 반드시 `_` 접두사 사용**
+```csharp
+// ✅ CORRECT: Member variables with _ prefix
+public class MyComponent : MonoBehaviour
+{
+    private MonoScript _selectedScript;        // ✅ Member variable
+    private List<string> _items = null;        // ✅ Member variable
+    private Vector2 _scrollPosition;           // ✅ Member variable
+    private bool _isEnabled = true;            // ✅ Member variable
+
+    private void Update()
+    {
+        string scriptName = _selectedScript.name;  // ✅ Local variable (no prefix)
+        int count = _items.Count;                  // ✅ Local variable (no prefix)
+    }
+}
+
+// ❌ WRONG: Member variables without _ prefix
+public class MyComponent : MonoBehaviour
+{
+    private MonoScript selectedScript;  // ❌ Missing _ prefix
+    private List<string> items;         // ❌ Missing _ prefix
+}
+```
+
 ### MonoBehaviour Lifecycle
 ```csharp
 // BaseManager<T> Pattern
@@ -199,15 +225,18 @@ TS.EditorLevel.Editor.{Category}
 ```yaml
 Before_Code_Generation:
   - "❌ Namespace 생성 금지 → 클래스 바디만 생성"
+  - "✅ 멤버 변수 _ 접두사 필수 → private Type _variableName"
   - "이 클래스가 어느 Assembly에 속하나?" (LowLevel/MiddleLevel/HighLevel/EditorLevel)
   - "MonoBehaviour가 필요한가? → MiddleLevel 이상"
   - "Manager를 참조하나? → HighLevel"
   - "ScriptableObject 데이터인가? → LowLevel"
   - "Editor 전용인가? → #if UNITY_EDITOR 필수"
 
-Singleton_Naming:
-  - "MonoBehaviour 싱글톤? → BaseManager<T> + ~Manager 접미사"
-  - "Non-MonoBehaviour 싱글톤? → SubBaseManager<T> + ~SubManager 접미사"
+Naming_Convention:
+  - "멤버 변수 → _camelCase (private int _count;)"
+  - "로컬 변수 → camelCase (int count = _count;)"
+  - "MonoBehaviour 싱글톤 → BaseManager<T> + ~Manager 접미사"
+  - "Non-MonoBehaviour 싱글톤 → SubBaseManager<T> + ~SubManager 접미사"
   - "GameObject 필요? → Manager | 불필요? → SubManager"
 
 Struct_Usage:
@@ -252,6 +281,7 @@ Example:
 
 ### 코드 리뷰 체크리스트
 - [ ] ❌ **Namespace 생성하지 않았나?** (클래스 바디만 생성)
+- [ ] ✅ **멤버 변수 _ 접두사 사용하나?** (private int _count)
 - [ ] Assembly 레벨 적절한가?
 - [ ] 의존성 방향 올바른가? (하위 → 상위만)
 - [ ] MonoBehaviour vs ScriptableObject 선택 맞나?
@@ -290,7 +320,7 @@ Example:
 |---------|-----------|
 | Manager base | `HighLevel/Manager/BaseManager.cs` |
 | Flow base | `HighLevel/Flow/BaseFlow.cs` |
-| Resource registry | `MiddleLevel/Support/ResourcesTypeRegistry.cs` |
+| Resource registry | `MiddleLevel/Core/ResourcesTypeRegistry.cs` |
 | Physics system | `HighLevel/System/Physics/OptimizedPhysicsSystem.cs` |
 | Game entry point | `HighLevel/Manager/GameManager.cs` |
 

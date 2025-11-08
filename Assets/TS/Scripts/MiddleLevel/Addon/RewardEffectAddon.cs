@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
-public class RewardEffectSupport : MonoBehaviour
+public class RewardEffectAddon : MonoBehaviour
 {
     [SerializeField] private TextMeshPro countText;
     [SerializeField] private SimpleTweenManage tween;

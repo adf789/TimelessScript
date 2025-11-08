@@ -16,7 +16,36 @@ public class UIScriptCreator : BaseScriptCreator
     }
 
     private ScriptType selectedType;
-    private string typeEnumPath = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
+
+    private readonly string PATH_UI_ENUM = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
+    private readonly string[] PATHS_VIEW =
+    {
+        "MiddleLevel/View/View",
+        "MiddleLevel/View/Popup",
+        "MiddleLevel/View/Unit",
+    };
+    private readonly string[] PATHS_MODEL =
+    {
+        "LowLevel/Model/View",
+        "LowLevel/Model/Popup",
+        "LowLevel/Model/Unit",
+    };
+    private readonly string[] PATHS_CONTROLLER =
+    {
+        "HighLevel/Controller/View",
+        "HighLevel/Controller/Popup",
+        "",
+    };
+    private readonly string[] SUFFIXS =
+    {
+        nameof(ScriptType.View),
+        nameof(ScriptType.Popup),
+        nameof(ScriptType.Unit),
+    };
+    private readonly string SUFFIX_CONTROLLER = "Controller";
+    private readonly string PREFS_KEY_CREATE_PREFAB_PATH = "EDITOR_PREFS_KEY_CREATE_PREFAB_PATH";
+    private readonly string PREFS_KEY_ATTACH_SCRIPT_NAME = "EDITOR_PREFS_KEY_ATTACH_SCRIPT_NAME";
+    private readonly string PREFS_KEY_CRETE_UI_TYPE = "EDITOR_PREFS_KEY_CRETE_UI_TYPE";
 
     public override void Create(string addPath, string assetName)
     {
@@ -26,11 +55,11 @@ public class UIScriptCreator : BaseScriptCreator
             return;
         }
 
-        string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{selectedType}");
-        string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{selectedType}");
         string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType, assetName);
         string createViewName = $"{assetName}{selectedType}";
         string createModelName = $"{assetName}{selectedType}Model";
+        string modelPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_MODEL[(int) selectedType]);
+        string viewPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_VIEW[(int) selectedType]);
 
         if (!string.IsNullOrEmpty(addPath))
             modelPath = Path.Combine(modelPath, addPath);
@@ -50,13 +79,13 @@ public class UIScriptCreator : BaseScriptCreator
         // View, Popup �� ���
         else
         {
-            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Controller/{selectedType}");
+            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_CONTROLLER[(int) selectedType]);
 
             if (!string.IsNullOrEmpty(addPath))
                 controllerPath = Path.Combine(controllerPath, addPath);
 
             CreateDirectoryIfNotExist(controllerPath);
-            CreateScript(controllerPath, $"{assetName}Controller", GenerateControllerCode(createViewName, selectedType == ScriptType.Popup));
+            CreateScript(controllerPath, $"{assetName}{SUFFIX_CONTROLLER}", GenerateControllerCode(createViewName, selectedType == ScriptType.Popup));
 
             AddEnum(createViewName);
 
@@ -68,16 +97,16 @@ public class UIScriptCreator : BaseScriptCreator
 
         CreatePrefab(createPrefabPath, createViewName);
 
-        EditorPrefs.SetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH", createPrefabPath);
-        EditorPrefs.SetString("EDITOR_PREFS_KEY_ATTACH_SCRIPT_NAME", createViewName);
-        EditorPrefs.SetInt("EDITOR_PREFS_KEY_CRETE_UI_TYPE", (int) selectedType);
+        EditorPrefs.SetString(PREFS_KEY_CREATE_PREFAB_PATH, createPrefabPath);
+        EditorPrefs.SetString(PREFS_KEY_ATTACH_SCRIPT_NAME, createViewName);
+        EditorPrefs.SetInt(PREFS_KEY_CRETE_UI_TYPE, (int) selectedType);
     }
 
     public override void OnAfterReload()
     {
-        string path = EditorPrefs.GetString("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
-        string scriptName = EditorPrefs.GetString("EDITOR_PREFS_KEY_ATTACH_SCRIPT_NAME");
-        ScriptType uiScriptType = (ScriptType) EditorPrefs.GetInt("EDITOR_PREFS_KEY_ATTACH_SCRIPT_NAME");
+        string path = EditorPrefs.GetString(PREFS_KEY_CREATE_PREFAB_PATH);
+        string scriptName = EditorPrefs.GetString(PREFS_KEY_ATTACH_SCRIPT_NAME);
+        ScriptType uiScriptType = (ScriptType) EditorPrefs.GetInt(PREFS_KEY_CRETE_UI_TYPE);
 
         if (string.IsNullOrEmpty(path) ||
             string.IsNullOrEmpty(scriptName))
@@ -87,8 +116,9 @@ public class UIScriptCreator : BaseScriptCreator
 
         AddScriptToPrefab(path, scriptName, uiScriptType);
 
-        EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_CREATE_PREFAB_PATH");
-        EditorPrefs.DeleteKey("EDITOR_PREFS_KEY_ATTACH_SCRIPT_NAME");
+        EditorPrefs.DeleteKey(PREFS_KEY_CREATE_PREFAB_PATH);
+        EditorPrefs.DeleteKey(PREFS_KEY_ATTACH_SCRIPT_NAME);
+        EditorPrefs.DeleteKey(PREFS_KEY_CRETE_UI_TYPE);
     }
 
     public override void DrawScriptDeletor()
@@ -157,8 +187,8 @@ public class UIScriptCreator : BaseScriptCreator
     {
         var paths = new List<string>();
 
-        string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{selectedType}");
-        string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{selectedType}");
+        string modelPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_MODEL[(int) selectedType]);
+        string viewPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_VIEW[(int) selectedType]);
         string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType, assetName);
         string createViewName = $"{assetName}{selectedType}";
         string createModelName = $"{assetName}{selectedType}Model";
@@ -178,11 +208,11 @@ public class UIScriptCreator : BaseScriptCreator
         else
         {
             // View, Popup 타입
-            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Controller/{selectedType}");
+            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_CONTROLLER[(int) selectedType]);
             if (!string.IsNullOrEmpty(addPath))
                 controllerPath = Path.Combine(controllerPath, addPath);
 
-            paths.Add($"{controllerPath.Replace("\\", "/")}{assetName}Controller.cs");
+            paths.Add($"{controllerPath.Replace("\\", "/")}{assetName}{SUFFIX_CONTROLLER}.cs");
             paths.Add($"{modelPath.Replace("\\", "/")}{createModelName}.cs");
             paths.Add($"{viewPath.Replace("\\", "/")}{createViewName}.cs");
         }
@@ -210,13 +240,12 @@ public class UIScriptCreator : BaseScriptCreator
                 EditorGUILayout.LabelField($"총 {finalPaths.Count}개 파일이 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
-                foreach (string path in finalPaths)
+                for (int i = 0; i < finalPaths.Count; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                        string normalizedPath = path.Replace("\\", "/");
-
-                        // 파일 타입 아이콘 표시
+                        string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         string fileType = Path.GetExtension(normalizedPath);
                         string icon = fileType switch
                         {
@@ -231,7 +260,6 @@ public class UIScriptCreator : BaseScriptCreator
                         EditorGUILayout.LabelField(normalizedPath, EditorStyles.miniLabel, GUILayout.ExpandWidth(true));
 
                         // Ping 버튼
-                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
                         {
                             PingFolder(folderPath);
@@ -264,7 +292,7 @@ public class UIScriptCreator : BaseScriptCreator
 
     public void AddEnum(string insertLine)
     {
-        List<string> lines = new List<string>(File.ReadAllLines(typeEnumPath));
+        List<string> lines = new List<string>(File.ReadAllLines(PATH_UI_ENUM));
 
         lines.Remove("public enum UIType");
         lines.Remove("{");
@@ -294,59 +322,58 @@ public class UIScriptCreator : BaseScriptCreator
         modifiedLines.Insert(0, "public enum UIType");
         modifiedLines.Add("}");
 
-        File.WriteAllLines(typeEnumPath, modifiedLines);
-        Debug.Log($"UI 열거형 업데이트 완료: {typeEnumPath}");
+        File.WriteAllLines(PATH_UI_ENUM, modifiedLines);
+        Debug.Log($"UI 열거형 업데이트 완료: {PATH_UI_ENUM}");
     }
 
     private void AddScriptToPrefab(string prefabPath, string scriptName, ScriptType uiScriptType)
     {
-        // ������ �ε�
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         if (prefab == null)
         {
-            Debug.LogError($"�������� ã�� �� �����ϴ�: {prefabPath}");
+            Debug.LogError($"Not found prefab: {prefabPath}");
             return;
         }
 
-        // ������Ʈ Ÿ�� ã��
         Type scriptType = GetTypeFromUnityAssembly(scriptName, uiScriptType);
         if (scriptType == null)
         {
-            Debug.LogError($"��ũ��Ʈ '{scriptName}'��(��) ã�� �� �����ϴ�.");
+            Debug.LogError($"Not found script type: {scriptName}");
             return;
         }
 
-        // �����տ� ��ũ��Ʈ �߰� (�̹� �߰��Ǿ� ������ ����)
         if (prefab.GetComponent(scriptType) == null)
         {
             GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
             instance.AddComponent(scriptType);
 
-            // ������ ���� �� ����
             PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
             GameObject.DestroyImmediate(instance);
 
-            Debug.Log($"'{scriptName}' ��ũ��Ʈ�� ������ '{prefab.name}'�� �߰��߽��ϴ�.");
+            Debug.Log($"'{scriptName}' 스크립트를 프리팹 '{prefab.name}'에 추가했습니다.");
         }
         else
         {
-            Debug.Log($"������ '{prefab.name}'���� �̹� '{scriptName}' ��ũ��Ʈ�� �߰��Ǿ� �ֽ��ϴ�.");
+            Debug.Log($"프리팹 '{prefab.name}'에는 이미 '{scriptName}' 스크립트가 추가되어 있습니다.");
         }
     }
 
     private void DeleteUI(UIType uiType)
     {
-        bool isPopup = uiType.ToString().Contains("Popup");
-        string uiTypeText = isPopup ? ScriptType.Popup.ToString() : ScriptType.View.ToString();
-        string modelPath = string.Format(StringDefine.PATH_SCRIPT, $"LowLevel/Model/{uiTypeText}");
-        string viewPath = string.Format(StringDefine.PATH_SCRIPT, $"MiddleLevel/View/{uiTypeText}");
-        string controllerPath = string.Format(StringDefine.PATH_SCRIPT, $"HighLevel/Controller/{uiTypeText}");
+        string suffix_popup = SUFFIXS[(int) ScriptType.Popup];
+        bool isPopup = uiType.ToString().Contains(suffix_popup);
+        int index = isPopup ? (int) ScriptType.Popup : (int) ScriptType.View;
+
+        string uiTypeText = SUFFIXS[index];
+        string modelPath = PATHS_MODEL[index];
+        string viewPath = PATHS_VIEW[index];
+        string controllerPath = PATHS_CONTROLLER[index];
         string prefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, uiTypeText, uiType);
         string originName = uiType.ToString().Replace(uiTypeText, "");
 
         DeleteFileInFolder($"{uiType}Model", "*.cs", modelPath);
         DeleteFileInFolder($"{uiType}", "*.cs", viewPath);
-        DeleteFileInFolder($"{originName}Controller", "*.cs", controllerPath);
+        DeleteFileInFolder($"{originName}{SUFFIX_CONTROLLER}", "*.cs", controllerPath);
         DeleteFileInFolder($"{uiType}", "*.prefab", prefabPath);
 
         DeleteEnum(uiType.ToString());
@@ -357,7 +384,7 @@ public class UIScriptCreator : BaseScriptCreator
 
     private void DeleteEnum(string deleteType)
     {
-        List<string> lines = new List<string>(File.ReadAllLines(typeEnumPath));
+        List<string> lines = new List<string>(File.ReadAllLines(PATH_UI_ENUM));
         List<string> modifiedLines = new List<string>();
 
         for (int i = 0; i < lines.Count; i++)
@@ -368,8 +395,8 @@ public class UIScriptCreator : BaseScriptCreator
             modifiedLines.Add(lines[i]);
         }
 
-        File.WriteAllLines(typeEnumPath, modifiedLines);
-        Debug.Log($"UI 열거형 업데이트 완료: {typeEnumPath}");
+        File.WriteAllLines(PATH_UI_ENUM, modifiedLines);
+        Debug.Log($"UI 열거형 업데이트 완료: {PATH_UI_ENUM}");
     }
 
     private Type GetTypeFromUnityAssembly(string typeName, ScriptType uiScriptType)
@@ -436,7 +463,7 @@ public class {name}Unit : BaseUnit<{name}UnitModel>
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public class {name}Controller : BaseController<{name}, {name}Model>
+public class {name}{SUFFIX_CONTROLLER} : BaseController<{name}, {name}Model>
 {{
     public override UIType UIType => UIType.{name};
     public override bool IsPopup => {(isPopup ? "true" : "false")};

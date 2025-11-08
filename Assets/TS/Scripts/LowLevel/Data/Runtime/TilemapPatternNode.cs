@@ -32,7 +32,7 @@ public class TilemapPatternNode
         PatternID = patternID;
         WorldGridPosition = worldGridPosition;
         IsLoaded = false;
-        LinkedNodes = new TilemapPatternNode[IntDefine.DEFAULT_MAP_PATTERN_DIRECTION]; // 4방향
+        LinkedNodes = new TilemapPatternNode[IntDefine.MAP_PATTERN_DIRECTION]; // 4방향
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public class TilemapPatternNode
     /// </summary>
     public TilemapPatternNode GetNodeInDirection(FourDirection direction)
     {
-        return LinkedNodes[(int)direction];
+        return LinkedNodes[(int) direction];
     }
 
     /// <summary>
@@ -48,7 +48,7 @@ public class TilemapPatternNode
     /// </summary>
     public void SetNodeInDirection(FourDirection direction, TilemapPatternNode node)
     {
-        LinkedNodes[(int)direction] = node;
+        LinkedNodes[(int) direction] = node;
     }
 
     /// <summary>

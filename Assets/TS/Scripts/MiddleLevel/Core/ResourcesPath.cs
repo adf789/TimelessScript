@@ -6,7 +6,7 @@ using Cysharp.Threading.Tasks;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(fileName = "New Resources Path", menuName = "Scriptable Objects/Resources Path")]
+[CreateAssetMenu(fileName = "New Resources Path", menuName = "TS/Resources/Resources Path")]
 public class ResourcesPath : ScriptableObject
 {
     [System.Serializable]

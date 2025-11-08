@@ -15,6 +15,11 @@ public class EditorScriptCreator : BaseScriptCreator
     // 선택된 에디터 스크립트 타입
     private EditorScriptType selectedScriptType = EditorScriptType.Window;
 
+    private readonly string PATH_WINDOW = "EditorLevel/Editor/Window";
+    private readonly string PATH_INSPECTOR = "EditorLevel/Editor/Inspector";
+    private readonly string SUFFIX_WINDOW = "EditorWindow";
+    private readonly string SUFFIX_INSPECTOR = "Inspector";
+
     public override void Create(string addPath, string assetName)
     {
         if (string.IsNullOrEmpty(assetName))
@@ -23,27 +28,29 @@ public class EditorScriptCreator : BaseScriptCreator
             return;
         }
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"EditorLevel/Editor/{selectedScriptType}");
-
         switch (selectedScriptType)
         {
             case EditorScriptType.Window:
                 {
+                    string path = string.Format(StringDefine.PATH_SCRIPT, PATH_WINDOW);
+
                     if (!string.IsNullOrEmpty(addPath))
                         path = Path.Combine(path, addPath);
 
                     CreateDirectoryIfNotExist(path);
-                    CreateScript(path, $"{assetName}EditorWindow", GenerateEditorWindowCode(assetName));
+                    CreateScript(path, $"{assetName}{SUFFIX_WINDOW}", GenerateEditorWindowCode(assetName));
                 }
                 break;
 
             case EditorScriptType.Inspector:
                 {
+                    string path = string.Format(StringDefine.PATH_SCRIPT, PATH_INSPECTOR);
+
                     if (!string.IsNullOrEmpty(addPath))
                         path = Path.Combine(path, addPath);
 
                     CreateDirectoryIfNotExist(path);
-                    CreateScript(path, $"{assetName}Inspector", GenerateInspectorCode(assetName));
+                    CreateScript(path, $"{assetName}{SUFFIX_INSPECTOR}", GenerateInspectorCode(assetName));
                 }
                 break;
         }
@@ -77,20 +84,26 @@ public class EditorScriptCreator : BaseScriptCreator
     {
         var paths = new List<string>();
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, $"EditorLevel/Editor/{selectedScriptType}");
-
         switch (selectedScriptType)
         {
             case EditorScriptType.Window:
-                if (!string.IsNullOrEmpty(addPath))
-                    path = Path.Combine(path, addPath);
-                paths.Add($"{path.Replace("\\", "/")}{assetName}EditorWindow.cs");
+                {
+                    string path = string.Format(StringDefine.PATH_SCRIPT, PATH_WINDOW);
+
+                    if (!string.IsNullOrEmpty(addPath))
+                        path = Path.Combine(path, addPath);
+                    paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX_WINDOW}.cs");
+                }
                 break;
 
             case EditorScriptType.Inspector:
-                if (!string.IsNullOrEmpty(addPath))
-                    path = Path.Combine(path, addPath);
-                paths.Add($"{path.Replace("\\", "/")}{assetName}Inspector.cs");
+                {
+                    string path = string.Format(StringDefine.PATH_SCRIPT, PATH_INSPECTOR);
+
+                    if (!string.IsNullOrEmpty(addPath))
+                        path = Path.Combine(path, addPath);
+                    paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX_INSPECTOR}.cs");
+                }
                 break;
         }
 
@@ -114,27 +127,25 @@ public class EditorScriptCreator : BaseScriptCreator
                 EditorGUILayout.LabelField($"{selectedScriptType} 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
-                foreach (string path in finalPaths)
+                for (int i = 0; i < finalPaths.Count; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     {
-                        string normalizedPath = path.Replace("\\", "/");
+                        string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
+                        Color pathColor = GetPathColor(i);
+                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
+
+                        labelStyle.normal.textColor = pathColor;
 
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
                         EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
 
                         // 에디터 타입별 라벨 스타일
-                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-                        if (selectedScriptType == EditorScriptType.Window)
-                            labelStyle.normal.textColor = Color.blue;
-                        else if (selectedScriptType == EditorScriptType.Inspector)
-                            labelStyle.normal.textColor = Color.red;
-
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
                         // Ping 버튼
-                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
                         {
                             PingFolder(folderPath);
@@ -158,7 +169,7 @@ public class EditorScriptCreator : BaseScriptCreator
 using UnityEditor;
 using UnityEngine;
 
-public class {name}Window : EditorWindow
+public class {name}{SUFFIX_WINDOW} : EditorWindow
 {{
     // 단축키 예시:
     // [MenuItem(""TS/My Tool %t"")]           // Ctrl+T
@@ -168,10 +179,10 @@ public class {name}Window : EditorWindow
     // [MenuItem(""TS/My Tool &q"")]           // Alt+Q
     // [MenuItem(""TS/My Tool F5"")]           // F5 키
     // [MenuItem(""TS/My Tool %F1"")]          // Ctrl+F1
-    [MenuItem(""TS/{name}Window"")]
+    [MenuItem(""TS/{name} Window"")]
     public static void OpenWindow()
     {{
-        var window = GetWindow<{name}Window>(""{name}"");
+        var window = GetWindow<{name}{SUFFIX_WINDOW}>(""{name}"");
 
         window.Show();
     }}
@@ -187,7 +198,7 @@ using Unity.Entities;
 using UnityEditor;
 
 [CustomEditor(typeof({name}))]
-public class {name}Inspector : Editor
+public class {name}{SUFFIX_INSPECTOR} : Editor
 {{
     private {name} inspectorTarget;
 

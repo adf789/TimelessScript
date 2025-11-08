@@ -1,19 +1,18 @@
 
 using UnityEngine;
-using Unity.Entities;
 using UnityEditor;
 
-[CustomEditor(typeof(ObjectPoolSupport))]
-public class ObjectPoolSupportInspector : Editor
+[CustomEditor(typeof(ObjectPoolAddon))]
+public class ObjectPoolAddonInspector : Editor
 {
-    private ObjectPoolSupport inspectorTarget;
+    private ObjectPoolAddon inspectorTarget;
     private GameObject gameObject;
     private SerializedProperty guidProperty;
     private SerializedProperty parentProperty;
 
     private void OnEnable()
     {
-        inspectorTarget = (ObjectPoolSupport) target;
+        inspectorTarget = (ObjectPoolAddon) target;
         guidProperty = serializedObject.FindProperty("guid");
         parentProperty = serializedObject.FindProperty("parent");
 

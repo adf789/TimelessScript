@@ -1,7 +1,7 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 
-[CreateAssetMenu(fileName = "LoadingFlow", menuName = "Scriptable Objects/Flow/Loading Flow")]
+[CreateAssetMenu(fileName = "LoadingFlow", menuName = "TS/Flow/Loading Flow")]
 public class LoadingFlow : BaseFlow
 {
     [Header("Tilemap Settings")]

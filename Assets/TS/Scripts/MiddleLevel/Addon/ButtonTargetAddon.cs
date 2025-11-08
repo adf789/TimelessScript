@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasRenderer))]
-public class ButtonTargetSupport : Graphic
+public class ButtonTargetAddon : Graphic
 {
     protected void OnValidate()
     {

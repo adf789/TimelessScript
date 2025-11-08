@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ItemTable", menuName = "Scriptable Objects/Table/ItemTable")]
+[CreateAssetMenu(fileName = "ItemTable", menuName = "TS/Table/ItemTable")]
 public class ItemTable : BaseTable<ItemTableData>
 {
     // ItemTable의 기본 설정값들은 BaseTable의 기본값을 그대로 사용
