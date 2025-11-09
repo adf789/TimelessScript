@@ -3,7 +3,7 @@ using Unity.Mathematics;
 
 public struct TSGroundComponent : IComponentData
 {
-    public float bounciness;
-    public float friction;
-    public GroundType groundType;
+    public float Bounciness;
+    public float Friction;
+    public GroundType GroundType;
 }

@@ -17,7 +17,7 @@ public class ECSScriptCreator : BaseScriptCreator
     }
 
     // 그룹별 스크립트 체크박스들
-    private bool[] groupCheckboxes = new bool[5] { false, false, false, false, false };
+    private bool[] _groupCheckboxes = new bool[5] { false, false, false, false, false };
 
     private readonly string PATH_COMPONENT = "LowLevel/Data/ComponentData";
     private readonly string PATH_BUFFER = "LowLevel/Data/BufferData";
@@ -38,11 +38,11 @@ public class ECSScriptCreator : BaseScriptCreator
             return;
         }
 
-        bool checkComponent = groupCheckboxes[(int) EcsScriptType.Component];
-        bool checkBuffer = groupCheckboxes[(int) EcsScriptType.Buffer];
-        bool checkAuthoring = groupCheckboxes[(int) EcsScriptType.Authoring];
-        bool checkJob = groupCheckboxes[(int) EcsScriptType.Job];
-        bool checkSystem = groupCheckboxes[(int) EcsScriptType.System];
+        bool checkComponent = _groupCheckboxes[(int) EcsScriptType.Component];
+        bool checkBuffer = _groupCheckboxes[(int) EcsScriptType.Buffer];
+        bool checkAuthoring = _groupCheckboxes[(int) EcsScriptType.Authoring];
+        bool checkJob = _groupCheckboxes[(int) EcsScriptType.Job];
+        bool checkSystem = _groupCheckboxes[(int) EcsScriptType.System];
 
         if (checkComponent)
         {
@@ -114,7 +114,7 @@ public class ECSScriptCreator : BaseScriptCreator
                 EditorGUILayout.BeginHorizontal();
                 {
                     int index = (int) type;
-                    groupCheckboxes[index] = EditorGUILayout.Toggle(groupCheckboxes[index], GUILayout.Width(20));
+                    _groupCheckboxes[index] = EditorGUILayout.Toggle(_groupCheckboxes[index], GUILayout.Width(20));
 
                     string description = type switch
                     {
@@ -141,11 +141,11 @@ public class ECSScriptCreator : BaseScriptCreator
     {
         var paths = new List<string>();
 
-        bool checkComponent = groupCheckboxes[(int) EcsScriptType.Component];
-        bool checkBuffer = groupCheckboxes[(int) EcsScriptType.Buffer];
-        bool checkAuthoring = groupCheckboxes[(int) EcsScriptType.Authoring];
-        bool checkJob = groupCheckboxes[(int) EcsScriptType.Job];
-        bool checkSystem = groupCheckboxes[(int) EcsScriptType.System];
+        bool checkComponent = _groupCheckboxes[(int) EcsScriptType.Component];
+        bool checkBuffer = _groupCheckboxes[(int) EcsScriptType.Buffer];
+        bool checkAuthoring = _groupCheckboxes[(int) EcsScriptType.Authoring];
+        bool checkJob = _groupCheckboxes[(int) EcsScriptType.Job];
+        bool checkSystem = _groupCheckboxes[(int) EcsScriptType.System];
 
         if (checkComponent)
         {

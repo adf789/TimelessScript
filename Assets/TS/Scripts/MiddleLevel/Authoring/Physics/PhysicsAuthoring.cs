@@ -31,8 +31,6 @@ public class PhysicsAuthoring : MonoBehaviour
                 IsGrounded = false,
                 IsStatic = authoring.isStatic
             });
-
-            AddBuffer<TriggerBuffer>(entity);
         }
     }
 }

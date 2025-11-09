@@ -6,8 +6,25 @@ using UnityEngine;
 
 public class DataScriptCreator : BaseScriptCreator
 {
-    private readonly string PATH = "LowLevel/Data";
-    private readonly string SUFFIX = "Addon";
+    private enum DataScriptType
+    {
+        Data,
+        Entry,
+    }
+
+    private bool[] _checkboxes = new bool[2] { true, false };
+    private int _checkIndex = 0;
+
+    private readonly string[] PATHS =
+    {
+        "LowLevel/Data",
+        "MiddleLevel/Entry",
+    };
+    private readonly string[] SUFFIXS =
+    {
+        "",
+        "Entry",
+    };
 
     public override void Create(string addPath, string assetName)
     {
@@ -17,24 +34,60 @@ public class DataScriptCreator : BaseScriptCreator
             return;
         }
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, PATH);
+        string path = string.Format(StringDefine.PATH_SCRIPT, PATHS[_checkIndex]);
+        string suffix = SUFFIXS[_checkIndex];
 
         if (!string.IsNullOrEmpty(addPath))
             path = Path.Combine(path, addPath);
 
         CreateDirectoryIfNotExist(path);
-        CreateScript(path, assetName, GenerateCode(assetName));
+        CreateScript(path, $"{assetName}{suffix}", GenerateCode(assetName, suffix));
+    }
+
+    public override void DrawCustomOptions()
+    {
+        EditorGUILayout.LabelField("옵션 설정", EditorStyles.boldLabel);
+
+        EditorGUILayout.BeginVertical("helpbox");
+        {
+            EditorGUILayout.LabelField("생성 데이터 옵션:", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+
+            for (int index = 0; index < _checkboxes.Length; index++)
+            {
+                EditorGUILayout.BeginHorizontal();
+                {
+                    DataScriptType scriptType = (DataScriptType) index;
+                    _checkboxes[index] = EditorGUILayout.Toggle(_checkboxes[index], GUILayout.Width(20));
+
+                    string description = scriptType switch
+                    {
+                        DataScriptType.Data => "Data - 순수 데이터(Low Level)",
+                        DataScriptType.Entry => "Entry - 컴포넌트를 참조할 수 있는 구조체(Middle Level)",
+                        _ => "None"
+                    };
+
+                    EditorGUILayout.LabelField(description, GUILayout.ExpandWidth(true));
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.HelpBox("하나 이상의 스크립트를 선택하세요. 일반적으로 Component와 System을 함께 사용합니다.", MessageType.Info);
+        }
+        EditorGUILayout.EndVertical();
     }
 
     public override List<string> GetFinalPaths(string addPath, string assetName)
     {
         var paths = new List<string>();
 
-        string path = string.Format(StringDefine.PATH_SCRIPT, PATH);
+        string path = string.Format(StringDefine.PATH_SCRIPT, PATHS[_checkIndex]);
+        string suffix = SUFFIXS[_checkIndex];
 
         if (!string.IsNullOrEmpty(addPath))
             path = Path.Combine(path, addPath);
-        paths.Add($"{path.Replace("\\", "/")}{assetName}{SUFFIX}.cs");
+        paths.Add($"{path.Replace("\\", "/")}{assetName}{suffix}.cs");
 
         return paths;
     }
@@ -61,21 +114,20 @@ public class DataScriptCreator : BaseScriptCreator
                     EditorGUILayout.BeginHorizontal();
                     {
                         string normalizedPath = finalPaths[i].Replace("\\", "/");
+                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         Color pathColor = GetPathColor(i);
+                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
+
+                        labelStyle.normal.textColor = pathColor;
 
                         // C# 스크립트 아이콘
                         GUIContent content = EditorGUIUtility.IconContent("cs Script Icon");
                         EditorGUILayout.LabelField(content, GUILayout.Width(20), GUILayout.Height(16));
 
                         // 에디터 타입별 라벨 스타일
-                        GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
-
-                        labelStyle.normal.textColor = pathColor;
-
                         EditorGUILayout.LabelField(normalizedPath, labelStyle, GUILayout.ExpandWidth(true));
 
                         // Ping 버튼
-                        string folderPath = Path.GetDirectoryName(normalizedPath);
                         if (GUILayout.Button("📁", GUILayout.Width(25), GUILayout.Height(16)))
                         {
                             PingFolder(folderPath);
@@ -93,10 +145,10 @@ public class DataScriptCreator : BaseScriptCreator
         EditorGUILayout.Space();
     }
 
-    private string GenerateCode(string name)
+    private string GenerateCode(string name, string suffix)
     {
         return $@"
-public struct {name}{SUFFIX}
+public struct {name}{suffix}
 {{
 
 }}

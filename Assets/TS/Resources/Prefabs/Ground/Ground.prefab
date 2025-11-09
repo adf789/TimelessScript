@@ -9,8 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2220680538594408155}
-  - component: {fileID: 2636587471752843309}
-  - component: {fileID: 927603165121118535}
   - component: {fileID: 7010944744273991333}
   - component: {fileID: 2227557285097962927}
   - component: {fileID: 5324830892724034587}
@@ -36,40 +34,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2636587471752843309
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3992088384083856927}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdf5bf0bda3d82645bf8084584b230a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::PhysicsAuthoring
-  velocity: {x: 0, y: 0}
-  gravity: {x: 0, y: -9.81}
-  mass: 1
-  drag: 0.98
-  useGravity: 1
-  isStatic: 1
---- !u!114 &927603165121118535
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3992088384083856927}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
-  layer: 2
-  size: {x: 73, y: 1}
-  offset: {x: 0, y: 0}
-  isTrigger: 0
 --- !u!114 &7010944744273991333
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,10 +46,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
-  root: {fileID: 0}
-  bounciness: 0.3
-  friction: 0.8
-  groundType: 0
+  _bounciness: 0.3
+  _friction: 0.8
+  _groundType: 0
+  _size: {x: 1, y: 1}
+  _offset: {x: 0, y: 0}
 --- !u!114 &2227557285097962927
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -112,6 +77,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
+  lifeTime: 0
+  layerOffset: 0
   maxSpawnCount: 10
   spawnCooldown: 2
   minSpawnDistance: 1
