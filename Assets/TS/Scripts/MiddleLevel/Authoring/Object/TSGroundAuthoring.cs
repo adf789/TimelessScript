@@ -30,9 +30,6 @@ public class TSGroundAuthoring : TSObjectAuthoring
                 friction = authoring.friction,
                 groundType = authoring.groundType
             });
-
-            // 초기 충돌 데이터
-            AddComponent(entity, new GroundCollisionComponent());
         }
     }
 }

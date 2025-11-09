@@ -12,23 +12,11 @@ public class SliceForSpriteSheetWindow : EditorWindow
         window.titleContent.text = "SliceForSpriteSheetWindow";
     }
 
-    //============================================================
-    //=========    Coding rule에 맞춰서 작업 바랍니다.   =========
-    //========= Coding rule region은 절대 지우지 마세요. =========
-    //=========    문제 시 '김철옥'에게 문의 바랍니다.   =========
-    //============================================================
-
-    #region Coding rule : Property
-    #endregion Coding rule : Property
-
-    #region Coding rule : Value
     private int count = 1;
     private Texture2D[] textures = null;
     private int[] columns = null;
     private int[] rows = null;
-    #endregion Coding rule : Value
 
-    #region Coding rule : Function
     private void OnGUI()
     {
         count = EditorGUILayout.IntField("Texture Count", count);
@@ -140,7 +128,6 @@ public class SliceForSpriteSheetWindow : EditorWindow
 
         Debug.Log("Texture processed and sliced successfully!");
     }
-    #endregion Coding rule : Function
 }
 
 public static class TextureImporterExtensions

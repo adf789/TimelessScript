@@ -55,7 +55,6 @@ public partial struct SpawnSystem : ISystem
         {
             currentTime = currentTime,
             linkedEntityGroupLookup = SystemAPI.GetBufferLookup<LinkedEntityGroup>(true),
-            availableLayerLookup = SystemAPI.GetBufferLookup<AvailableLayerBuffer>(false),
             availableActorLookup = SystemAPI.GetBufferLookup<AvailableActorBuffer>(false),
             spawnConfigLookup = SystemAPI.GetComponentLookup<SpawnConfigComponent>(false),
             ecb = ecb

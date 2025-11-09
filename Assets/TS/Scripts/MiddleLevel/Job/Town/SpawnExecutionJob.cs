@@ -2,17 +2,15 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
+[BurstCompile]
 public partial struct SpawnExecutionJob : IJobEntity
 {
     [ReadOnly] public float currentTime;
     public EntityCommandBuffer ecb;
     [NativeDisableUnsafePtrRestriction]
     [ReadOnly] public BufferLookup<LinkedEntityGroup> linkedEntityGroupLookup;
-    public BufferLookup<AvailableLayerBuffer> availableLayerLookup;
     public BufferLookup<AvailableActorBuffer> availableActorLookup;
     public ComponentLookup<SpawnConfigComponent> spawnConfigLookup;
 
@@ -32,6 +30,7 @@ public partial struct SpawnExecutionJob : IJobEntity
         // 스폰 오브젝트 인스턴스 생성 (하위 오브 젝트들도 함께 생성됨)
         var spawnedEntity = ecb.Instantiate(spawnRequest.SpawnObject);
         FixedString64Bytes name = $"Spawned {spawnRequest.Name} {spawnedEntity.Index}";
+        int layer = -1;
 
         ecb.SetName(spawnedEntity, in name);
 
@@ -45,12 +44,16 @@ public partial struct SpawnExecutionJob : IJobEntity
                     var availableActors = availableActorLookup[spawnRequest.Spawner];
                     if (availableActors.Length > 0)
                     {
+                        // 재사용 가능한 액터의 정보를 가져옴
                         var actorComponent = availableActors[0].Actor;
+                        layer = availableActors[0].Layer;
+
+                        // 가져온 액터 제거
                         availableActors.RemoveAt(0);
 
                         actorComponent.LifePassingTime = 0;
 
-                        ecb.AddComponent<TSActorComponent>(spawnedEntity, actorComponent);
+                        ecb.AddComponent(spawnedEntity, actorComponent);
                         ecb.AddComponent<MoveRestoreFlagComponent>(spawnedEntity);
                     }
                 }
@@ -73,21 +76,6 @@ public partial struct SpawnExecutionJob : IJobEntity
         });
 
         // 스폰된 오브젝트의 애니메이션 컴포넌트 연결
-        int layer = -1;
-
-        // 1. 재사용 가능한 Layer 큐에서 가져오기
-        if (availableLayerLookup.HasBuffer(spawnRequest.Spawner))
-        {
-            var availableLayers = availableLayerLookup[spawnRequest.Spawner];
-
-            if (availableLayers.Length > 0)
-            {
-                // 큐에서 첫 번째 layer 가져오고 제거
-                layer = availableLayers[0].Layer;
-                availableLayers.RemoveAt(0);
-            }
-        }
-
         // 설정된 레이어가 없으면 스폰된 엔티티 수로 결정
         if (layer == -1)
         {

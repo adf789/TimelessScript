@@ -25,8 +25,6 @@ public class ColliderAuthoring : MonoBehaviour
             });
 
             AddComponent(entity, new ColliderBoundsComponent());
-            AddComponent(entity, new CollisionInfoComponent());
-            AddComponent(entity, new SpatialHashKeyComponent()); // Spatial Hashing을 위한 컴포넌트 추가
             AddBuffer<CollisionBuffer>(entity);
         }
     }

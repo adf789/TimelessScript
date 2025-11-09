@@ -40,9 +40,6 @@ public class SpawnConfigAuthoring : MonoBehaviour
             AddBuffer<SpawnedEntityBuffer>(entity);
 
             // 재사용 가능한 Layer를 관리하기 위한 버퍼 추가
-            AddBuffer<AvailableLayerBuffer>(entity);
-
-            // 재사용 가능한 Layer를 관리하기 위한 버퍼 추가
             AddBuffer<AvailableActorBuffer>(entity);
         }
     }

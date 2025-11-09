@@ -11,13 +11,13 @@ public class PhysicsAuthoring : MonoBehaviour
     public float drag = 0.98f;
     public bool useGravity = true;
     public bool isStatic = false;
-    
+
     private class Baker : Baker<PhysicsAuthoring>
     {
         public override void Bake(PhysicsAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            
+
             AddComponent(entity, new PhysicsComponent
             {
                 Entity = entity,
@@ -31,9 +31,7 @@ public class PhysicsAuthoring : MonoBehaviour
                 IsGrounded = false,
                 IsStatic = authoring.isStatic
             });
-            
-            AddComponent(entity, new PhysicsEventsComponent());
-            
+
             AddBuffer<TriggerBuffer>(entity);
         }
     }

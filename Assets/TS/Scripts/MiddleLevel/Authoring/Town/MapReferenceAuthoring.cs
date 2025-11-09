@@ -1,18 +1,12 @@
 
 using UnityEngine;
 
-public class MapReferenceAddon : MonoBehaviour
+public class MapReferenceAuthoring : MonoBehaviour
 {
-    //============================================================
-    //=========    Coding rule에 맞춰서 작업 바랍니다.   =========
-    //========= Coding rule region은 절대 지우지 마세요. =========
-    //=========    문제 시 '김철옥'에게 문의 바랍니다.   =========
-    //============================================================
-
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.white;
+        Gizmos.color = Color.gray;
         Vector3 startPos = transform.position;
 
         startPos.x -= IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f;

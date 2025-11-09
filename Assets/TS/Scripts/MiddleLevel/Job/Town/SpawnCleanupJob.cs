@@ -15,8 +15,7 @@ public partial struct SpawnCleanupJob : IJobEntity
     public void Execute(
         Entity entity,
         ref SpawnConfigComponent spawnConfig,
-        ref DynamicBuffer<SpawnedEntityBuffer> spawnedObjects,
-        ref DynamicBuffer<AvailableLayerBuffer> availableLayers)
+        ref DynamicBuffer<SpawnedEntityBuffer> spawnedObjects)
     {
         // 스폰된 오브젝트들의 상태를 확인하고 카운트 업데이트
         int validSpawnCount = 0;

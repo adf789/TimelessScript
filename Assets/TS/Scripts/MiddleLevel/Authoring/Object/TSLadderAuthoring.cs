@@ -48,9 +48,7 @@ public class TSLadderAuthoring : TSObjectAuthoring
                     IsTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
                 });
 
-                AddComponent(entity, new SpatialHashKeyComponent());
                 AddComponent(entity, new ColliderBoundsComponent());
-                AddComponent(entity, new CollisionInfoComponent());
                 AddBuffer<CollisionBuffer>(entity);
             }
         }

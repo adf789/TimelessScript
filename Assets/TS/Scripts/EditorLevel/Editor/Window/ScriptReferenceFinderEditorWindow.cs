@@ -12,12 +12,6 @@ public class ScriptReferenceFinderWindow : EditorWindow
         window.titleContent.text = "Script Reference Finder";
     }
 
-    //============================================================
-    //=========    Coding rule에 맞춰서 작업 바랍니다.   =========
-    //========= Coding rule region은 절대 지우지 마세요. =========
-    //=========    문제 시 '김철옥'에게 문의 바랍니다.   =========
-    //============================================================
-
     #region Coding rule : Property
     #endregion Coding rule : Property
 

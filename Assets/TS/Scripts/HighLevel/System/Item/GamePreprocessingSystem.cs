@@ -45,7 +45,6 @@ public partial class GamePreprocessingSystem : SystemBase
         .WithoutBurst()
         .ForEach((Entity spawner,
         ref DynamicBuffer<SpawnedEntityBuffer> spawnedEntities,
-        ref DynamicBuffer<AvailableLayerBuffer> availableLayers,
         ref DynamicBuffer<AvailableActorBuffer> availableActors,
         ref SpawnConfigComponent spawnConfig) =>
         {
@@ -69,7 +68,7 @@ public partial class GamePreprocessingSystem : SystemBase
                     continue;
 
                 // 엔티티 삭제 시 재활용 가능한 컴포넌트 값 반환
-                ReturningResources(in entity, in actor.ValueRW, ref availableLayers, ref availableActors);
+                ReturningResources(in entity, in actor.ValueRW, ref availableActors);
 
                 // 엔티티 삭제
                 ecb.DestroyEntity(entity);
@@ -161,10 +160,10 @@ public partial class GamePreprocessingSystem : SystemBase
 
     private void ReturningResources(in Entity entity,
     in TSActorComponent actor,
-    ref DynamicBuffer<AvailableLayerBuffer> availableLayers,
     ref DynamicBuffer<AvailableActorBuffer> availableActors)
     {
         // 존재하지 않는 Entity이면 layer를 큐에 반환하고 버퍼에서 제거
+        int layer = 0;
         if (SystemAPI.HasComponent<TSObjectComponent>(entity))
         {
             var tsObject = SystemAPI.GetComponentRW<TSObjectComponent>(entity);
@@ -173,11 +172,12 @@ public partial class GamePreprocessingSystem : SystemBase
                 SystemAPI.HasComponent<SpriteRendererComponent>(tsObject.ValueRW.RendererEntity))
             {
                 var renderer = SystemAPI.GetComponentRO<SpriteRendererComponent>(tsObject.ValueRW.RendererEntity);
-                availableLayers.Add(new AvailableLayerBuffer { Layer = renderer.ValueRO.Layer });
+
+                layer = renderer.ValueRO.Layer;
             }
         }
 
         // 컴포넌트 값 재사용
-        availableActors.Add(new AvailableActorBuffer(actor));
+        availableActors.Add(new AvailableActorBuffer(actor, layer));
     }
 }

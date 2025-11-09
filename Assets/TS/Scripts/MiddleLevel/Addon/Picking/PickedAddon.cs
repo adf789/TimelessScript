@@ -5,19 +5,10 @@ using UnityEngine.Events;
 
 public class PickedAddon : MonoBehaviour, IComparable<PickedAddon>
 {
-    //============================================================
-    //=========    Coding rule에 맞춰서 작업 바랍니다.   =========
-    //========= Coding rule region은 절대 지우지 마세요. =========
-    //=========    문제 시 '김철옥'에게 문의 바랍니다.   =========
-    //============================================================
-
-    #region Coding rule : Property
     public int PickOrder { get => pickOrder; }
     public bool IsIgnoreLowOrder { get => isIgnoreLowOrder; }
     public bool IsCallHoldEvent { get; private set; }
-    #endregion Coding rule : Property
 
-    #region Coding rule : Value
     [Header("터치 우선 순위(높을 수록 우선)")]
     [SerializeField]
     private int pickOrder;
@@ -62,9 +53,7 @@ public class PickedAddon : MonoBehaviour, IComparable<PickedAddon>
 
     private bool isClickDelay;
     private bool isPointDown;
-    #endregion Coding rule : Value
 
-    #region Coding rule : Function
     public bool OnEventPointDown(PickingData data)
     {
         isPointDown = true;
@@ -234,5 +223,4 @@ public class PickedAddon : MonoBehaviour, IComparable<PickedAddon>
     {
         TokenPool.Cancel(GetHashCode());
     }
-    #endregion Coding rule : Function
 }
