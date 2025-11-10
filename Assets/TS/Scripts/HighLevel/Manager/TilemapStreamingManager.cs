@@ -651,8 +651,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         return direction switch
         {
-            FourDirection.Top => new Vector2Int(currentOffset.x, currentOffset.y + 1),
-            FourDirection.Bottom => new Vector2Int(currentOffset.x, currentOffset.y - 1),
+            FourDirection.Up => new Vector2Int(currentOffset.x, currentOffset.y + 1),
+            FourDirection.Down => new Vector2Int(currentOffset.x, currentOffset.y - 1),
             FourDirection.Left => new Vector2Int(currentOffset.x - 1, currentOffset.y),
             FourDirection.Right => new Vector2Int(currentOffset.x + 1, currentOffset.y),
             _ => currentOffset

@@ -17,12 +17,7 @@ public class TilemapPatternRegistry : ScriptableObject
     [Tooltip("Shape별로 분류된 패턴")]
     public List<PatternCategory> Categories = new List<PatternCategory>();
 
-    [Header("Grid Configuration")]
-    [Tooltip("타일맵 그리드 크기")]
-    [SerializeField]
-    private Vector2Int gridSize = new Vector2Int(50, 50);
-
-    public Vector2Int GridSize => gridSize;
+    public Vector2Int GridSize { get; private set; } = new Vector2Int(IntDefine.MAP_TOTAL_GRID_WIDTH, IntDefine.MAP_TOTAL_GRID_WIDTH);
 
     // 런타임 캐시
     private Dictionary<string, TilemapPatternData> _patternCache;
@@ -133,65 +128,6 @@ public class TilemapPatternRegistry : ScriptableObject
         if (!_isInitialized) Initialize();
         return new List<string>(_patternCache.Keys);
     }
-
-#if UNITY_EDITOR
-    /// <summary>
-    /// 에디터 전용: 패턴 검증
-    /// </summary>
-    public void ValidatePatterns()
-    {
-        var errors = new List<string>();
-        var warnings = new List<string>();
-
-        // 중복 ID 검사
-        var idGroups = AllPatterns
-            .Where(p => p != null)
-            .GroupBy(p => p.PatternID)
-            .Where(g => g.Count() > 1);
-
-        foreach (var group in idGroups)
-        {
-            errors.Add($"Duplicate PatternID: {group.Key} ({group.Count()} occurrences)");
-        }
-
-        // 빈 Addressable 참조 검사
-        foreach (var pattern in AllPatterns)
-        {
-            if (pattern == null) continue;
-
-            if (pattern.TilemapPrefab == null || !pattern.TilemapPrefab.RuntimeKeyIsValid())
-            {
-                warnings.Add($"Pattern '{pattern.PatternID}' has invalid Addressable reference");
-            }
-        }
-
-        // 결과 출력
-        if (errors.Count > 0)
-        {
-            Debug.LogError($"[TilemapPatternRegistry] Validation found {errors.Count} errors:\n" + string.Join("\n", errors));
-        }
-
-        if (warnings.Count > 0)
-        {
-            Debug.LogWarning($"[TilemapPatternRegistry] Validation found {warnings.Count} warnings:\n" + string.Join("\n", warnings));
-        }
-
-        if (errors.Count == 0 && warnings.Count == 0)
-        {
-            Debug.Log("[TilemapPatternRegistry] Validation passed!");
-        }
-    }
-
-    private void OnValidate()
-    {
-        // 에디터에서 값이 변경될 때마다 캐시 무효화
-        _isInitialized = false;
-
-        // GridSize가 0 이하면 기본값으로 설정
-        if (gridSize.x <= 0) gridSize.x = 1;
-        if (gridSize.y <= 0) gridSize.y = 1;
-    }
-#endif
 }
 
 /// <summary>

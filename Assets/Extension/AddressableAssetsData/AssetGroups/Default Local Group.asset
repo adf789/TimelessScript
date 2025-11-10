@@ -15,11 +15,6 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 5608806d7f4b9774fad49cdaca92e971
   m_SerializeEntries:
-  - m_GUID: a2e2155934eb5de4c87c846622de45fd
-    m_Address: Assets/TS/AddressableResources/SubScene/Town/BaseTown_1.unity
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: adc2087ca96785c449e008188386ce26
     m_Address: Assets/TS/AddressableResources/Tilemap/Tilemap.prefab
     m_ReadOnly: 0

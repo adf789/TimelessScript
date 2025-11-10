@@ -5,6 +5,8 @@ using Unity.Mathematics;
 public class TSGroundAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Ground;
+    public Vector3 Position => transform.position;
+    public Vector2 Size => _size;
 
     [Header("Ground Settings")]
     [SerializeField] private float _bounciness = 0.3f;
@@ -48,7 +50,7 @@ public class TSGroundAuthoring : TSObjectAuthoring
 
     public void SetPosition(float x, float y)
     {
-        transform.position = new Vector3(x, y);
+        transform.localPosition = new Vector3(x, y);
     }
 
     public void SetSize(int x, int y)

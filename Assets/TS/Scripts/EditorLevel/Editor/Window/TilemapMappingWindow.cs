@@ -438,8 +438,8 @@ public class TilemapMappingWindow : EditorWindow
     {
         return direction switch
         {
-            FourDirection.Top => "상단",
-            FourDirection.Bottom => "하단",
+            FourDirection.Up => "상단",
+            FourDirection.Down => "하단",
             FourDirection.Left => "좌측",
             FourDirection.Right => "우측",
             _ => direction.ToString()

@@ -58,7 +58,20 @@ public class DataScriptCreator : BaseScriptCreator
                 EditorGUILayout.BeginHorizontal();
                 {
                     DataScriptType scriptType = (DataScriptType) index;
-                    _checkboxes[index] = EditorGUILayout.Toggle(_checkboxes[index], GUILayout.Width(20));
+                    bool check = false;
+                    EditorGUI.BeginChangeCheck();
+                    {
+                        check = EditorGUILayout.Toggle(_checkboxes[index], GUILayout.Width(20));
+                    }
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        for (int j = 0; check && j < _checkboxes.Length; j++)
+                        {
+                            _checkboxes[j] = j == index;
+                        }
+
+                        _checkIndex = index;
+                    }
 
                     string description = scriptType switch
                     {
@@ -148,6 +161,9 @@ public class DataScriptCreator : BaseScriptCreator
     private string GenerateCode(string name, string suffix)
     {
         return $@"
+using System;
+
+[Serializable]
 public struct {name}{suffix}
 {{
 

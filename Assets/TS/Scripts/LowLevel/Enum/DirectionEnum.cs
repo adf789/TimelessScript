@@ -3,8 +3,8 @@
 /// </summary>
 public enum FourDirection
 {
-    Top,         // 상단
-    Bottom,      // 하단
+    Up,         // 상단
+    Down,      // 하단
     Left,        // 좌
     Right,       // 우
 }

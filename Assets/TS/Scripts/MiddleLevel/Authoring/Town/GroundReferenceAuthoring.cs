@@ -4,8 +4,18 @@ using UnityEngine;
 public class GroundReferenceAuthoring : MonoBehaviour
 {
     [SerializeField] private GroundEntry[] _grounds;
+    [SerializeField] private LadderEntry[] _ladders;
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// 에디터용
+    /// </summary>
+    [SerializeField] private Transform _groundParent;
+    /// <summary>
+    /// 에디터용
+    /// </summary>
+    [SerializeField] private Transform _ladderParent;
+
     private void OnDrawGizmos()
     {
         // Draw grid
