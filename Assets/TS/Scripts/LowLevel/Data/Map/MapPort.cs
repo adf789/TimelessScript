@@ -1,8 +1,9 @@
 
 using Unity.Mathematics;
 
-public struct MapPort
+public struct MapLink
 {
+    public MapNode Node;
     public FourDirection Direction;
-    public int2 Position;
+    public int2 FromPosition;
 }

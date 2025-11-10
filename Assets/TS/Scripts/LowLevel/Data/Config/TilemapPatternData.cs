@@ -28,28 +28,6 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("씬 엔티티 Addressable 참조")]
     public EntitySceneReference SubScene;
 
-    [Header("Connection Points")]
-    [Tooltip("다른 패턴과 연결 가능한 지점")]
-    public List<ConnectionPoint> Connections = new List<ConnectionPoint>();
-
-    /// <summary>
-    /// 특정 방향의 활성화된 연결 지점이 있는지 확인
-    /// </summary>
-    public bool HasActiveConnection(FourDirection direction)
-    {
-        return Connections.Exists(c => c.Direction == direction);
-    }
-
-    /// <summary>
-    /// 특정 방향의 연결 지점 가져오기
-    /// </summary>
-    public ConnectionPoint? GetConnection(FourDirection direction)
-    {
-        int index = Connections.FindIndex(c => c.Direction == direction);
-        if (index < 0) return null;
-        return Connections[index];
-    }
-
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -66,17 +44,4 @@ public class TilemapPatternData : ScriptableObject
         }
     }
 #endif
-}
-
-/// <summary>
-/// 패턴 연결 지점 정의 (6방향)
-/// </summary>
-[System.Serializable]
-public struct ConnectionPoint
-{
-    [Tooltip("연결 방향 (6방향)")]
-    public FourDirection Direction;
-
-    [Tooltip("패턴 내 정수형 연결 좌표")]
-    public int Position;
 }

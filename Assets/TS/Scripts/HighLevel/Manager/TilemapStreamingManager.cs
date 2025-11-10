@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using Unity.Scenes;
 using Unity.Entities;
+using Unity.Mathematics;
 
 /// <summary>
 /// 타일맵 패턴 스트리밍 매니저
@@ -50,6 +51,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     // 패턴 캐시
     private readonly Dictionary<string, LoadedPattern> _loadedPatterns = new Dictionary<string, LoadedPattern>();
     private readonly Dictionary<string, PatternHistory> _unloadedPatternHistory = new Dictionary<string, PatternHistory>();
+    private readonly Dictionary<string, Entity> _loadedLadders = new Dictionary<string, Entity>();
 
     // 로딩 관리
     private readonly Queue<LoadRequest> _loadQueue = new Queue<LoadRequest>();
@@ -63,7 +65,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     // 초기화 상태
     private bool _isInitialized;
 
-    private Dictionary<Vector2Int, TilemapPatternNode> mapDatas = new Dictionary<Vector2Int, TilemapPatternNode>();
+    private Dictionary<int2, MapNode> _mapDatas = new Dictionary<int2, MapNode>();
     #endregion
 
     #region Unity Lifecycle
@@ -129,14 +131,17 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     public void SetTestMapData()
     {
         // 테스트 데이터
-        var basePosition = new Vector2Int(0, 0);
-        var basePattern = new TilemapPatternNode("BaseTown", basePosition);
+        var basePosition = new int2(0, 0);
+        var baseMap = new MapNode("BaseTown", basePosition);
 
-        var secondPosition = new Vector2Int(1, 0);
-        var secondPattern = new TilemapPatternNode("1000002", secondPosition);
+        var secondPosition = new int2(0, -1);
+        var secondMap = new MapNode("BaseTown", secondPosition);
 
-        mapDatas[basePosition] = basePattern;
-        mapDatas[secondPosition] = secondPattern;
+        baseMap.SetNodeInDirection(secondMap, FourDirection.Down, new int2(33, 3));
+        secondMap.SetNodeInDirection(baseMap, FourDirection.Up, new int2(33, 11));
+
+        _mapDatas[basePosition] = baseMap;
+        _mapDatas[secondPosition] = secondMap;
     }
 
     private bool ValidateRegistry()
@@ -241,7 +246,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Pattern Loading - Core
 
-    public async UniTask<GameObject> LoadPattern(string patternID, Vector2Int gridOffset)
+    public async UniTask<GameObject> LoadPattern(string patternID, int2 gridOffset)
     {
         if (!_isInitialized)
         {
@@ -249,7 +254,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             return null;
         }
 
-        var key = GetPatternKey(patternID, gridOffset);
+        var key = GetPatternKey(gridOffset);
 
         // 중복 로드 체크
         if (TryGetLoadedPattern(key, out var existingInstance))
@@ -331,7 +336,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return true;
     }
 
-    private async UniTask<GameObject> LoadPatternInternal(string key, string patternID, Vector2Int gridOffset, TilemapPatternData patternData)
+    private async UniTask<GameObject> LoadPatternInternal(string key, string patternID, int2 gridOffset, TilemapPatternData patternData)
     {
         _loadingKeys.Add(key);
 
@@ -348,6 +353,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
             RegisterLoadedPattern(key, patternID, gridOffset, patternData, instance, subSceneEntity);
 
+            await LoadLadders(gridOffset);
+
             return instance;
         }
         catch (System.Exception ex)
@@ -358,7 +365,94 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
     }
 
-    private async UniTask<GameObject> InstantiateTilemap(TilemapPatternData patternData, Vector2Int gridOffset, string key)
+    private async UniTask LoadLadders(int2 gridOffset)
+    {
+        // 해당 그리드의 패턴이 로드되었는지
+        if (!IsPatternLoaded(gridOffset))
+            return;
+
+        if (!_mapDatas.TryGetValue(gridOffset, out var node))
+            return;
+
+        // 위 방향에 연결된 노드가 있는지
+        if (node.HasConnectionInDirection(FourDirection.Up))
+        {
+            var upGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
+            if (!IsPatternLoaded(upGridOffset))
+                return;
+
+            if (IsLadderLoaded(GetLadderKey(gridOffset, upGridOffset)))
+                return;
+
+            if (!_mapDatas.TryGetValue(upGridOffset, out var upNode))
+                return;
+
+            var baseLink = node.GetLink(FourDirection.Up);
+            var oppsitionLink = upNode.GetLink(FourDirection.Down);
+
+            if (_loadedPatterns.TryGetValue(GetPatternKey(gridOffset), out var pattern))
+            {
+                // SubScene에서 GroundReferenceAuthoring 찾기
+                if (pattern.TilemapInstance == null)
+                    return;
+
+                // Tilemap GameObject의 자식에서 SubScene GameObject 찾기
+                var groundReferenceObject = pattern.TilemapInstance.GetComponentInChildren<GroundReferenceAuthoring>();
+                if (groundReferenceObject == null)
+                    return;
+
+                // 그리드 좌표를 월드 좌표로 변환하는 헬퍼 함수
+                static Vector3 GridToWorldPosition(int2 gridPos, Vector3 referencePos)
+                {
+                    // 그리드 (0,0)은 RootObject 중심 기준 로컬 포지션 (-25+0.5, -8+0.5)
+                    float gridOriginX = -25f + 0.5f;
+                    float gridOriginY = -8f + 0.5f;
+
+                    float worldX = referencePos.x + gridOriginX + gridPos.x * IntDefine.MAP_GRID_SIZE;
+                    float worldY = referencePos.y + gridOriginY + gridPos.y * IntDefine.MAP_GRID_SIZE;
+
+                    return new Vector3(worldX, worldY, referencePos.z);
+                }
+
+                // 사다리 생성
+                var ladderGO = new GameObject($"Ladder_{gridOffset.x}_{gridOffset.y}_to_{upGridOffset.x}_{upGridOffset.y}");
+                ladderGO.transform.parent = groundReferenceObject.transform;
+
+                // 사다리 위치 계산 (baseLink의 FromPosition 기준)
+                var baseLinkWorldPos = GridToWorldPosition(baseLink.FromPosition, groundReferenceObject.transform.position);
+
+                // 사다리는 하단 링크 위치에 배치
+                ladderGO.transform.position = baseLinkWorldPos;
+
+                // TSLadderAuthoring 추가
+                ladderGO.AddComponent<TSLadderAuthoring>();
+
+                // 생성된 사다리를 딕셔너리에 등록 (나중에 언로드 시 제거하기 위함)
+                var ladderKey = GetLadderKey(gridOffset, upGridOffset);
+                if (!string.IsNullOrEmpty(ladderKey))
+                {
+                    // Entity로 변환하여 저장하는 부분은 필요시 추가
+                    LogDebug($"Ladder created at {ladderGO.transform.position} connecting {gridOffset} to {upGridOffset}");
+                }
+            }
+        }
+
+        // 아래 방향에 연결된 노드가 있는지
+        if (node.HasConnectionInDirection(FourDirection.Down))
+        {
+            var downGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
+            if (!IsPatternLoaded(downGridOffset))
+                return;
+
+            if (IsLadderLoaded(GetLadderKey(gridOffset, downGridOffset)))
+                return;
+
+            if (!_mapDatas.TryGetValue(downGridOffset, out var downNode))
+                return;
+        }
+    }
+
+    private async UniTask<GameObject> InstantiateTilemap(TilemapPatternData patternData, int2 gridOffset, string key)
     {
         var tileMapHandle = Addressables.InstantiateAsync(patternData.TilemapPrefab);
         var instance = await tileMapHandle.Task;
@@ -401,7 +495,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return subSceneEntity;
     }
 
-    private void RegisterLoadedPattern(string key, string patternID, Vector2Int gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
+    private void RegisterLoadedPattern(string key, string patternID, int2 gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
     {
         var loadedPattern = new LoadedPattern
         {
@@ -424,7 +518,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Pattern Unloading
 
-    public async UniTask UnloadPatternNode(TilemapPatternNode node)
+    public async UniTask UnloadPatternNode(MapNode node)
     {
         if (node == null) return;
 
@@ -435,9 +529,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         LogDebug($"Node unloaded: {node.PatternID}");
     }
 
-    public async UniTask UnloadPattern(string patternID, Vector2Int gridOffset)
+    public async UniTask UnloadPattern(string patternID, int2 gridOffset)
     {
-        var key = GetPatternKey(patternID, gridOffset);
+        var key = GetPatternKey(gridOffset);
 
         if (!_loadedPatterns.TryGetValue(key, out var loaded))
         {
@@ -498,7 +592,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     public async UniTask UnloadAllPatterns()
     {
-        var patternsToUnload = new List<(string patternID, Vector2Int gridOffset)>();
+        var patternsToUnload = new List<(string patternID, int2 gridOffset)>();
 
         foreach (var loaded in _loadedPatterns.Values)
         {
@@ -578,9 +672,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             {
                 int integerX = (int) ((x + gridHalfWidth) / _patternRegistry.GridSize.x);
                 int integerY = (int) ((y + gridHalfHeight) / _patternRegistry.GridSize.y);
-                var position = new Vector2Int(integerX, integerY);
+                var position = new int2(integerX, integerY);
 
-                if (mapDatas.TryGetValue(position, out var node))
+                if (_mapDatas.TryGetValue(position, out var node))
                 {
                     if (node.IsLoaded)
                         continue;
@@ -632,7 +726,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
     }
 
-    public void EnqueueLoadRequest(string patternID, Vector2Int gridOffset, int priority = 50)
+    public void EnqueueLoadRequest(string patternID, int2 gridOffset, int priority = 50)
     {
         _loadQueue.Enqueue(new LoadRequest
         {
@@ -659,7 +753,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         };
     }
 
-    private Vector2 CalculatePatternCenter(Vector2Int gridOffset)
+    private Vector2 CalculatePatternCenter(int2 gridOffset)
     {
         return new Vector2(
             gridOffset.x * _patternRegistry.GridSize.x,
@@ -667,7 +761,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         );
     }
 
-    private Rect CalculatePatternRect(Vector2Int gridOffset)
+    private Rect CalculatePatternRect(int2 gridOffset)
     {
         float x = gridOffset.x * _patternRegistry.GridSize.x - _patternRegistry.GridSize.x * 0.5f;
         float y = gridOffset.y * _patternRegistry.GridSize.y - _patternRegistry.GridSize.y * 0.5f;
@@ -719,9 +813,27 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Utility
 
-    private string GetPatternKey(string patternID, Vector2Int offset)
+    private string GetPatternKey(int2 offset)
     {
-        return $"{patternID}_{offset.x}_{offset.y}";
+        return $"{offset.x}_{offset.y}";
+    }
+
+    private string GetLadderKey(int2 firstGround, int2 secondGround)
+    {
+        // x좌표 비교
+        if (firstGround.x < secondGround.x)
+            return $"{firstGround.x}:{firstGround.y}_{secondGround.x}:{secondGround.y}";
+        else if (firstGround.x > secondGround.x)
+            return $"{secondGround.x}:{secondGround.y}_{firstGround.x}:{firstGround.y}";
+
+        // y좌표 비교
+        if (firstGround.y < secondGround.y)
+            return $"{firstGround.x}:{firstGround.y}_{secondGround.x}:{secondGround.y}";
+        else if (firstGround.y > secondGround.y)
+            return $"{secondGround.x}:{secondGround.y}_{firstGround.x}:{firstGround.y}";
+
+        // 완전 같다면 키가 없음.
+        return null;
     }
 
     public Vector3 GetCameraPosition() => _cameraPosition;
@@ -732,10 +844,15 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return new List<string>(_loadedPatterns.Keys);
     }
 
-    public bool IsPatternLoaded(string patternID, Vector2Int gridOffset)
+    public bool IsPatternLoaded(int2 gridOffset)
     {
-        var key = GetPatternKey(patternID, gridOffset);
+        var key = GetPatternKey(gridOffset);
         return _loadedPatterns.ContainsKey(key);
+    }
+
+    public bool IsLadderLoaded(string key)
+    {
+        return _loadedLadders.ContainsKey(key);
     }
 
     public Rect CreateRect(in Vector2 position, in Vector2 size)
@@ -810,7 +927,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private class LoadedPattern
     {
         public string PatternID;
-        public Vector2Int GridOffset;
+        public int2 GridOffset;
         public TilemapPatternData PatternData;
         public GameObject TilemapInstance;
         public Entity SubSceneEntity;
@@ -820,7 +937,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private struct LoadRequest
     {
         public string PatternID;
-        public Vector2Int GridOffset;
+        public int2 GridOffset;
         public int Priority;
         public float RequestTime;
     }
@@ -828,7 +945,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private class PatternHistory
     {
         public string PatternID;
-        public Vector2Int GridOffset;
+        public int2 GridOffset;
         public float UnloadTime;
     }
 

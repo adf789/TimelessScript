@@ -1,10 +1,9 @@
-using UnityEngine;
+using Unity.Mathematics;
 
 /// <summary>
-/// 타일맵 패턴 노드 - 6방향 멀티 링크드 리스트 구조
-/// 각 노드는 6개의 방향으로 다른 패턴과 연결될 수 있음
+/// 타일맵 패턴 노드
 /// </summary>
-public class TilemapPatternNode
+public class MapNode
 {
     /// <summary>
     /// 패턴 고유 ID
@@ -14,41 +13,46 @@ public class TilemapPatternNode
     /// <summary>
     /// 월드 그리드 위치
     /// </summary>
-    public Vector2Int WorldGridPosition { get; private set; }
+    public int2 WorldGridPosition { get; private set; }
 
     /// <summary>
     /// 현재 로드 상태
     /// </summary>
     public bool IsLoaded { get; set; }
 
-    // 6방향 연결 노드
-    public TilemapPatternNode[] LinkedNodes { get; set; }
+    // 4방향 연결 노드
+    private MapLink[] _linkedNodes;
 
     /// <summary>
     /// 생성자
     /// </summary>
-    public TilemapPatternNode(string patternID, Vector2Int worldGridPosition)
+    public MapNode(string patternID, int2 worldGridPosition)
     {
         PatternID = patternID;
         WorldGridPosition = worldGridPosition;
         IsLoaded = false;
-        LinkedNodes = new TilemapPatternNode[IntDefine.MAP_PATTERN_DIRECTION]; // 4방향
+        _linkedNodes = new MapLink[IntDefine.MAP_PATTERN_DIRECTION]; // 4방향
     }
 
     /// <summary>
     /// 특정 방향의 노드 가져오기
     /// </summary>
-    public TilemapPatternNode GetNodeInDirection(FourDirection direction)
+    public MapLink GetLink(FourDirection direction)
     {
-        return LinkedNodes[(int) direction];
+        return _linkedNodes[(int) direction];
     }
 
     /// <summary>
     /// 특정 방향에 노드 설정
     /// </summary>
-    public void SetNodeInDirection(FourDirection direction, TilemapPatternNode node)
+    public void SetNodeInDirection(MapNode node, FourDirection direction, int2 fromPosition)
     {
-        LinkedNodes[(int) direction] = node;
+        _linkedNodes[(int) direction] = new MapLink()
+        {
+            Node = node,
+            Direction = direction,
+            FromPosition = fromPosition,
+        };
     }
 
     /// <summary>
@@ -56,6 +60,6 @@ public class TilemapPatternNode
     /// </summary>
     public bool HasConnectionInDirection(FourDirection direction)
     {
-        return GetNodeInDirection(direction) != null;
+        return !default(MapLink).Equals(GetLink(direction));
     }
 }

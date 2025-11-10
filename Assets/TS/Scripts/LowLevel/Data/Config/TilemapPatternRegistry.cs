@@ -45,13 +45,6 @@ public class TilemapPatternRegistry : ScriptableObject
             _patternCache[pattern.PatternID] = pattern;
         }
 
-        // Shape별 캐시 생성
-        _shapeCache = new Dictionary<FourDirection, List<TilemapPatternData>>();
-        foreach (FourDirection direction in System.Enum.GetValues(typeof(FourDirection)))
-        {
-            _shapeCache[direction] = AllPatterns.Where(p => p != null && p.Connections.Any(c => c.Direction == direction)).ToList();
-        }
-
         _isInitialized = true;
         Debug.Log($"[TilemapPatternRegistry] Initialized with {_patternCache.Count} patterns");
     }
