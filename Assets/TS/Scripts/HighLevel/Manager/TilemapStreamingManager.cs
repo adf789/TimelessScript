@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Unity.Scenes;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 /// <summary>
 /// 타일맵 패턴 스트리밍 매니저
@@ -73,7 +74,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private void Start()
     {
         Initialize();
-
     }
 
     private void Update()
@@ -135,7 +135,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         var baseMap = new MapNode("BaseTown", basePosition);
 
         var secondPosition = new int2(0, -1);
-        var secondMap = new MapNode("BaseTown", secondPosition);
+        var secondMap = new MapNode("BaseTown_1", secondPosition);
 
         baseMap.SetNodeInDirection(secondMap, FourDirection.Down, new int2(33, 3));
         secondMap.SetNodeInDirection(baseMap, FourDirection.Up, new int2(33, 11));
@@ -377,7 +377,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         // 위 방향에 연결된 노드가 있는지
         if (node.HasConnectionInDirection(FourDirection.Up))
         {
-            var upGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
+            var upGridOffset = new int2(gridOffset.x, gridOffset.y + 1);
             if (!IsPatternLoaded(upGridOffset))
                 return;
 
@@ -392,47 +392,32 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
             if (_loadedPatterns.TryGetValue(GetPatternKey(gridOffset), out var pattern))
             {
-                // SubScene에서 GroundReferenceAuthoring 찾기
-                if (pattern.TilemapInstance == null)
-                    return;
-
-                // Tilemap GameObject의 자식에서 SubScene GameObject 찾기
-                var groundReferenceObject = pattern.TilemapInstance.GetComponentInChildren<GroundReferenceAuthoring>();
-                if (groundReferenceObject == null)
-                    return;
-
-                // 그리드 좌표를 월드 좌표로 변환하는 헬퍼 함수
-                static Vector3 GridToWorldPosition(int2 gridPos, Vector3 referencePos)
+                // 상단 패턴 가져오기
+                if (_loadedPatterns.TryGetValue(GetPatternKey(upGridOffset), out var upPattern))
                 {
-                    // 그리드 (0,0)은 RootObject 중심 기준 로컬 포지션 (-25+0.5, -8+0.5)
-                    float gridOriginX = -25f + 0.5f;
-                    float gridOriginY = -8f + 0.5f;
+                    // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
+                    // 패턴의 월드 위치 기준으로 계산
+                    float3 ladderPosition = new float3(
+                        gridOffset.x + baseLink.FromPosition.x,
+                        gridOffset.y + baseLink.FromPosition.y,
+                        0);
 
-                    float worldX = referencePos.x + gridOriginX + gridPos.x * IntDefine.MAP_GRID_SIZE;
-                    float worldY = referencePos.y + gridOriginY + gridPos.y * IntDefine.MAP_GRID_SIZE;
+                    // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
+                    // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
+                    Entity bottomGroundEntity = Entity.Null;
+                    Entity topGroundEntity = Entity.Null;
 
-                    return new Vector3(worldX, worldY, referencePos.z);
-                }
+                    // 사다리 Entity 생성
+                    Entity ladderEntity = CreateLadderEntity(
+                        ladderPosition,
+                        topGroundEntity,
+                        bottomGroundEntity);
 
-                // 사다리 생성
-                var ladderGO = new GameObject($"Ladder_{gridOffset.x}_{gridOffset.y}_to_{upGridOffset.x}_{upGridOffset.y}");
-                ladderGO.transform.parent = groundReferenceObject.transform;
+                    // 로드된 사다리 저장
+                    string ladderKey = GetLadderKey(gridOffset, upGridOffset);
+                    _loadedLadders[ladderKey] = ladderEntity;
 
-                // 사다리 위치 계산 (baseLink의 FromPosition 기준)
-                var baseLinkWorldPos = GridToWorldPosition(baseLink.FromPosition, groundReferenceObject.transform.position);
-
-                // 사다리는 하단 링크 위치에 배치
-                ladderGO.transform.position = baseLinkWorldPos;
-
-                // TSLadderAuthoring 추가
-                ladderGO.AddComponent<TSLadderAuthoring>();
-
-                // 생성된 사다리를 딕셔너리에 등록 (나중에 언로드 시 제거하기 위함)
-                var ladderKey = GetLadderKey(gridOffset, upGridOffset);
-                if (!string.IsNullOrEmpty(ladderKey))
-                {
-                    // Entity로 변환하여 저장하는 부분은 필요시 추가
-                    LogDebug($"Ladder created at {ladderGO.transform.position} connecting {gridOffset} to {upGridOffset}");
+                    Debug.Log($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
                 }
             }
         }
@@ -449,6 +434,14 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
             if (!_mapDatas.TryGetValue(downGridOffset, out var downNode))
                 return;
+
+            var baseLink = node.GetLink(FourDirection.Down);
+            var oppsitionLink = downNode.GetLink(FourDirection.Up);
+
+            if (_loadedPatterns.TryGetValue(GetPatternKey(gridOffset), out var pattern))
+            {
+
+            }
         }
     }
 
@@ -545,6 +538,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             SaveToHistory(loaded, key);
 
             _loadedPatterns.Remove(key);
+
+            if (_mapDatas.TryGetValue(gridOffset, out var node))
+                node.IsLoaded = false;
 
             LogDebug($"Pattern unloaded and saved to history: {key}");
         }
@@ -679,7 +675,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                     if (node.IsLoaded)
                         continue;
 
-                    await LoadPattern(node.PatternID, position);
+                    if (await LoadPattern(node.PatternID, position) != null)
+                        node.IsLoaded = true;
                 }
             }
         }
@@ -918,6 +915,133 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         var unloadRect = GetCameraUnloadRect();
         Gizmos.color = new Color(1f, 0.5f, 0f, 0.2f); // 주황색
         Gizmos.DrawWireCube(unloadRect.center, unloadRect.size);
+    }
+
+    #endregion
+
+    #region Ladder Creation (Runtime ECS Entity Generation)
+
+    /// <summary>
+    /// 런타임 중 사다리 Entity 생성 (TSLadderAuthoring.Baker 로직 참고)
+    /// </summary>
+    /// <param name="position">사다리 생성 위치</param>
+    /// <param name="topGroundEntity">상단 연결 지형 Entity</param>
+    /// <param name="bottomGroundEntity">하단 연결 지형 Entity</param>
+    /// <returns>생성된 사다리 Entity</returns>
+    private Entity CreateLadderEntity(float3 position, Entity topGroundEntity, Entity bottomGroundEntity)
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null)
+        {
+            Debug.LogError("DefaultGameObjectInjectionWorld is null!");
+            return Entity.Null;
+        }
+
+        var entityManager = world.EntityManager;
+
+        // 1. Entity 생성
+        Entity ladderEntity = entityManager.CreateEntity();
+
+#if UNITY_EDITOR
+        // 2. 디버깅용 이름 설정
+        entityManager.SetName(ladderEntity, $"Ladder_{position.x:F1}_{position.y:F1}");
+#endif
+
+        // 3. Transform 컴포넌트 추가
+        entityManager.AddComponentData(ladderEntity, LocalTransform.FromPosition(position));
+
+        // 4. TSObjectComponent 추가
+        entityManager.AddComponentData(ladderEntity, new TSObjectComponent
+        {
+            Name = "RuntimeLadder",
+            Self = ladderEntity,
+            ObjectType = TSObjectType.Ladder,
+            RootOffset = 0f
+        });
+
+        // 5. TSLadderComponent 추가 (연결된 Ground 설정)
+        entityManager.AddComponentData(ladderEntity, new TSLadderComponent
+        {
+            TopConnectedGround = topGroundEntity,
+            BottomConnectedGround = bottomGroundEntity
+        });
+
+        // 6. 사다리 높이 계산 (TSLadderAuthoring.CalculateLadderHeight 참고)
+        float calculatedHeight = CalculateLadderHeight(
+            entityManager,
+            position.y,
+            topGroundEntity,
+            bottomGroundEntity);
+
+        // 7. ColliderComponent 추가 (TSLadderAuthoring.Baker 참고)
+        entityManager.AddComponentData(ladderEntity, new ColliderComponent
+        {
+            Layer = ColliderLayer.Ladder,
+            Size = new float2(0.5f, calculatedHeight),
+            Offset = new float2(0f, 0.5f),  // TSLadderAuthoring와 동일
+            IsTrigger = true  // 사다리는 반드시 Trigger!
+        });
+
+        // 8. ColliderBoundsComponent 추가
+        entityManager.AddComponentData(ladderEntity, new ColliderBoundsComponent());
+
+        // 9. CollisionBuffer 추가
+        entityManager.AddBuffer<CollisionBuffer>(ladderEntity);
+
+        return ladderEntity;
+    }
+
+    /// <summary>
+    /// 사다리 높이 계산 (TSLadderAuthoring.CalculateLadderHeight 로직 그대로 구현)
+    /// </summary>
+    private float CalculateLadderHeight(
+        EntityManager entityManager,
+        float ladderY,
+        Entity topGroundEntity,
+        Entity bottomGroundEntity)
+    {
+        float defaultHeight = 3.0f; // 기본 높이
+
+        // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
+        if (topGroundEntity != Entity.Null && bottomGroundEntity != Entity.Null)
+        {
+            if (entityManager.HasComponent<LocalTransform>(topGroundEntity) &&
+                entityManager.HasComponent<LocalTransform>(bottomGroundEntity))
+            {
+                float topY = entityManager.GetComponentData<LocalTransform>(topGroundEntity).Position.y;
+                float bottomY = entityManager.GetComponentData<LocalTransform>(bottomGroundEntity).Position.y;
+                float groundDistance = math.abs(topY - bottomY);
+
+                // TopConnectedGround보다 1 높게 설정
+                return groundDistance + 1.0f;
+            }
+        }
+        // TopConnectedGround만 있는 경우
+        else if (topGroundEntity != Entity.Null)
+        {
+            if (entityManager.HasComponent<LocalTransform>(topGroundEntity))
+            {
+                float topY = entityManager.GetComponentData<LocalTransform>(topGroundEntity).Position.y;
+                float distanceToTop = math.abs(topY - ladderY);
+
+                // TopConnectedGround보다 1 높게 설정
+                return distanceToTop + 1.0f;
+            }
+        }
+        // BottomConnectedGround만 있는 경우
+        else if (bottomGroundEntity != Entity.Null)
+        {
+            if (entityManager.HasComponent<LocalTransform>(bottomGroundEntity))
+            {
+                float bottomY = entityManager.GetComponentData<LocalTransform>(bottomGroundEntity).Position.y;
+                float distanceToBottom = math.abs(ladderY - bottomY);
+
+                // 기본적으로 하단에서 위로 올라가는 높이 + 1
+                return distanceToBottom + 1.0f;
+            }
+        }
+
+        return defaultHeight;
     }
 
     #endregion

@@ -20,13 +20,12 @@ public partial struct OptimizedPhysicsJob : IJobEntity
 {
     [ReadOnly] public float DeltaTime;
     [ReadOnly] public NativeArray<Entity> GroundEntities;
-    [ReadOnly] public NativeArray<ColliderBoundsComponent> GroundBounds;
+    [ReadOnly] public NativeArray<ColliderBoundsComponent> ColliderBounds;
     [ReadOnly] public ComponentLookup<TSGroundComponent> GroundLookup;
     [ReadOnly] public ComponentLookup<TSObjectComponent> ObjectLookup;
     [ReadOnly] public ComponentLookup<ColliderComponent> ColliderLookup;
 
     public void Execute(
-        Entity actorEntity,
         ref PhysicsComponent physics,
         ref LocalTransform transform,
         ref ColliderBoundsComponent bounds,
@@ -43,7 +42,7 @@ public partial struct OptimizedPhysicsJob : IJobEntity
         UpdateBounds(ref bounds, transform.Position.xy, collider);
 
         // 3. 충돌 검사 및 응답 (Actor vs Ground)
-        ResolveCollisions(actorEntity, ref physics, ref transform, ref bounds, collider);
+        ResolveCollisions(ref physics, ref transform, ref bounds, collider);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,7 +73,6 @@ public partial struct OptimizedPhysicsJob : IJobEntity
 
     [BurstCompile]
     private void ResolveCollisions(
-        Entity actorEntity,
         ref PhysicsComponent physics,
         ref LocalTransform transform,
         ref ColliderBoundsComponent actorBounds,
@@ -91,7 +89,7 @@ public partial struct OptimizedPhysicsJob : IJobEntity
         for (int i = 0; i < GroundEntities.Length; i++)
         {
             Entity groundEntity = GroundEntities[i];
-            ColliderBoundsComponent groundBound = GroundBounds[i];
+            ColliderBoundsComponent groundBound = ColliderBounds[i];
 
             // Bounds 체크
             if (!BoundsIntersect(actorBounds, groundBound))

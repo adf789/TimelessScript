@@ -17,18 +17,24 @@ public class TilemapPatternRegistry : ScriptableObject
     [Tooltip("Shape별로 분류된 패턴")]
     public List<PatternCategory> Categories = new List<PatternCategory>();
 
-    public Vector2Int GridSize { get; private set; } = new Vector2Int(IntDefine.MAP_TOTAL_GRID_WIDTH, IntDefine.MAP_TOTAL_GRID_WIDTH);
+    public Vector2Int GridSize { get; private set; } = new Vector2Int(IntDefine.MAP_TOTAL_GRID_WIDTH, IntDefine.MAP_TOTAL_GRID_HEIGHT);
 
     // 런타임 캐시
     private Dictionary<string, TilemapPatternData> _patternCache;
     private Dictionary<FourDirection, List<TilemapPatternData>> _shapeCache;
-    private bool _isInitialized = false;
+    private bool _isInit = false;
+
+    private void OnValidate()
+    {
+        _isInit = false;
+    }
+
     /// <summary>
     /// 레지스트리 초기화 (런타임에 최초 1회 호출)
     /// </summary>
     public void Initialize()
     {
-        if (_isInitialized) return;
+        if (_isInit) return;
 
         // 패턴 ID 캐시 생성
         _patternCache = new Dictionary<string, TilemapPatternData>();
@@ -45,7 +51,7 @@ public class TilemapPatternRegistry : ScriptableObject
             _patternCache[pattern.PatternID] = pattern;
         }
 
-        _isInitialized = true;
+        _isInit = true;
         Debug.Log($"[TilemapPatternRegistry] Initialized with {_patternCache.Count} patterns");
     }
 
@@ -54,7 +60,8 @@ public class TilemapPatternRegistry : ScriptableObject
     /// </summary>
     public TilemapPatternData GetPattern(string patternID)
     {
-        if (!_isInitialized) Initialize();
+        if (!_isInit)
+            Initialize();
 
         if (string.IsNullOrEmpty(patternID))
         {
@@ -76,7 +83,8 @@ public class TilemapPatternRegistry : ScriptableObject
     /// </summary>
     public List<TilemapPatternData> GetPatternsByShape(FourDirection direction)
     {
-        if (!_isInitialized) Initialize();
+        if (!_isInit)
+            Initialize();
 
         if (_shapeCache.TryGetValue(direction, out var patterns))
         {
@@ -91,7 +99,8 @@ public class TilemapPatternRegistry : ScriptableObject
     /// </summary>
     public TilemapPatternData GetRandomPattern(FourDirection direction)
     {
-        if (!_isInitialized) Initialize();
+        if (!_isInit)
+            Initialize();
 
         List<TilemapPatternData> targetList = GetPatternsByShape(direction);
 
@@ -109,7 +118,9 @@ public class TilemapPatternRegistry : ScriptableObject
     /// </summary>
     public bool HasPattern(string patternID)
     {
-        if (!_isInitialized) Initialize();
+        if (!_isInit)
+            Initialize();
+
         return _patternCache.ContainsKey(patternID);
     }
 
@@ -118,7 +129,9 @@ public class TilemapPatternRegistry : ScriptableObject
     /// </summary>
     public List<string> GetAllPatternIDs()
     {
-        if (!_isInitialized) Initialize();
+        if (!_isInit)
+            Initialize();
+
         return new List<string>(_patternCache.Keys);
     }
 }

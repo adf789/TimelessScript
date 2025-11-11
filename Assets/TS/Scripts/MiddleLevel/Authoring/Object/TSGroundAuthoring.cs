@@ -45,6 +45,7 @@ public class TSGroundAuthoring : TSObjectAuthoring
                 Offset = new float2(authoring._offset.x, authoring._offset.y),
                 IsTrigger = false,
             });
+            AddComponent(entity, new ColliderBoundsComponent());
         }
     }
 

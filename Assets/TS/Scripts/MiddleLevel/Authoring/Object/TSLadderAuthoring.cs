@@ -36,23 +36,19 @@ public class TSLadderAuthoring : TSObjectAuthoring
                 BottomConnectedGround = authoring._bottomConnectedGround ? GetEntity(authoring._bottomConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null
             });
 
-            // Collider 관련 컴포넌트들 (ColliderAuthoring이 없는 경우)
-            if (!authoring.GetComponent<ColliderAuthoring>())
+            // ConnectedGround 위치를 기반으로 높이 계산
+            float calculatedHeight = CalculateLadderHeight(authoring);
+
+            AddComponent(entity, new ColliderComponent
             {
-                // ConnectedGround 위치를 기반으로 높이 계산
-                float calculatedHeight = CalculateLadderHeight(authoring);
+                Layer = ColliderLayer.Ladder,
+                Size = new float2(0.5f, calculatedHeight),
+                Offset = new float2(0f, .5f),
+                IsTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
+            });
 
-                AddComponent(entity, new ColliderComponent
-                {
-                    Layer = ColliderLayer.Ladder,
-                    Size = new float2(0.5f, calculatedHeight),
-                    Offset = new float2(0f, .5f),
-                    IsTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
-                });
-
-                AddComponent(entity, new ColliderBoundsComponent());
-                AddBuffer<CollisionBuffer>(entity);
-            }
+            AddComponent(entity, new ColliderBoundsComponent());
+            AddBuffer<CollisionBuffer>(entity);
         }
 
         private float CalculateLadderHeight(TSLadderAuthoring authoring)

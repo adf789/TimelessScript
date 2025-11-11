@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 5608806d7f4b9774fad49cdaca92e971
   m_SerializeEntries:
+  - m_GUID: 1767d01e7b673e841897b0f1212dedfb
+    m_Address: Assets/TS/AddressableResources/Tilemap/Tilemap_1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: adc2087ca96785c449e008188386ce26
     m_Address: Assets/TS/AddressableResources/Tilemap/Tilemap.prefab
     m_ReadOnly: 0
@@ -22,11 +27,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ef6f749c7c73fe44ab1c52bf5da6d638
     m_Address: Assets/TS/AddressableResources/SubScene/Town/TownActor.unity
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ffccf122668ebae429d601c43407abbb
-    m_Address: Assets/TS/AddressableResources/Tilemap/Tilemap_1.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
