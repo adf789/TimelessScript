@@ -659,23 +659,22 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private async UniTask LoadPatternsInCameraView(Rect cameraRect)
     {
-        float gridHalfWidth = _patternRegistry.GridSize.x * 0.5f;
-        float gridHalfHeight = _patternRegistry.GridSize.y * 0.5f;
+        // 맵 로드 영역 체크 (y좌표 무시, 영역 내 그리드만 탐색)
+        Vector2Int minGrid = CalculateGrid(new Vector3(cameraRect.min.x, cameraRect.min.y));
+        Vector2Int maxGrid = CalculateGrid(new Vector3(cameraRect.max.x, cameraRect.max.y));
 
-        for (float y = cameraRect.yMin; y <= cameraRect.yMax; y += _patternRegistry.GridSize.y)
+        for (int x = minGrid.x; x <= maxGrid.x; x++)
         {
-            for (float x = cameraRect.xMin; x <= cameraRect.xMax; x += _patternRegistry.GridSize.x)
+            for (int y = minGrid.y; y <= maxGrid.y; y++)
             {
-                int integerX = (int) ((x + gridHalfWidth) / _patternRegistry.GridSize.x);
-                int integerY = (int) ((y + gridHalfHeight) / _patternRegistry.GridSize.y);
-                var position = new int2(integerX, integerY);
+                int2 grid = new int2(x, y);
 
-                if (_mapDatas.TryGetValue(position, out var node))
+                if (_mapDatas.TryGetValue(grid, out var node))
                 {
                     if (node.IsLoaded)
                         continue;
 
-                    if (await LoadPattern(node.PatternID, position) != null)
+                    if (await LoadPattern(node.PatternID, grid) != null)
                         node.IsLoaded = true;
                 }
             }
@@ -764,6 +763,14 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         float y = gridOffset.y * _patternRegistry.GridSize.y - _patternRegistry.GridSize.y * 0.5f;
 
         return new Rect(x, y, _patternRegistry.GridSize.x, _patternRegistry.GridSize.y);
+    }
+
+    private Vector2Int CalculateGrid(Vector3 position)
+    {
+        int x = Mathf.FloorToInt(position.x * FloatDefine.INVERSE_MAP_GRID_WIDTH);
+        int y = Mathf.FloorToInt(position.y * FloatDefine.INVERSE_MAP_GRID_HEIGHT);
+
+        return new Vector2Int(x, y);
     }
 
     /// <summary>
