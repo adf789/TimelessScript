@@ -221,6 +221,49 @@ TS.EditorLevel.Editor.{Category}
 
 ## 🤖 AI Interaction Guidelines
 
+### ⚠️ Code Implementation Request Protocol (CRITICAL)
+
+**When user requests code implementation**:
+
+1. **🎯 Goal Analysis First**
+   - Break down into functional units (features, not files)
+   - Identify dependencies and impact scope
+   - List what needs to be modified vs created
+
+2. **📋 Present Goals & Ask Confirmation**
+   ```markdown
+   ## 구현 목표 분석
+
+   ### 목표 1: [Feature Name]
+   - **영향 범위**: [Files/Systems affected]
+   - **의존성**: [What it depends on]
+   - **예상 작업**: [Brief description]
+
+   ### 목표 2: [Feature Name]
+   ...
+
+   **진행할까요?** (y/n 또는 특정 목표만 선택)
+   ```
+
+3. **✅ Code Generation Rules**
+   - **Minimize code generation** - Only implement confirmed goals
+   - **Wait for user requests** - Don't generate unless explicitly asked
+   - **Incremental approach** - One goal at a time if user prefers
+
+**Examples**:
+```markdown
+❌ WRONG:
+User: "로드 범위 체크 수정"
+AI: *Immediately generates full implementation*
+
+✅ CORRECT:
+User: "로드 범위 체크 수정"
+AI: "구현 목표 분석:
+     목표 1: ChunkLoader 범위 계산 로직 수정
+     목표 2: TilemapStreamingManager 중복 로드 방지
+     어떤 목표부터 진행할까요?"
+```
+
 ### 코드 생성 전 필수 체크
 ```yaml
 Before_Code_Generation:
