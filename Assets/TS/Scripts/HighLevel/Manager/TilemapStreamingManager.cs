@@ -51,7 +51,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     // 패턴 캐시
     private readonly Dictionary<int2, LoadedPattern> _loadedPatterns = new Dictionary<int2, LoadedPattern>();
-    private readonly Dictionary<int2, PatternHistory> _unloadedPatternHistory = new Dictionary<int2, PatternHistory>();
     private readonly Dictionary<LadderKey, Entity> _loadedLadders = new Dictionary<LadderKey, Entity>();
 
     // 로딩 관리
@@ -66,6 +65,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     // 초기화 상태
     private bool _isInitialized;
 
+    // 모든 맵 데이터
     private Dictionary<int2, MapNode> _mapDatas = new Dictionary<int2, MapNode>();
     #endregion
 
@@ -285,7 +285,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (_loadedPatterns.TryGetValue(key, out var loaded))
         {
             instance = loaded.TilemapInstance;
-            return true;
+            return instance != null;
         }
 
         instance = null;
@@ -347,11 +347,19 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 return null;
             }
 
-            var subSceneEntity = await LoadSubScene(patternData, patternID);
+            if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
+            {
+                var subSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
 
-            RegisterLoadedPattern(patternID, gridOffset, patternData, instance, subSceneEntity);
+                RegisterLoadedPattern(patternID, gridOffset, patternData, instance, subSceneEntity);
 
-            await LoadLadders(gridOffset);
+                await LoadLadders(gridOffset);
+            }
+            else
+            {
+                loadedPattern.IsLoaded = true;
+                loadedPattern.TilemapInstance = instance;
+            }
 
             return instance;
         }
@@ -366,7 +374,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private async UniTask LoadLadders(int2 gridOffset)
     {
         // 해당 그리드의 패턴이 로드되었는지
-        if (!IsPatternLoaded(gridOffset))
+        if (GetMapLoadState(gridOffset) == MapLoadState.None)
             return;
 
         if (!_mapDatas.TryGetValue(gridOffset, out var node))
@@ -376,7 +384,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (node.HasConnectionInDirection(FourDirection.Up))
         {
             var upGridOffset = new int2(gridOffset.x, gridOffset.y + 1);
-            if (!IsPatternLoaded(upGridOffset))
+            if (GetMapLoadState(upGridOffset) == MapLoadState.None)
                 return;
 
             if (IsLadderLoaded(new LadderKey(gridOffset, upGridOffset)))
@@ -423,7 +431,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (node.HasConnectionInDirection(FourDirection.Down))
         {
             var downGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
-            if (!IsPatternLoaded(downGridOffset))
+            if (GetMapLoadState(downGridOffset) == MapLoadState.None)
                 return;
 
             if (IsLadderLoaded(new LadderKey(gridOffset, downGridOffset)))
@@ -459,12 +467,17 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return instance;
     }
 
-    private async UniTask<Entity> LoadSubScene(TilemapPatternData patternData, string patternID)
+    private async UniTask<Entity> LoadSubScene(TilemapPatternData patternData, string patternID, int2 gridOffset)
     {
         if (!patternData.SubScene.IsReferenceValid)
         {
             LogDebug($"No SubScene reference for pattern: {patternID}");
             return Entity.Null;
+        }
+
+        if (_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
+        {
+            return loadedPattern.SubSceneEntity;
         }
 
         var world = World.DefaultGameObjectInjectionWorld;
@@ -474,15 +487,66 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             return Entity.Null;
         }
 
+        // gridOffset 계산
+        float3 offset = new float3(
+            gridOffset.x * _patternRegistry.GridSize.x,
+            gridOffset.y * _patternRegistry.GridSize.y,
+            0
+        );
+
+        // SubScene 로드 (BlockOnStreamIn으로 즉시 로드)
+        var loadParams = new SceneSystem.LoadParameters
+        {
+            Flags = SceneLoadFlags.BlockOnStreamIn | SceneLoadFlags.LoadAdditive
+        };
+
         var subSceneEntity = SceneSystem.LoadSceneAsync(
             world.Unmanaged,
             patternData.SubScene,
-            new SceneSystem.LoadParameters { Flags = SceneLoadFlags.LoadAdditive }
+            loadParams
         );
 
-        LogDebug($"SubScene loaded for pattern: {patternID} (Entity: {subSceneEntity})");
+        // SubScene 로드 완료 대기
+        await UniTask.WaitUntil(() =>
+            SceneSystem.IsSceneLoaded(world.Unmanaged, subSceneEntity)
+        );
+
+        // SubScene의 모든 Entity에 offset 적용
+        ApplyOffsetToSubSceneEntities(world.EntityManager, subSceneEntity, offset);
+
+        LogDebug($"SubScene loaded for pattern: {patternID} at offset {offset} (Entity: {subSceneEntity})");
 
         return subSceneEntity;
+    }
+
+    private void ApplyOffsetToSubSceneEntities(EntityManager entityManager, Entity subSceneEntity, float3 offset)
+    {
+        // SubScene의 SceneReference 가져오기
+        if (!entityManager.HasComponent<SceneReference>(subSceneEntity))
+            return;
+
+        var sceneRef = entityManager.GetComponentData<SceneReference>(subSceneEntity);
+
+        // SubScene에 속한 모든 Entity 쿼리
+        using var query = entityManager.CreateEntityQuery(
+            ComponentType.ReadWrite<LocalTransform>(),
+            ComponentType.ReadOnly<SceneSection>()
+        );
+
+        using var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
+
+        foreach (var entity in entities)
+        {
+            // 해당 SubScene의 Entity인지 확인
+            var sceneSection = entityManager.GetSharedComponent<SceneSection>(entity);
+            if (sceneSection.SceneGUID == sceneRef.SceneGUID)
+            {
+                // LocalTransform에 offset 적용
+                var transform = entityManager.GetComponentData<LocalTransform>(entity);
+                transform.Position += offset;
+                entityManager.SetComponentData(entity, transform);
+            }
+        }
     }
 
     private void RegisterLoadedPattern(string patternID, int2 gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
@@ -494,12 +558,12 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             PatternData = patternData,
             TilemapInstance = instance,
             SubSceneEntity = subSceneEntity,
-            LoadTime = Time.time
+            LoadTime = Time.time,
+            IsLoaded = true,
         };
 
         _loadedPatterns[gridOffset] = loadedPattern;
         _loadingKeys.Remove(gridOffset);
-        _unloadedPatternHistory.Remove(gridOffset);
 
         LogDebug($"Pattern loaded: {gridOffset}");
     }
@@ -510,7 +574,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     public async UniTask UnloadPattern(int2 gridOffset)
     {
-        if (!_loadedPatterns.TryGetValue(gridOffset, out var loaded))
+        if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
         {
             LogDebug($"Pattern not loaded: {gridOffset}");
             return;
@@ -518,10 +582,10 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         try
         {
-            UnloadTilemap(loaded);
-            SaveToHistory(loaded, gridOffset);
+            UnloadTilemap(loadedPattern);
 
-            _loadedPatterns.Remove(gridOffset);
+            loadedPattern.IsLoaded = false;
+            loadedPattern.TilemapInstance = null;
 
             if (_mapDatas.TryGetValue(gridOffset, out var node))
                 node.IsLoaded = false;
@@ -536,38 +600,12 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         await UniTask.Yield();
     }
 
-    private async UniTask UnloadSubScene(LoadedPattern loaded, string key)
-    {
-        if (loaded.SubSceneEntity == Entity.Null) return;
-
-        var world = World.DefaultGameObjectInjectionWorld;
-        if (world == null || !world.IsCreated) return;
-
-        SceneSystem.UnloadScene(
-            world.Unmanaged,
-            loaded.SubSceneEntity,
-            SceneSystem.UnloadParameters.DestroyMetaEntities
-        );
-
-        LogDebug($"SubScene unloaded for pattern: {key} (Entity: {loaded.SubSceneEntity})");
-    }
-
     private void UnloadTilemap(LoadedPattern loaded)
     {
         if (loaded.TilemapInstance != null)
         {
             Object.Destroy(loaded.TilemapInstance);
         }
-    }
-
-    private void SaveToHistory(LoadedPattern loaded, int2 key)
-    {
-        _unloadedPatternHistory[key] = new PatternHistory
-        {
-            PatternID = loaded.PatternID,
-            GridOffset = loaded.GridOffset,
-            UnloadTime = Time.time
-        };
     }
 
     public async UniTask UnloadAllPatterns()
@@ -673,6 +711,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         {
             if (ShouldUnloadByCamera(loaded, cameraRect))
             {
+                if (!loaded.IsLoaded)
+                    continue;
+
                 patternsToUnload.Add(loaded);
             }
         }
@@ -808,9 +849,12 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return new List<int2>(_loadedPatterns.Keys);
     }
 
-    public bool IsPatternLoaded(int2 gridOffset)
+    public MapLoadState GetMapLoadState(int2 gridOffset)
     {
-        return _loadedPatterns.ContainsKey(gridOffset);
+        if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
+            return MapLoadState.None;
+
+        return loadedPattern.IsLoaded ? MapLoadState.All : MapLoadState.OnlyPhysics;
     }
 
     private bool IsLadderLoaded(LadderKey key)
@@ -1022,6 +1066,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         public GameObject TilemapInstance;
         public Entity SubSceneEntity;
         public float LoadTime;
+        public bool IsLoaded;
     }
 
     private struct LoadRequest
