@@ -66,7 +66,9 @@ public partial struct ControlSystem : ISystem
                 ecb.RemoveComponent<Disabled>(selection.ValueRW.SelectVisual);
             }
 
-            Debug.Log($"Select {pickedTarget.Name}");
+#if UNITY_EDITOR
+            Debug.Log($"Select {pickedTarget.Self}");
+#endif
 
             return;
         }

@@ -31,7 +31,7 @@ public class PlayerSubManager : SubBaseManager<PlayerSubManager>
 
         _inventory.Clear();
 
-        if (document.Exists)
+        if (document != null && document.Exists)
             Inventory.ConvertFromSaveData(document.ToDictionary());
     }
 }

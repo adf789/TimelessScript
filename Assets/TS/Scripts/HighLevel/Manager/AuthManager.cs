@@ -1,198 +1,306 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System;
-
-#if UNITY_ANDROID
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-#endif
-
-#if UNITY_EDITOR
-using System.Collections.Specialized;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
-using UnityEngine.Networking;
-#endif
+using Firebase;
+using Firebase.Auth;
+using Firebase.Extensions;
 
 public class AuthManager : BaseManager<AuthManager>
 {
-    private AuthSetting _authSetting;
-    private bool _isAuthenticated;
-    private string _playerID;
-    private string _playerName;
-
-#if UNITY_EDITOR
-    private const string _authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-    private const string _tokenEndpoint = "https://oauth2.googleapis.com/token";
-    private const string _userInfoEndpoint = "https://openidconnect.googleapis.com/v1/userinfo";
-
-    private string _redirectUri;
-    private string _state;
-    private string _codeVerifier;
-    private HttpListener _httpListener;
-#endif
+    private FirebaseAuth _auth;
+    private FirebaseUser _currentUser;
+    private bool _isInitialized;
 
     /// <summary>
-    /// 구글 플레이 게임즈 로그인 상태
+    /// Firebase 인증 상태
     /// </summary>
-    public bool IsAuthenticated => _isAuthenticated;
+    public bool IsAuthenticated => _currentUser != null;
 
     /// <summary>
-    /// 현재 로그인한 플레이어 ID
+    /// 현재 로그인한 사용자 ID
     /// </summary>
-    public string PlayerID => _playerID;
+    public string PlayerID => _currentUser?.UserId ?? string.Empty;
 
     /// <summary>
-    /// 현재 로그인한 플레이어 이름
+    /// 현재 로그인한 사용자 이름
     /// </summary>
-    public string PlayerName => _playerName;
+    public string PlayerName => _currentUser?.DisplayName ?? "Guest";
 
-    private async void Awake()
+    /// <summary>
+    /// 현재 로그인한 사용자 이메일
+    /// </summary>
+    public string PlayerEmail => _currentUser?.Email ?? string.Empty;
+
+    /// <summary>
+    /// Firebase User 객체
+    /// </summary>
+    public FirebaseUser CurrentUser => _currentUser;
+
+    private async void Start()
     {
-#if UNITY_EDITOR
-        Debug.Log("[AuthManager][EDITOR] Google OAuth authentication system initialized");
+        await InitializeFirebaseAuth();
+    }
 
-        _authSetting = await ResourcesTypeRegistry.Get().LoadAsyncWithName<ScriptableObject, AuthSetting>("AuthSetting");
-#elif UNITY_ANDROID
-        InitializeGooglePlayGames();
-#else
-        Debug.LogWarning("[AuthManager] Google Play Games is only supported on Android platform");
-#endif
+    /// <summary>
+    /// Firebase Auth 초기화
+    /// </summary>
+    private async UniTask InitializeFirebaseAuth()
+    {
+        try
+        {
+            // Firebase 의존성 확인
+            var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync();
+
+            if (dependencyStatus == DependencyStatus.Available)
+            {
+                _auth = FirebaseAuth.DefaultInstance;
+                _auth.StateChanged += OnAuthStateChanged;
+
+                _isInitialized = true;
+                Debug.Log("[AuthManager] Firebase Auth initialized successfully");
+
+                // 자동 로그인 시도 (이전 세션 복원)
+                if (_auth.CurrentUser != null)
+                {
+                    _currentUser = _auth.CurrentUser;
+                    Debug.Log($"[AuthManager] Auto sign-in successful. User: {PlayerName} (ID: {PlayerID})");
+                }
+            }
+            else
+            {
+                Debug.LogError($"[AuthManager] Firebase dependencies error: {dependencyStatus}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Firebase Auth initialization failed: {ex.Message}");
+        }
     }
 
     private void OnDestroy()
     {
-#if UNITY_EDITOR
-        _httpListener?.Stop();
-        _httpListener?.Close();
+        if (_auth != null)
+        {
+            _auth.StateChanged -= OnAuthStateChanged;
+        }
+    }
+
+    /// <summary>
+    /// Firebase Auth 상태 변경 콜백
+    /// </summary>
+    private void OnAuthStateChanged(object sender, EventArgs eventArgs)
+    {
+        if (_auth.CurrentUser != _currentUser)
+        {
+            bool signedIn = _currentUser != _auth.CurrentUser && _auth.CurrentUser != null;
+            _currentUser = _auth.CurrentUser;
+
+            if (signedIn)
+            {
+                Debug.Log($"[AuthManager] User signed in: {PlayerName} (ID: {PlayerID})");
+            }
+            else if (_currentUser == null)
+            {
+                Debug.Log("[AuthManager] User signed out");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Google Sign-In (Android/iOS)
+    /// </summary>
+    public async UniTask<bool> SignInWithGoogleAsync(Action onEventFinished = null)
+    {
+        if (!_isInitialized)
+        {
+            Debug.LogError("[AuthManager] Firebase Auth not initialized");
+            return false;
+        }
+
+#if UNITY_ANDROID || UNITY_IOS
+        try
+        {
+            Debug.Log("[AuthManager] Starting Google Sign-In...");
+
+            // FederatedOAuthProvider 사용
+            var provider = new FederatedOAuthProvider();
+            provider.SetProviderData(new FederatedOAuthProviderData
+            {
+                ProviderId = GoogleAuthProvider.ProviderId
+            });
+
+            var credential = await _auth.SignInWithProviderAsync(provider).AsUniTask();
+
+            if (credential != null && credential.User != null)
+            {
+                _currentUser = credential.User;
+                Debug.Log($"[AuthManager] Google sign-in successful. User: {PlayerName} (ID: {PlayerID})");
+
+                // Firestore에 유저 데이터 저장
+                await SaveUserDataToDatabase();
+
+                onEventFinished?.Invoke();
+                return true;
+            }
+
+            Debug.LogError("[AuthManager] Google sign-in failed: Invalid credential");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Google sign-in error: {ex.Message}");
+            return false;
+        }
+#else
+        Debug.LogWarning("[AuthManager] Google Sign-In only supported on Android/iOS");
+        await UniTask.Yield();
+        return false;
 #endif
     }
 
     /// <summary>
-    /// Google Play Games 초기화
+    /// 익명 로그인
     /// </summary>
-    private void InitializeGooglePlayGames()
+    public async UniTask<bool> SignInAnonymouslyAsync(Action onEventFinished = null)
     {
-        PlayGamesPlatform.DebugLogEnabled = Debug.isDebugBuild;
-        PlayGamesPlatform.Activate();
-
-        Debug.Log("[AuthManager] Google Play Games initialized");
-    }
-
-    /// <summary>
-    /// Google Play Games 자동 로그인 시도
-    /// </summary>
-    public async UniTask<bool> SignInSilentlyAsync()
-    {
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
+        if (!_isInitialized)
         {
-            // 에디터에서는 자동 로그인 불가 (OAuth는 항상 수동 브라우저 인증 필요)
-            Debug.Log("[AuthManager][EDITOR] Silent sign-in not supported. Please use SignInAsync()");
-            await UniTask.Yield();
+            Debug.LogError("[AuthManager] Firebase Auth not initialized");
             return false;
         }
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-        {
-            var tcs = new UniTaskCompletionSource<bool>();
 
-            PlayGamesPlatform.Instance.Authenticate(status =>
+        try
+        {
+            Debug.Log("[AuthManager] Starting anonymous sign-in...");
+
+            var credential = await _auth.SignInAnonymouslyAsync().AsUniTask();
+
+            if (credential != null && credential.User != null)
             {
-                if (status == SignInStatus.Success)
-                {
-                    _playerID = PlayGamesPlatform.Instance.GetUserId();
-                    _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
-                    _isAuthenticated = true;
+                _currentUser = credential.User;
+                Debug.Log($"[AuthManager] Anonymous sign-in successful. User ID: {PlayerID}");
 
-                    Debug.Log($"[AuthManager] Silent sign-in successful. Player: {_playerName} (ID: {_playerID})");
-                    tcs.TrySetResult(true);
-                }
-                else
-                {
-                    Debug.Log($"[AuthManager] Silent sign-in failed: {status}");
-                    tcs.TrySetResult(false);
-                }
-            });
+                onEventFinished?.Invoke();
+                return true;
+            }
 
-            return await tcs.Task;
+            Debug.LogError("[AuthManager] Anonymous sign-in failed");
+            return false;
         }
-        else
+        catch (Exception ex)
         {
-            Debug.LogWarning("[AuthManager] Sign-in not supported on this platform");
-            await UniTask.Yield();
+            Debug.LogError($"[AuthManager] Anonymous sign-in error: {ex.Message}");
             return false;
         }
     }
 
     /// <summary>
-    /// Google Play Games 수동 로그인 (UI 표시)
+    /// 이메일/비밀번호 회원가입
     /// </summary>
-    public async UniTask<bool> SignInAsync(Action onEventFinished = null)
+    public async UniTask<bool> SignUpWithEmailAsync(string email, string password, string displayName = null)
     {
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
+        if (!_isInitialized)
         {
-            if (string.IsNullOrEmpty(_authSetting.EditorClientId) || string.IsNullOrEmpty(_authSetting.EditorClientSecret))
-            {
-                Debug.LogError("[AuthManager][EDITOR] Client ID and Client Secret must be set in Inspector!");
-                return false;
-            }
-
-            try
-            {
-                Debug.Log("[AuthManager][EDITOR] Starting Google OAuth sign-in...");
-
-                var success = await EditorGoogleOAuthSignIn();
-
-                if (success)
-                {
-                    Debug.Log($"[AuthManager][EDITOR] Sign-in successful. Player: {_playerName} (ID: {_playerID})");
-                    onEventFinished?.Invoke();
-                }
-                else
-                {
-                    Debug.LogError("[AuthManager][EDITOR] Sign-in failed");
-                }
-
-                return success;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[AuthManager][EDITOR] Sign-in error: {ex.Message}");
-                return false;
-            }
-        }
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-        {
-            var tcs = new UniTaskCompletionSource<bool>();
-
-            PlayGamesPlatform.Instance.ManuallyAuthenticate(status =>
-            {
-                if (status == SignInStatus.Success)
-                {
-                    _playerID = PlayGamesPlatform.Instance.GetUserId();
-                    _playerName = PlayGamesPlatform.Instance.GetUserDisplayName();
-                    _isAuthenticated = true;
-
-                    Debug.Log($"[AuthManager] Sign-in successful. Player: {_playerName} (ID: {_playerID})");
-                    tcs.TrySetResult(true);
-
-                    onEventFinished?.Invoke();
-                }
-                else
-                {
-                    Debug.LogError($"[AuthManager] Sign-in failed: {status}");
-                    tcs.TrySetResult(false);
-                }
-            });
-
-            return await tcs.Task;
-        }
-        else
-        {
-            Debug.LogWarning("[AuthManager] Sign-in not supported on this platform");
-            await UniTask.Yield();
+            Debug.LogError("[AuthManager] Firebase Auth not initialized");
             return false;
+        }
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            Debug.LogError("[AuthManager] Email or password is empty");
+            return false;
+        }
+
+        try
+        {
+            Debug.Log($"[AuthManager] Creating account for {email}...");
+
+            var credential = await _auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask();
+
+            if (credential != null && credential.User != null)
+            {
+                _currentUser = credential.User;
+
+                // DisplayName 설정
+                if (!string.IsNullOrEmpty(displayName))
+                {
+                    var profile = new UserProfile { DisplayName = displayName };
+                    await _currentUser.UpdateUserProfileAsync(profile).AsUniTask();
+                }
+
+                Debug.Log($"[AuthManager] Account created successfully. User: {PlayerName} (ID: {PlayerID})");
+
+                // Firestore에 유저 데이터 저장
+                await SaveUserDataToDatabase();
+
+                return true;
+            }
+
+            Debug.LogError("[AuthManager] Account creation failed");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Account creation error: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 이메일/비밀번호 로그인
+    /// </summary>
+    public async UniTask<bool> SignInWithEmailAsync(string email, string password, Action onEventFinished = null)
+    {
+        if (!_isInitialized)
+        {
+            Debug.LogError("[AuthManager] Firebase Auth not initialized");
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            Debug.LogError("[AuthManager] Email or password is empty");
+            return false;
+        }
+
+        try
+        {
+            Debug.Log($"[AuthManager] Signing in with email: {email}...");
+
+            var credential = await _auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask();
+
+            if (credential != null && credential.User != null)
+            {
+                _currentUser = credential.User;
+                Debug.Log($"[AuthManager] Email sign-in successful. User: {PlayerName} (ID: {PlayerID})");
+
+                // Firestore에 유저 데이터 저장
+                await SaveUserDataToDatabase();
+
+                onEventFinished?.Invoke();
+                return true;
+            }
+
+            Debug.LogError("[AuthManager] Email sign-in failed");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Email sign-in error: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 로그아웃
+    /// </summary>
+    public void SignOut()
+    {
+        if (_auth != null)
+        {
+            _auth.SignOut();
+            _currentUser = null;
+            Debug.Log("[AuthManager] User signed out");
         }
     }
 
@@ -201,12 +309,7 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public bool IsPlayerAuthenticated()
     {
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
-            return _isAuthenticated;
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-            return PlayGamesPlatform.Instance.IsAuthenticated();
-        else
-            return false;
+        return _currentUser != null && !_currentUser.IsAnonymous;
     }
 
     /// <summary>
@@ -214,7 +317,7 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public async UniTask<bool> SaveUserDataToDatabase()
     {
-        if (!_isAuthenticated)
+        if (_currentUser == null)
         {
             Debug.LogWarning("[AuthManager] User is not authenticated. Cannot save data.");
             return false;
@@ -231,17 +334,20 @@ public class AuthManager : BaseManager<AuthManager>
             // 유저 데이터 구조 생성
             var userData = new System.Collections.Generic.Dictionary<string, object>
             {
-                { "playerId", _playerID },
-                { "playerName", _playerName },
-                { "lastLogin", System.DateTime.UtcNow.ToString("o") }
+                { "userId", PlayerID },
+                { "displayName", PlayerName },
+                { "email", PlayerEmail },
+                { "isAnonymous", _currentUser.IsAnonymous },
+                { "lastLogin", DateTime.UtcNow.ToString("o") },
+                { "createdAt", _currentUser.Metadata.CreationTimestamp }
             };
 
-            // Firebase Firestore에 저장 (users 컬렉션의 {playerId} 문서)
-            bool success = await DatabaseSubManager.Instance.SetDocumentAsync("users", _playerID, userData);
+            // Firebase Firestore에 저장 (users 컬렉션의 {userId} 문서)
+            bool success = await DatabaseSubManager.Instance.SetDocumentAsync("users", PlayerID, userData);
 
             if (success)
             {
-                Debug.Log($"[AuthManager] User data saved to Firestore: {_playerName}");
+                Debug.Log($"[AuthManager] User data saved to Firestore: {PlayerName}");
             }
 
             return success;
@@ -258,7 +364,7 @@ public class AuthManager : BaseManager<AuthManager>
     /// </summary>
     public async UniTask<bool> LoadUserDataFromDatabase()
     {
-        if (!_isAuthenticated)
+        if (_currentUser == null)
         {
             Debug.LogWarning("[AuthManager] User is not authenticated. Cannot load data.");
             return false;
@@ -272,31 +378,27 @@ public class AuthManager : BaseManager<AuthManager>
 
         try
         {
-#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
-            // Firestore에서 문서 읽기 (users 컬렉션의 {playerId} 문서)
-            var snapshot = await DatabaseSubManager.Instance.GetDocumentAsync("users", _playerID);
+            // Firestore에서 문서 읽기 (users 컬렉션의 {userId} 문서)
+            var snapshot = await DatabaseSubManager.Instance.GetDocumentAsync("users", PlayerID);
 
             if (snapshot != null && snapshot.Exists)
             {
                 // Firestore 데이터 파싱
                 var data = snapshot.ToDictionary();
-                var playerName = data.ContainsKey("playerName") ? data["playerName"]?.ToString() : null;
+                var displayName = data.ContainsKey("displayName") ? data["displayName"]?.ToString() : null;
+                var email = data.ContainsKey("email") ? data["email"]?.ToString() : null;
                 var lastLogin = data.ContainsKey("lastLogin") ? data["lastLogin"]?.ToString() : null;
 
                 Debug.Log($"[AuthManager] User data loaded from Firestore");
-                Debug.Log($"[AuthManager] Name: {playerName}, Last Login: {lastLogin}");
+                Debug.Log($"[AuthManager] Name: {displayName}, Email: {email}, Last Login: {lastLogin}");
 
                 return true;
             }
             else
             {
-                Debug.LogWarning($"[AuthManager] No user data found for {_playerID}");
+                Debug.LogWarning($"[AuthManager] No user data found for {PlayerID}");
                 return false;
             }
-#else
-            await UniTask.Yield();
-            return false;
-#endif
         }
         catch (Exception ex)
         {
@@ -306,324 +408,103 @@ public class AuthManager : BaseManager<AuthManager>
     }
 
     /// <summary>
-    /// 업적 잠금 해제
+    /// 비밀번호 재설정 이메일 전송
     /// </summary>
-    public void UnlockAchievement(string achievementId, Action<bool> callback = null)
+    public async UniTask<bool> SendPasswordResetEmailAsync(string email)
     {
-        if (!_isAuthenticated)
+        if (!_isInitialized)
         {
-            Debug.LogWarning("[AuthManager] User is not authenticated");
-            callback?.Invoke(false);
-            return;
+            Debug.LogError("[AuthManager] Firebase Auth not initialized");
+            return false;
         }
 
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
+        if (string.IsNullOrEmpty(email))
         {
-            Debug.Log($"[AuthManager][EDITOR] Achievement unlocked (simulated): {achievementId}");
-            callback?.Invoke(true);
-        }
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-        {
-            PlayGamesPlatform.Instance.ReportProgress(achievementId, 100.0, success =>
-            {
-                if (success)
-                {
-                    Debug.Log($"[AuthManager] Achievement unlocked: {achievementId}");
-                }
-                else
-                {
-                    Debug.LogError($"[AuthManager] Failed to unlock achievement: {achievementId}");
-                }
-                callback?.Invoke(success);
-            });
-        }
-    }
-
-    /// <summary>
-    /// 리더보드 점수 전송
-    /// </summary>
-    public void PostScoreToLeaderboard(string leaderboardId, long score, Action<bool> callback = null)
-    {
-        if (!_isAuthenticated)
-        {
-            Debug.LogWarning("[AuthManager] User is not authenticated");
-            callback?.Invoke(false);
-            return;
+            Debug.LogError("[AuthManager] Email is empty");
+            return false;
         }
 
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
-        {
-            Debug.Log($"[AuthManager][EDITOR] Score posted to leaderboard (simulated) {leaderboardId}: {score}");
-            callback?.Invoke(true);
-        }
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-        {
-            PlayGamesPlatform.Instance.ReportScore(score, leaderboardId, success =>
-            {
-                if (success)
-                {
-                    Debug.Log($"[AuthManager] Score posted to leaderboard {leaderboardId}: {score}");
-                }
-                else
-                {
-                    Debug.LogError($"[AuthManager] Failed to post score to leaderboard: {leaderboardId}");
-                }
-                callback?.Invoke(success);
-            });
-        }
-    }
-
-    /// <summary>
-    /// 업적 UI 표시
-    /// </summary>
-    public void ShowAchievementsUI()
-    {
-        if (!_isAuthenticated)
-        {
-            Debug.LogWarning("[AuthManager] User is not authenticated");
-            return;
-        }
-
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
-            Debug.Log("[AuthManager][EDITOR] Showing Achievements UI (simulated)");
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-            PlayGamesPlatform.Instance.ShowAchievementsUI();
-    }
-
-    /// <summary>
-    /// 리더보드 UI 표시
-    /// </summary>
-    public void ShowLeaderboardUI(string leaderboardId = null)
-    {
-        if (!_isAuthenticated)
-        {
-            Debug.LogWarning("[AuthManager] User is not authenticated");
-            return;
-        }
-
-        if (PlatformSubManager.Instance.Platform == PlatformType.Editor)
-        {
-            if (string.IsNullOrEmpty(leaderboardId))
-            {
-                Debug.Log("[AuthManager][EDITOR] Showing all Leaderboards UI (simulated)");
-            }
-            else
-            {
-                Debug.Log($"[AuthManager][EDITOR] Showing Leaderboard UI for {leaderboardId} (simulated)");
-            }
-        }
-        else if (PlatformSubManager.Instance.Platform == PlatformType.Android)
-        {
-            if (string.IsNullOrEmpty(leaderboardId))
-            {
-                PlayGamesPlatform.Instance.ShowLeaderboardUI();
-            }
-            else
-            {
-                PlayGamesPlatform.Instance.ShowLeaderboardUI(leaderboardId);
-            }
-        }
-    }
-
-    // ==================== 에디터 전용 Google OAuth 구현 ====================
-
-    /// <summary>
-    /// 에디터 전용 Google OAuth 로그인 플로우
-    /// </summary>
-    private async UniTask<bool> EditorGoogleOAuthSignIn()
-    {
-#if UNITY_EDITOR
-        // 1. Loopback flow 초기화 (고정 포트 사용)
-        _redirectUri = $"http://localhost:{_authSetting.EditorRedirectPort}/";
-        _state = Guid.NewGuid().ToString("N");
-        _codeVerifier = Guid.NewGuid().ToString("N");
-
-        // 2. HttpListener 시작
         try
         {
-            _httpListener = new HttpListener();
-            _httpListener.Prefixes.Add(_redirectUri);
-            _httpListener.Start();
-            Debug.Log($"[AuthManager][EDITOR] Listening on {_redirectUri}");
-        }
-        catch (HttpListenerException ex)
-        {
-            Debug.LogError($"[AuthManager][EDITOR] Failed to start HttpListener on port {_authSetting.EditorRedirectPort}. " +
-                           $"Port may be in use. Error: {ex.Message}");
-            return false;
-        }
-
-        // 3. Authorization URL 생성 및 브라우저 열기
-        var codeChallenge = CreateCodeChallenge(_codeVerifier);
-        var scopes = "openid email profile";
-        var authUrl = $"{_authorizationEndpoint}?response_type=code" +
-                      $"&scope={Uri.EscapeDataString(scopes)}" +
-                      $"&redirect_uri={Uri.EscapeDataString(_redirectUri)}" +
-                      $"&client_id={_authSetting.EditorClientId}" +
-                      $"&state={_state}" +
-                      $"&code_challenge={codeChallenge}" +
-                      $"&code_challenge_method=S256";
-
-        Debug.Log($"[AuthManager][EDITOR] Opening browser for authentication...");
-        Application.OpenURL(authUrl);
-
-        // 4. Authorization Code 대기
-        var code = await WaitForAuthorizationCode();
-        if (string.IsNullOrEmpty(code))
-        {
-            return false;
-        }
-
-        // 5. Access Token 교환
-        var accessToken = await ExchangeCodeForToken(code);
-        if (string.IsNullOrEmpty(accessToken))
-        {
-            return false;
-        }
-
-        // 6. UserInfo 요청
-        return await GetUserInfo(accessToken);
-#else
-        return true;
-#endif
-    }
-
-#if UNITY_EDITOR
-    private string CreateCodeChallenge(string codeVerifier)
-    {
-        using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(codeVerifier));
-        return Convert.ToBase64String(hash)
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-    }
-
-    private async UniTask<string> WaitForAuthorizationCode()
-    {
-        try
-        {
-            var context = await _httpListener.GetContextAsync().AsUniTask();
-
-            // HTML 응답 전송
-            var response = context.Response;
-            var html = "<html><body><h1>Authentication successful!</h1><p>You can close this window.</p></body></html>";
-            var buffer = Encoding.UTF8.GetBytes(html);
-            response.ContentType = "text/html; charset=utf-8";
-            response.ContentLength64 = buffer.Length;
-            response.OutputStream.Write(buffer, 0, buffer.Length);
-            response.OutputStream.Close();
-
-            // URL 파싱
-            var url = context.Request.Url.AbsoluteUri;
-            var parameters = ParseQueryString(url);
-            var state = parameters.Get("state");
-            var code = parameters.Get("code");
-            var error = parameters.Get("error");
-
-            _httpListener.Stop();
-            _httpListener.Close();
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                Debug.LogError($"[AuthManager][EDITOR] OAuth error: {error}");
-                return null;
-            }
-
-            if (state != _state)
-            {
-                Debug.LogError("[AuthManager][EDITOR] State mismatch!");
-                return null;
-            }
-
-            return code;
+            await _auth.SendPasswordResetEmailAsync(email).AsUniTask();
+            Debug.Log($"[AuthManager] Password reset email sent to {email}");
+            return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[AuthManager][EDITOR] Authorization error: {ex.Message}");
-            return null;
+            Debug.LogError($"[AuthManager] Password reset email error: {ex.Message}");
+            return false;
         }
     }
 
-    private NameValueCollection ParseQueryString(string url)
+    /// <summary>
+    /// 사용자 프로필 업데이트
+    /// </summary>
+    public async UniTask<bool> UpdateUserProfileAsync(string displayName = null, Uri photoUrl = null)
     {
-        var result = new NameValueCollection();
-        foreach (Match match in Regex.Matches(url, @"(?<key>\w+)=(?<value>[^&#]+)"))
+        if (_currentUser == null)
         {
-            result.Add(match.Groups["key"].Value, Uri.UnescapeDataString(match.Groups["value"].Value));
-        }
-        return result;
-    }
-
-    private async UniTask<string> ExchangeCodeForToken(string code)
-    {
-        var form = new WWWForm();
-        form.AddField("code", code);
-        form.AddField("redirect_uri", _redirectUri);
-        form.AddField("client_id", _authSetting.EditorClientId);
-        form.AddField("client_secret", _authSetting.EditorClientSecret);
-        form.AddField("code_verifier", _codeVerifier);
-        form.AddField("grant_type", "authorization_code");
-
-        using var request = UnityWebRequest.Post(_tokenEndpoint, form);
-        await request.SendWebRequest();
-
-        if (request.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError($"[AuthManager][EDITOR] Token exchange failed: {request.error}");
-            return null;
-        }
-
-        var json = request.downloadHandler.text;
-        Debug.Log($"[AuthManager][EDITOR] Token response: {json}");
-
-        // JSON 파싱 (간단한 방식)
-        var accessTokenMatch = Regex.Match(json, @"""access_token""\s*:\s*""([^""]+)""");
-        if (accessTokenMatch.Success)
-        {
-            return accessTokenMatch.Groups[1].Value;
-        }
-
-        Debug.LogError("[AuthManager][EDITOR] Failed to parse access token");
-        return null;
-    }
-
-    private async UniTask<bool> GetUserInfo(string accessToken)
-    {
-        using var request = UnityWebRequest.Get(_userInfoEndpoint);
-        request.SetRequestHeader("Authorization", $"Bearer {accessToken}");
-        await request.SendWebRequest();
-
-        if (request.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError($"[AuthManager][EDITOR] UserInfo request failed: {request.error}");
+            Debug.LogWarning("[AuthManager] User is not authenticated");
             return false;
         }
 
-        var json = request.downloadHandler.text;
-        Debug.Log($"[AuthManager][EDITOR] UserInfo: {json}");
-
-        // JSON 파싱 (간단한 방식)
-        var subMatch = Regex.Match(json, @"""sub""\s*:\s*""([^""]+)""");
-        var nameMatch = Regex.Match(json, @"""name""\s*:\s*""([^""]+)""");
-        var emailMatch = Regex.Match(json, @"""email""\s*:\s*""([^""]+)""");
-
-        if (subMatch.Success && nameMatch.Success)
+        try
         {
-            _playerID = subMatch.Groups[1].Value;
-            _playerName = nameMatch.Groups[1].Value;
-            _isAuthenticated = true;
+            var profile = new UserProfile();
 
-            if (emailMatch.Success)
-            {
-                Debug.Log($"[AuthManager][EDITOR] Email: {emailMatch.Groups[1].Value}");
-            }
+            if (!string.IsNullOrEmpty(displayName))
+                profile.DisplayName = displayName;
+
+            if (photoUrl != null)
+                profile.PhotoUrl = photoUrl;
+
+            await _currentUser.UpdateUserProfileAsync(profile).AsUniTask();
+            Debug.Log($"[AuthManager] User profile updated: {displayName}");
+
+            // Firestore 데이터도 업데이트
+            await SaveUserDataToDatabase();
 
             return true;
         }
-
-        Debug.LogError("[AuthManager][EDITOR] Failed to parse UserInfo");
-        return false;
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Profile update error: {ex.Message}");
+            return false;
+        }
     }
-#endif
+
+    /// <summary>
+    /// 계정 삭제
+    /// </summary>
+    public async UniTask<bool> DeleteAccountAsync()
+    {
+        if (_currentUser == null)
+        {
+            Debug.LogWarning("[AuthManager] User is not authenticated");
+            return false;
+        }
+
+        try
+        {
+            var userId = PlayerID;
+
+            // Firebase Auth 계정 삭제
+            await _currentUser.DeleteAsync().AsUniTask();
+            Debug.Log("[AuthManager] User account deleted");
+
+            // Firestore 데이터 삭제
+            if (DatabaseSubManager.Instance.IsInitialized)
+            {
+                await DatabaseSubManager.Instance.DeleteDocumentAsync("users", userId);
+            }
+
+            _currentUser = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[AuthManager] Account deletion error: {ex.Message}");
+            return false;
+        }
+    }
 }

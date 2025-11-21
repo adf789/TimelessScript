@@ -43,6 +43,27 @@ public class MapNode
     }
 
     /// <summary>
+    /// 특정 방향의 노드 위치 가져오기
+    /// </summary>
+    public float2 GetLinkPosition(FourDirection direction)
+    {
+        var link = GetLink(direction);
+
+        if (default(MapLink).Equals(link))
+            return float2.zero;
+
+        float x = WorldGridPosition.x * IntDefine.MAP_TOTAL_GRID_WIDTH
+        + (link.FromPosition.x - IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f) * IntDefine.MAP_GRID_SIZE
+        + IntDefine.MAP_GRID_SIZE * 0.5f;
+
+        float y = WorldGridPosition.y * IntDefine.MAP_TOTAL_GRID_HEIGHT
+        + (link.FromPosition.y - IntDefine.MAP_TOTAL_GRID_HEIGHT * 0.5f) * IntDefine.MAP_GRID_SIZE
+        + IntDefine.MAP_GRID_SIZE * 0.5f;
+
+        return new float2(x, y);
+    }
+
+    /// <summary>
     /// 특정 방향에 노드 설정
     /// </summary>
     public void SetNodeInDirection(MapNode node, FourDirection direction, int2 fromPosition)
@@ -58,8 +79,10 @@ public class MapNode
     /// <summary>
     /// 특정 방향에 연결이 있는지 확인
     /// </summary>
-    public bool HasConnectionInDirection(FourDirection direction)
+    public bool TryGetConnectionInDirection(FourDirection direction, out MapLink link)
     {
-        return !default(MapLink).Equals(GetLink(direction));
+        link = GetLink(direction);
+
+        return !default(MapLink).Equals(link);
     }
 }

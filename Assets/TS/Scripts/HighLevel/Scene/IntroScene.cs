@@ -13,7 +13,7 @@ public class IntroScene : MonoBehaviour
     {
         await DatabaseSubManager.Instance.InitializeFirebaseAsync();
 
-        if (await AuthManager.Instance.SignInAsync())
+        if (await AuthManager.Instance.SignInAnonymouslyAsync())
         {
             PlayerSubManager.Instance.SetPlayerID(AuthManager.Instance.PlayerID);
 

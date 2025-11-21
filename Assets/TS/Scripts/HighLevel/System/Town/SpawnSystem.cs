@@ -5,7 +5,6 @@ using Unity.Entities;
 using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[DisableAutoCreation]
 public partial struct SpawnSystem : ISystem
 {
     public void OnCreate(ref SystemState state)

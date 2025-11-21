@@ -43,14 +43,13 @@ public partial class DrawEntityGizmosSystem : SystemBase
         // 라벨 데이터 수집
         _labelData.Clear();
 
-        foreach (var (ltw, obj, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<TSObjectComponent>>()
+        foreach (var (collider, obj, entity) in SystemAPI.Query<RefRO<ColliderBoundsComponent>, RefRO<TSObjectComponent>>()
             .WithEntityAccess())
         {
-            float3 position = ltw.ValueRO.Position;
-
             // 구체 모양 근사 (8각형 3개로 구 표현)
-            DrawDebugSphere(position, 0.3f, Color.yellow);
-            var name = obj.ValueRO.Name;
+            float3 position = new float3(collider.ValueRO.Center.x, collider.ValueRO.Center.y, 0);
+            DrawShape(in collider.ValueRO, Color.yellow);
+            var name = EntityManager.GetName(entity);
 
             // 라벨 데이터 저장 (SceneView 콜백에서 그림)
             _labelData.Add((
@@ -69,6 +68,25 @@ public partial class DrawEntityGizmosSystem : SystemBase
         {
             Handles.Label(position, label, _labelStyle);
         }
+    }
+
+    private void DrawShape(in ColliderBoundsComponent colliderBounds, Color color)
+    {
+        // 2D 사각형의 4개 꼭짓점 계산 (Min, Max 사용)
+        float3 bottomLeft = new float3(colliderBounds.Min.x, colliderBounds.Min.y, 0);
+        float3 bottomRight = new float3(colliderBounds.Max.x, colliderBounds.Min.y, 0);
+        float3 topRight = new float3(colliderBounds.Max.x, colliderBounds.Max.y, 0);
+        float3 topLeft = new float3(colliderBounds.Min.x, colliderBounds.Max.y, 0);
+
+        // 사각형의 4개 선 그리기
+        Debug.DrawLine(bottomLeft, bottomRight, color, 0.1f);   // 하단
+        Debug.DrawLine(bottomRight, topRight, color, 0.1f);     // 우측
+        Debug.DrawLine(topRight, topLeft, color, 0.1f);         // 상단
+        Debug.DrawLine(topLeft, bottomLeft, color, 0.1f);       // 좌측
+
+        // 대각선 (선택적 - 박스 중심 표시)
+        Debug.DrawLine(bottomLeft, topRight, color * 0.5f, 0.1f);
+        Debug.DrawLine(bottomRight, topLeft, color * 0.5f, 0.1f);
     }
 
     private void DrawDebugSphere(float3 center, float radius, Color color)

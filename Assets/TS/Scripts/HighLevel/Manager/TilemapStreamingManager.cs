@@ -351,7 +351,10 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             {
                 var subSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
 
-                RegisterLoadedPattern(patternID, gridOffset, patternData, instance, subSceneEntity);
+                loadedPattern = RegisterLoadedPattern(patternID, gridOffset, patternData, instance, subSceneEntity);
+
+                // SubScene의 모든 Entity에 offset 적용
+                ApplyOffsetToSubSceneEntities(World.DefaultGameObjectInjectionWorld.EntityManager, loadedPattern, gridOffset);
 
                 await LoadLadders(gridOffset);
             }
@@ -360,6 +363,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 loadedPattern.IsLoaded = true;
                 loadedPattern.TilemapInstance = instance;
             }
+
+            _loadingKeys.Remove(gridOffset);
 
             return instance;
         }
@@ -374,79 +379,82 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private async UniTask LoadLadders(int2 gridOffset)
     {
         // 해당 그리드의 패턴이 로드되었는지
-        if (GetMapLoadState(gridOffset) == MapLoadState.None)
+        if (!_loadedPatterns.TryGetValue(gridOffset, out var pattern))
             return;
 
         if (!_mapDatas.TryGetValue(gridOffset, out var node))
             return;
 
         // 위 방향에 연결된 노드가 있는지
-        if (node.HasConnectionInDirection(FourDirection.Up))
+        if (node.TryGetConnectionInDirection(FourDirection.Up, out var upLink))
         {
             var upGridOffset = new int2(gridOffset.x, gridOffset.y + 1);
-            if (GetMapLoadState(upGridOffset) == MapLoadState.None)
+            if (!_loadedPatterns.TryGetValue(upGridOffset, out var upPattern))
                 return;
 
             if (IsLadderLoaded(new LadderKey(gridOffset, upGridOffset)))
                 return;
 
-            if (!_mapDatas.TryGetValue(upGridOffset, out var upNode))
-                return;
+            // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
+            // 패턴의 월드 위치 기준으로 계산
+            var basePosition = node.GetLinkPosition(FourDirection.Up);
+            var oppsitionPosition = upLink.Node.GetLinkPosition(FourDirection.Down);
+            float x = basePosition.x;
+            float y = (basePosition.y + oppsitionPosition.y) * 0.5f;
 
-            var baseLink = node.GetLink(FourDirection.Up);
-            var oppsitionLink = upNode.GetLink(FourDirection.Down);
+            float3 ladderPosition = new float3(x, y, 0);
 
-            if (_loadedPatterns.TryGetValue(gridOffset, out var pattern))
-            {
-                // 상단 패턴 가져오기
-                if (_loadedPatterns.TryGetValue(upGridOffset, out var upPattern))
-                {
-                    // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
-                    // 패턴의 월드 위치 기준으로 계산
-                    float3 ladderPosition = new float3(
-                        gridOffset.x + baseLink.FromPosition.x,
-                        gridOffset.y + baseLink.FromPosition.y,
-                        0);
+            // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
+            // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
+            Entity bottomGroundEntity = pattern.MaxGroundEntity;
+            Entity topGroundEntity = upPattern.MinGroundEntity;
 
-                    // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
-                    // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
-                    Entity bottomGroundEntity = Entity.Null;
-                    Entity topGroundEntity = Entity.Null;
+            // 사다리 Entity 생성
+            Entity ladderEntity = CreateLadderEntity(
+                ladderPosition,
+                topGroundEntity,
+                bottomGroundEntity);
 
-                    // 사다리 Entity 생성
-                    Entity ladderEntity = CreateLadderEntity(
-                        ladderPosition,
-                        topGroundEntity,
-                        bottomGroundEntity);
+            // 로드된 사다리 저장
+            _loadedLadders[new LadderKey(gridOffset, upGridOffset)] = ladderEntity;
 
-                    // 로드된 사다리 저장
-                    _loadedLadders[new LadderKey(gridOffset, upGridOffset)] = ladderEntity;
-
-                    Debug.Log($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
-                }
-            }
+            Debug.Log($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
         }
 
         // 아래 방향에 연결된 노드가 있는지
-        if (node.HasConnectionInDirection(FourDirection.Down))
+        if (node.TryGetConnectionInDirection(FourDirection.Down, out var downLink))
         {
             var downGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
-            if (GetMapLoadState(downGridOffset) == MapLoadState.None)
+            if (!_loadedPatterns.TryGetValue(downGridOffset, out var downPattern))
                 return;
 
             if (IsLadderLoaded(new LadderKey(gridOffset, downGridOffset)))
                 return;
 
-            if (!_mapDatas.TryGetValue(downGridOffset, out var downNode))
-                return;
+            // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
+            // 패턴의 월드 위치 기준으로 계산
+            var basePosition = node.GetLinkPosition(FourDirection.Down);
+            var oppsitionPosition = downLink.Node.GetLinkPosition(FourDirection.Up);
+            float x = basePosition.x;
+            float y = (basePosition.y + oppsitionPosition.y) * 0.5f;
 
-            var baseLink = node.GetLink(FourDirection.Down);
-            var oppsitionLink = downNode.GetLink(FourDirection.Up);
+            float3 ladderPosition = new float3(x, y, 0);
 
-            if (_loadedPatterns.TryGetValue(gridOffset, out var pattern))
-            {
+            // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
+            // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
+            Entity bottomGroundEntity = downPattern.MaxGroundEntity;
+            Entity topGroundEntity = pattern.MinGroundEntity;
 
-            }
+            // 사다리 Entity 생성
+            Entity ladderEntity = CreateLadderEntity(
+                ladderPosition,
+                topGroundEntity,
+                bottomGroundEntity);
+
+            // 로드된 사다리 저장
+            _loadedLadders[new LadderKey(gridOffset, downGridOffset)] = ladderEntity;
+
+            Debug.Log($"Ladder created at {ladderPosition} between {gridOffset} and {downGridOffset}");
         }
     }
 
@@ -487,13 +495,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             return Entity.Null;
         }
 
-        // gridOffset 계산
-        float3 offset = new float3(
-            gridOffset.x * _patternRegistry.GridSize.x,
-            gridOffset.y * _patternRegistry.GridSize.y,
-            0
-        );
-
         // SubScene 로드 (BlockOnStreamIn으로 즉시 로드)
         var loadParams = new SceneSystem.LoadParameters
         {
@@ -511,21 +512,28 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             SceneSystem.IsSceneLoaded(world.Unmanaged, subSceneEntity)
         );
 
-        // SubScene의 모든 Entity에 offset 적용
-        ApplyOffsetToSubSceneEntities(world.EntityManager, subSceneEntity, offset);
-
-        LogDebug($"SubScene loaded for pattern: {patternID} at offset {offset} (Entity: {subSceneEntity})");
+        LogDebug($"SubScene loaded for pattern: {patternID} at offset {gridOffset} (Entity: {subSceneEntity})");
 
         return subSceneEntity;
     }
 
-    private void ApplyOffsetToSubSceneEntities(EntityManager entityManager, Entity subSceneEntity, float3 offset)
+    private void ApplyOffsetToSubSceneEntities(EntityManager entityManager, LoadedPattern loadedPattern, int2 gridOffset)
     {
-        // SubScene의 SceneReference 가져오기
-        if (!entityManager.HasComponent<SceneReference>(subSceneEntity))
+        if (loadedPattern == null)
             return;
 
-        var sceneRef = entityManager.GetComponentData<SceneReference>(subSceneEntity);
+        // SubScene의 SceneReference 가져오기
+        if (!entityManager.HasComponent<SceneReference>(loadedPattern.SubSceneEntity))
+            return;
+
+        // gridOffset 계산
+        float3 offset = new float3(
+            gridOffset.x * IntDefine.MAP_TOTAL_GRID_WIDTH,
+            gridOffset.y * IntDefine.MAP_TOTAL_GRID_HEIGHT,
+            0
+        );
+
+        var sceneRef = entityManager.GetComponentData<SceneReference>(loadedPattern.SubSceneEntity);
 
         // SubScene에 속한 모든 Entity 쿼리
         using var query = entityManager.CreateEntityQuery(
@@ -545,11 +553,34 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 var transform = entityManager.GetComponentData<LocalTransform>(entity);
                 transform.Position += offset;
                 entityManager.SetComponentData(entity, transform);
+
+                if (entityManager.HasBuffer<GroundReferenceBuffer>(entity))
+                {
+                    var referenceBuffer = entityManager.GetBuffer<GroundReferenceBuffer>(entity);
+
+                    int min = int.MaxValue;
+                    int max = int.MinValue;
+
+                    foreach (var reference in referenceBuffer)
+                    {
+                        if (min > reference.Max.y)
+                        {
+                            loadedPattern.MinGroundEntity = reference.Ground;
+                            min = reference.Max.y;
+                        }
+
+                        if (max < reference.Max.y)
+                        {
+                            loadedPattern.MaxGroundEntity = reference.Ground;
+                            max = reference.Max.y;
+                        }
+                    }
+                }
             }
         }
     }
 
-    private void RegisterLoadedPattern(string patternID, int2 gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
+    private LoadedPattern RegisterLoadedPattern(string patternID, int2 gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
     {
         var loadedPattern = new LoadedPattern
         {
@@ -563,9 +594,10 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         };
 
         _loadedPatterns[gridOffset] = loadedPattern;
-        _loadingKeys.Remove(gridOffset);
 
         LogDebug($"Pattern loaded: {gridOffset}");
+
+        return loadedPattern;
     }
 
     #endregion
@@ -954,7 +986,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
 #if UNITY_EDITOR
         // 2. 디버깅용 이름 설정
-        entityManager.SetName(ladderEntity, $"Ladder_{position.x:F1}_{position.y:F1}");
+        entityManager.AddComponentData(ladderEntity, new SetNameComponent() { Name = $"Ladder_{position.x:F1}_{position.y:F1}" });
 #endif
 
         // 3. Transform 컴포넌트 추가
@@ -963,7 +995,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         // 4. TSObjectComponent 추가
         entityManager.AddComponentData(ladderEntity, new TSObjectComponent
         {
-            Name = "RuntimeLadder",
             Self = ladderEntity,
             ObjectType = TSObjectType.Ladder,
             RootOffset = 0f
@@ -1065,6 +1096,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         public TilemapPatternData PatternData;
         public GameObject TilemapInstance;
         public Entity SubSceneEntity;
+        public Entity MinGroundEntity;
+        public Entity MaxGroundEntity;
         public float LoadTime;
         public bool IsLoaded;
     }

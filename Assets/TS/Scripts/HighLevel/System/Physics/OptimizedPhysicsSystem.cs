@@ -35,7 +35,7 @@ public partial struct OptimizedPhysicsSystem : ISystem
             .WithAny<TSGroundComponent, TSLadderComponent>()
             .Build();
 
-        state.RequireForUpdate(actorQuery);
+        // state.RequireForUpdate(actorQuery);
         // RequireForUpdate(groundQuery) 제거: Ground Entity가 프레임 중간에 삭제될 수 있어 안전하지 않음
     }
 

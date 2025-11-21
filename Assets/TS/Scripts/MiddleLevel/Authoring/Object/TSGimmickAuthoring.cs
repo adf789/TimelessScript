@@ -16,9 +16,11 @@ public class TSGimmickAuthoring : TSObjectAuthoring
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+
+            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+
             AddComponent(entity, new TSObjectComponent()
             {
-                Name = authoring.name,
                 Self = entity,
                 DataID = authoring.gimmickID,
                 ObjectType = authoring.Type,
@@ -31,11 +33,11 @@ public class TSGimmickAuthoring : TSObjectAuthoring
             });
         }
     }
-    
+
     void OnDrawGizmos()
     {
-        Vector2 center = (Vector2)transform.position;
-        
+        Vector2 center = (Vector2) transform.position;
+
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(center, radius);
     }

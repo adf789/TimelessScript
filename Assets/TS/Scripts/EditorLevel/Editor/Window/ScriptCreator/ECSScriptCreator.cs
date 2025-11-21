@@ -316,6 +316,7 @@ public partial struct {name}{SUFFIX_JOB} : IJobEntity
 using Unity.Burst;
 using Unity.Entities;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct {name}{SUFFIX_SYSTEM} : ISystem
 {{
     //public void OnCreate(ref SystemState state)
@@ -324,6 +325,8 @@ public partial struct {name}{SUFFIX_SYSTEM} : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {{
+        //var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+        
         //var job = new {name}Job();
 
         //state.Dependency = job.ScheduleParallel(state.Dependency);

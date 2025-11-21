@@ -21,9 +21,10 @@ public class TSGroundAuthoring : TSObjectAuthoring
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+
             AddComponent(entity, new TSObjectComponent()
             {
-                Name = authoring.name,
                 Self = entity,
                 ObjectType = authoring.Type,
                 RootOffset = authoring.GetRootOffset(),
@@ -45,6 +46,7 @@ public class TSGroundAuthoring : TSObjectAuthoring
                 Offset = new float2(authoring._offset.x, authoring._offset.y),
                 IsTrigger = false,
             });
+
             AddComponent(entity, new ColliderBoundsComponent());
         }
     }

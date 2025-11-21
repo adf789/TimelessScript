@@ -21,9 +21,10 @@ public class TSLadderAuthoring : TSObjectAuthoring
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+
             AddComponent(entity, new TSObjectComponent()
             {
-                Name = authoring.name,
                 Self = entity,
                 ObjectType = authoring.Type,
                 RootOffset = 0f,
@@ -48,6 +49,7 @@ public class TSLadderAuthoring : TSObjectAuthoring
             });
 
             AddComponent(entity, new ColliderBoundsComponent());
+
             AddBuffer<CollisionBuffer>(entity);
         }
 

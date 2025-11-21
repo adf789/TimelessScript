@@ -1,10 +1,39 @@
 
 using UnityEngine;
+using Unity.Entities;
+using Unity.Mathematics;
 
 public class GroundReferenceAuthoring : MonoBehaviour
 {
     [SerializeField] private GroundEntry[] _grounds;
     [SerializeField] private LadderEntry[] _ladders;
+
+    private class Baker : Baker<GroundReferenceAuthoring>
+    {
+        public override void Bake(GroundReferenceAuthoring authoring)
+        {
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+
+            var referenceBuffer = AddBuffer<GroundReferenceBuffer>(entity);
+
+            for (int i = 0; i < authoring._grounds.Length; i++)
+            {
+                referenceBuffer.Add(CreateReference(in authoring._grounds[i]));
+            }
+        }
+
+        private GroundReferenceBuffer CreateReference(in GroundEntry entry)
+        {
+            return new GroundReferenceBuffer()
+            {
+                Ground = GetEntity(entry.Ground, TransformUsageFlags.None),
+                Min = new int2(entry.Min.x, entry.Min.y),
+                Max = new int2(entry.Max.x, entry.Max.y),
+            };
+        }
+    }
 
 #if UNITY_EDITOR
     /// <summary>

@@ -15,9 +15,10 @@ public class TSActorAuthoring : TSObjectAuthoring
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+
             AddComponent(entity, new TSObjectComponent()
             {
-                Name = authoring.name,
                 Self = entity,
                 ObjectType = authoring.Type,
                 RootOffset = authoring.GetRootOffset(),
