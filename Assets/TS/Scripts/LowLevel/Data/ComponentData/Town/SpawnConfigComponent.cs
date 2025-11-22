@@ -5,6 +5,7 @@ using Unity.Mathematics;
 public struct SpawnConfigComponent : IComponentData
 {
     public Entity SpawnObjectPrefab;
+    public Entity SpawnParent;
     public TSObjectType ObjectType;
     public FixedString64Bytes Name;
     public int LayerOffset;

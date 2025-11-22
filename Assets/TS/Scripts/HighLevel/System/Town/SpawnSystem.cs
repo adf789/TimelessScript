@@ -54,7 +54,6 @@ public partial struct SpawnSystem : ISystem
         var spawnExecutionJob = new SpawnExecutionJob
         {
             currentTime = currentTime,
-            linkedEntityGroupLookup = SystemAPI.GetBufferLookup<LinkedEntityGroup>(true),
             availableActorLookup = SystemAPI.GetBufferLookup<AvailableActorBuffer>(false),
             spawnConfigLookup = SystemAPI.GetComponentLookup<SpawnConfigComponent>(false),
             ecb = ecb

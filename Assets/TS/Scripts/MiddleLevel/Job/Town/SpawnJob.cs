@@ -34,6 +34,7 @@ public partial struct SpawnJob : IJobEntity
         ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, new SpawnRequestComponent
         {
             SpawnObject = spawnConfig.SpawnObjectPrefab,
+            SpawnParent = spawnConfig.SpawnParent,
             Spawner = spawnerEntity, // 스포너 Entity 참조 설정
             ObjectType = spawnConfig.ObjectType, // Entity 오브젝트 타입
             Name = spawnConfig.Name,

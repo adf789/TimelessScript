@@ -6,6 +6,7 @@ public class SpawnConfigAuthoring : MonoBehaviour
 {
     [Header("Spawn Configuration")]
     [SerializeField] private TSObjectAuthoring spawnObjectPrefab;
+    [SerializeField] private GameObject spawnParent;
     [SerializeField] private float lifeTime = 0;
     [SerializeField] private int layerOffset = 0;
     [SerializeField] private int maxSpawnCount = 10;
@@ -17,12 +18,14 @@ public class SpawnConfigAuthoring : MonoBehaviour
         public override void Bake(SpawnConfigAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.None);
-            var spawnEntity = GetEntity(authoring.spawnObjectPrefab.gameObject, TransformUsageFlags.Dynamic);
+            var spawnEntity = GetEntity(authoring.spawnObjectPrefab.gameObject, TransformUsageFlags.None);
+            var spawnParentEntity = GetEntity(authoring.GetSpawnParent(), TransformUsageFlags.Dynamic);
 
             // SpawnConfigComponent 추가
             AddComponent(entity, new SpawnConfigComponent
             {
                 SpawnObjectPrefab = spawnEntity,
+                SpawnParent = spawnParentEntity,
                 Name = authoring.GetSpawnName(),
                 ObjectType = authoring.spawnObjectPrefab.Type,
                 LayerOffset = authoring.layerOffset,
@@ -47,5 +50,10 @@ public class SpawnConfigAuthoring : MonoBehaviour
     public FixedString64Bytes GetSpawnName()
     {
         return spawnObjectPrefab != null ? spawnObjectPrefab.name : name;
+    }
+
+    public GameObject GetSpawnParent()
+    {
+        return spawnParent != null ? spawnParent : gameObject;
     }
 }

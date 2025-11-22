@@ -9,8 +9,6 @@ public partial struct SpawnExecutionJob : IJobEntity
 {
     [ReadOnly] public float currentTime;
     public EntityCommandBuffer ecb;
-    [NativeDisableUnsafePtrRestriction]
-    [ReadOnly] public BufferLookup<LinkedEntityGroup> linkedEntityGroupLookup;
     public BufferLookup<AvailableActorBuffer> availableActorLookup;
     public ComponentLookup<SpawnConfigComponent> spawnConfigLookup;
 
@@ -29,12 +27,13 @@ public partial struct SpawnExecutionJob : IJobEntity
 
         // 스폰 오브젝트 인스턴스 생성 (하위 오브 젝트들도 함께 생성됨)
         var spawnedEntity = ecb.Instantiate(spawnRequest.SpawnObject);
-        FixedString64Bytes name = $"Spawned {spawnRequest.Name} {spawnedEntity.Index}";
+        FixedString64Bytes name = $"{spawnRequest.Name} {spawnedEntity.Index}";
         int layer = -1;
 
         ecb.SetName(spawnedEntity, in name);
 
         // 스폰된 오브젝트의 위치 설정
+        ecb.AddComponent(spawnedEntity, new Parent { Value = spawnRequest.SpawnParent });
         ecb.SetComponent(spawnedEntity, LocalTransform.FromPosition(spawnRequest.SpawnPosition));
 
         switch (spawnRequest.ObjectType)
