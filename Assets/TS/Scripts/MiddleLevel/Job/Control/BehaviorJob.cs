@@ -85,7 +85,7 @@ public partial struct BehaviorJob : IJobEntity
         {
             OnStartClimbing(in tsActor, ref animComponent.ValueRW);
 
-            HandleClimbing(ref transform.ValueRW, ref tsObject, ref tsActor, ref animComponent.ValueRW);
+            HandleClimbing(ref transform.ValueRW, ref tsObject, ref tsActor);
 
             if (navigation.IsActive && navigation.State == NavigationState.Completed)
                 OnEndMoving(entityInQueryIndex,
@@ -130,8 +130,7 @@ public partial struct BehaviorJob : IJobEntity
 
     private void HandleClimbing(ref LocalTransform transform,
     ref TSObjectComponent objectComponent,
-    ref TSActorComponent actorComponent,
-    ref SpriteSheetAnimationComponent animComponent)
+    ref TSActorComponent actorComponent)
     {
         // 현재 위치와 목표 위치 계산
         float2 currentRootPosition = transform.Position.xy;

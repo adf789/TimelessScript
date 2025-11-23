@@ -53,8 +53,7 @@ public partial class DrawEntityGizmosSystem : SystemBase
 
             // 라벨 데이터 저장 (SceneView 콜백에서 그림)
             _labelData.Add((
-                position + new float3(0, 0.5f, 0),
-                $"{name}\n({entity.Index})"
+                position + new float3(0, 0.5f, 0), name
             ));
         }
     }

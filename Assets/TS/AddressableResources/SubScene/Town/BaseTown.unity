@@ -389,8 +389,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MiddleLevel::TSLadderAuthoring
-  _topConnectedGround: {fileID: 7010944743627693600}
-  _bottomConnectedGround: {fileID: 7010944742738787248}
+  _firstConnectedGround: {fileID: 7010944743627693600}
+  _secondConnectedGround: {fileID: 7010944742738787248}
 --- !u!1 &1635684061
 GameObject:
   m_ObjectHideFlags: 0
@@ -536,8 +536,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MiddleLevel::TSLadderAuthoring
-  _topConnectedGround: {fileID: 7010944742738787248}
-  _bottomConnectedGround: {fileID: 7010944744099340687}
+  _firstConnectedGround: {fileID: 7010944742738787248}
+  _secondConnectedGround: {fileID: 7010944744099340687}
 --- !u!4 &2220680538200424030
 Transform:
   m_ObjectHideFlags: 0

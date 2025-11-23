@@ -5,15 +5,10 @@ using UnityEngine;
 public class TSLadderAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Ladder;
-    public TSGroundAuthoring TopConnectedGround => _topConnectedGround;
-    public TSGroundAuthoring BottomConnectedGround => _bottomConnectedGround;
 
     [Header("Ground Connection")]
-    [Tooltip("상단 연결 지형")]
-    [SerializeField] private TSGroundAuthoring _topConnectedGround;
-
-    [Tooltip("하단 연결 지형")]
-    [SerializeField] private TSGroundAuthoring _bottomConnectedGround;
+    [SerializeField] private TSGroundAuthoring _firstConnectedGround;
+    [SerializeField] private TSGroundAuthoring _secondConnectedGround;
 
     private class Baker : Baker<TSLadderAuthoring>
     {
@@ -31,10 +26,13 @@ public class TSLadderAuthoring : TSObjectAuthoring
             });
 
             // 사다리 특화 컴포넌트 추가
+            var topGround = authoring.GetTopConnectGround();
+            var bottomGround = authoring.GetBottomConnectGround();
             AddComponent(entity, new TSLadderComponent
             {
-                TopConnectedGround = authoring._topConnectedGround ? GetEntity(authoring._topConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null,
-                BottomConnectedGround = authoring._bottomConnectedGround ? GetEntity(authoring._bottomConnectedGround, TransformUsageFlags.Dynamic) : Entity.Null
+                TopConnectedGround = topGround ? GetEntity(topGround, TransformUsageFlags.Dynamic) : Entity.Null,
+                BottomConnectedGround = bottomGround ? GetEntity(
+                    bottomGround, TransformUsageFlags.Dynamic) : Entity.Null
             });
 
             // ConnectedGround 위치를 기반으로 높이 계산
@@ -56,21 +54,23 @@ public class TSLadderAuthoring : TSObjectAuthoring
         private float CalculateLadderHeight(TSLadderAuthoring authoring)
         {
             float defaultHeight = 3.0f; // 기본 높이
+            var topGround = authoring.GetTopConnectGround();
+            var bottomGround = authoring.GetBottomConnectGround();
 
             // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
-            if (authoring._topConnectedGround && authoring._bottomConnectedGround)
+            if (topGround && bottomGround)
             {
-                float topY = authoring._topConnectedGround.transform.position.y;
-                float bottomY = authoring._bottomConnectedGround.transform.position.y;
+                float topY = topGround.transform.position.y;
+                float bottomY = bottomGround.transform.position.y;
                 float groundDistance = math.abs(topY - bottomY);
 
                 // TopConnectedGround보다 1 높게 설정
                 return groundDistance + 1.0f;
             }
             // TopConnectedGround만 있는 경우
-            else if (authoring._topConnectedGround)
+            else if (topGround)
             {
-                float topY = authoring._topConnectedGround.transform.position.y;
+                float topY = topGround.transform.position.y;
                 float ladderY = authoring.transform.position.y;
                 float distanceToTop = math.abs(topY - ladderY);
 
@@ -78,9 +78,9 @@ public class TSLadderAuthoring : TSObjectAuthoring
                 return distanceToTop + 1.0f;
             }
             // BottomConnectedGround만 있는 경우
-            else if (authoring._bottomConnectedGround)
+            else if (bottomGround)
             {
-                float bottomY = authoring._bottomConnectedGround.transform.position.y;
+                float bottomY = bottomGround.transform.position.y;
                 float ladderY = authoring.transform.position.y;
                 float distanceToBottom = math.abs(ladderY - bottomY);
 
@@ -92,14 +92,54 @@ public class TSLadderAuthoring : TSObjectAuthoring
         }
     }
 
-    public void SetTopGround(TSGroundAuthoring ground)
+    public void SetFirstConnectGround(TSGroundAuthoring ground)
     {
-        _topConnectedGround = ground;
+        _firstConnectedGround = ground;
     }
 
-    public void SetBottomGround(TSGroundAuthoring ground)
+    public void SetSecondConnectGround(TSGroundAuthoring ground)
     {
-        _bottomConnectedGround = ground;
+        _secondConnectedGround = ground;
+    }
+
+    public TSGroundAuthoring GetTopConnectGround()
+    {
+        // 내림차순 정리
+        return GetConnectGround((ground1, ground2) => ground2.transform.position.y.CompareTo(ground1.transform.position.y));
+    }
+
+    public TSGroundAuthoring GetBottomConnectGround()
+    {
+        // 오름차순 정리
+        return GetConnectGround((ground1, ground2) => ground1.transform.position.y.CompareTo(ground2.transform.position.y));
+    }
+
+    private TSGroundAuthoring GetConnectGround(System.Comparison<TSGroundAuthoring> comparison)
+    {
+        if (comparison == null)
+            return null;
+
+        if (_firstConnectedGround && _secondConnectedGround)
+        {
+            int value = comparison(_firstConnectedGround, _secondConnectedGround);
+
+            if (value < 0)
+                return _firstConnectedGround;
+            else
+                return _secondConnectedGround;
+        }
+        else if (_firstConnectedGround)
+        {
+            return _firstConnectedGround;
+        }
+        else if (_secondConnectedGround)
+        {
+            return _secondConnectedGround;
+        }
+        else
+        {
+            return null;
+        }
     }
 
 #if UNITY_EDITOR
@@ -116,37 +156,41 @@ public class TSLadderAuthoring : TSObjectAuthoring
 
         // 연결된 지형 시각화
         Gizmos.color = Color.green;
-        if (_topConnectedGround)
+        var topGround = GetTopConnectGround();
+        var bottomGround = GetBottomConnectGround();
+        if (topGround)
         {
-            Gizmos.DrawLine(transform.position, _topConnectedGround.transform.position);
-            Gizmos.DrawWireSphere(_topConnectedGround.transform.position, 0.3f);
+            Gizmos.DrawLine(transform.position, topGround.transform.position);
+            Gizmos.DrawWireSphere(topGround.transform.position, 0.3f);
         }
 
-        if (_bottomConnectedGround)
+        if (bottomGround)
         {
-            Gizmos.DrawLine(transform.position, _bottomConnectedGround.transform.position);
-            Gizmos.DrawWireSphere(_bottomConnectedGround.transform.position, 0.3f);
+            Gizmos.DrawLine(transform.position, bottomGround.transform.position);
+            Gizmos.DrawWireSphere(bottomGround.transform.position, 0.3f);
         }
     }
 
     private float CalculateGizmoHeight()
     {
         float defaultHeight = 3.0f; // 기본 높이
+        var topGround = GetTopConnectGround();
+        var bottomGround = GetBottomConnectGround();
 
         // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
-        if (_topConnectedGround && _bottomConnectedGround)
+        if (topGround && bottomGround)
         {
-            float topY = _topConnectedGround.transform.position.y;
-            float bottomY = _bottomConnectedGround.transform.position.y;
+            float topY = topGround.transform.position.y;
+            float bottomY = bottomGround.transform.position.y;
             float groundDistance = Mathf.Abs(topY - bottomY);
 
             // TopConnectedGround보다 1 높게 설정
             return groundDistance + 1.0f;
         }
         // TopConnectedGround만 있는 경우
-        else if (_topConnectedGround)
+        else if (topGround)
         {
-            float topY = _topConnectedGround.transform.position.y;
+            float topY = topGround.transform.position.y;
             float ladderY = transform.position.y;
             float distanceToTop = Mathf.Abs(topY - ladderY);
 
@@ -154,9 +198,9 @@ public class TSLadderAuthoring : TSObjectAuthoring
             return distanceToTop + 1.0f;
         }
         // BottomConnectedGround만 있는 경우
-        else if (_bottomConnectedGround)
+        else if (bottomGround)
         {
-            float bottomY = _bottomConnectedGround.transform.position.y;
+            float bottomY = bottomGround.transform.position.y;
             float ladderY = transform.position.y;
             float distanceToBottom = Mathf.Abs(ladderY - bottomY);
 

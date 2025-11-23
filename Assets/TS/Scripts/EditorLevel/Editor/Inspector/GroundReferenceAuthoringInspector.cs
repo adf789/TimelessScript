@@ -286,8 +286,8 @@ public class GroundReferenceAuthoringInspector : Editor
                     // Link Ground fields
                     if (ladderProp.objectReferenceValue is TSLadderAuthoring ladder)
                     {
-                        string topGround = ladder.TopConnectedGround?.name;
-                        string bottomGround = ladder.BottomConnectedGround?.name;
+                        string topGround = ladder.GetTopConnectGround()?.name;
+                        string bottomGround = ladder.GetBottomConnectGround()?.name;
 
                         EditorGUILayout.LabelField($"Link: {topGround}-{bottomGround}");
                     }
@@ -382,14 +382,17 @@ public class GroundReferenceAuthoringInspector : Editor
         if (ladderProp.boxedValue is not TSLadderAuthoring ladderAuthoring)
             return;
 
-        if (!ladderAuthoring.TopConnectedGround || !ladderAuthoring.BottomConnectedGround)
+        var topGround = ladderAuthoring.GetTopConnectGround();
+        var bottomGround = ladderAuthoring.GetBottomConnectGround();
+
+        if (!topGround || !bottomGround)
         {
             positionProp.intValue = 0;
             return;
         }
 
-        var topGroundGrid = ConvertToGrid(ladderAuthoring.TopConnectedGround);
-        var bottomGroundGrid = ConvertToGrid(ladderAuthoring.BottomConnectedGround);
+        var topGroundGrid = ConvertToGrid(topGround);
+        var bottomGroundGrid = ConvertToGrid(bottomGround);
 
         int min = Mathf.Max(topGroundGrid.min.x, bottomGroundGrid.min.x);
         int max = Mathf.Min(topGroundGrid.max.x, bottomGroundGrid.max.x);
@@ -482,14 +485,17 @@ public class GroundReferenceAuthoringInspector : Editor
         if (ladderProp.boxedValue is not TSLadderAuthoring ladder)
             return false;
 
-        if (!ladder.TopConnectedGround || !ladder.BottomConnectedGround)
+        var topGround = ladder.GetTopConnectGround();
+        var bottomGround = ladder.GetBottomConnectGround();
+
+        if (!topGround || !bottomGround)
             return false;
 
         float halfWidth = IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f;
         float halfGridSize = IntDefine.MAP_GRID_SIZE * 0.5f;
         int positionX = positionProp.intValue;
         float x = (positionX - halfWidth) * IntDefine.MAP_GRID_SIZE;
-        float y = (ladder.TopConnectedGround.Position.y + ladder.BottomConnectedGround.Position.y) * 0.5f;
+        float y = (topGround.Position.y + bottomGround.Position.y) * 0.5f;
 
         x += halfGridSize;
 
@@ -627,8 +633,8 @@ public class GroundReferenceAuthoringInspector : Editor
 
         var ladder = newLadder.AddComponent<TSLadderAuthoring>();
 
-        ladder.SetTopGround(topGround);
-        ladder.SetBottomGround(bottomGround);
+        ladder.SetFirstConnectGround(topGround);
+        ladder.SetSecondConnectGround(bottomGround);
 
         if (parent != null)
         {
