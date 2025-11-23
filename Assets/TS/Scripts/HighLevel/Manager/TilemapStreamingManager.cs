@@ -111,18 +111,24 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (!ValidateRegistry()) return;
         if (!InitializeCamera()) return;
 
-        _patternRegistry.Initialize();
-
         _isInitialized = true;
         _lastUpdateTime = Time.time;
 
-        LogDebug($"Initialized. Camera: {_targetCamera?.name}, MaxPatterns: {_maxLoadedPatterns}, UpdateInterval: {_updateInterval}s");
+        this.DebugLog($"Initialized. Camera: {_targetCamera?.name}, MaxPatterns: {_maxLoadedPatterns}, UpdateInterval: {_updateInterval}s");
     }
 
     public async UniTask LoadMapDatas()
     {
         _patternRegistry = await ResourcesTypeRegistry.Get()
         .LoadAsyncWithName<ScriptableObject, TilemapPatternRegistry>("TilemapPatternRegistry");
+
+        if (_patternRegistry == null)
+        {
+            this.DebugLogError($"Failed to load map pattern registry.");
+            return;
+        }
+
+        _patternRegistry.Initialize();
     }
 
     /// <summary>
@@ -148,7 +154,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (_patternRegistry != null) return true;
 
-        Debug.LogError("[TilemapStreamingManager] PatternRegistry is not assigned!");
+        this.DebugLogError("PatternRegistry is not assigned!");
         return false;
     }
 
@@ -161,14 +167,14 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         if (_targetCamera == null)
         {
-            Debug.LogWarning("[TilemapStreamingManager] No camera found. Auto-streaming disabled.");
+            this.DebugLogWarning("No camera found. Auto-streaming disabled.");
             _enableAutoStreaming = false;
             return false;
         }
 
         if (!_targetCamera.orthographic)
         {
-            Debug.LogWarning("[TilemapStreamingManager] Camera is not Orthographic! Streaming may not work correctly.");
+            this.DebugLogWarning("Camera is not Orthographic! Streaming may not work correctly.");
         }
 
         SetCameraPosition(_targetCamera.transform.position);
@@ -181,20 +187,20 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (camera == null)
         {
-            Debug.LogError("[TilemapStreamingManager] Cannot set null camera!");
+            this.DebugLogError("Cannot set null camera!");
             return;
         }
 
         if (!camera.orthographic)
         {
-            Debug.LogWarning("[TilemapStreamingManager] Camera is not Orthographic!");
+            this.DebugLogWarning("Camera is not Orthographic!");
         }
 
         _targetCamera = camera;
         SetCameraPosition(camera.transform.position);
         SetCameraSize(camera.orthographicSize);
 
-        LogDebug($"Camera set: {camera.name}");
+        this.DebugLog($"Camera set: {camera.name}");
     }
 
     public void SetCameraPosition(Vector2 position) => _cameraPosition = position;
@@ -226,7 +232,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private void OnCameraZoomChanged()
     {
         SetCameraSize(_targetCamera.orthographicSize);
-        LogDebug($"Camera zoom changed: {_lastCameraSize}");
+        this.DebugLog($"Camera zoom changed: {_lastCameraSize}");
         UpdateStreamingByCameraView().Forget();
     }
 
@@ -250,7 +256,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (!_isInitialized)
         {
-            Debug.LogError("[TilemapStreamingManager] Not initialized!");
+            this.DebugLogError("Not initialized!");
             return null;
         }
 
@@ -296,7 +302,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (_loadingKeys.Contains(key))
         {
-            LogDebug($"Pattern is currently loading: {key}");
+            this.DebugLog($"Pattern is currently loading: {key}");
             return true;
         }
         return false;
@@ -312,7 +318,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (_loadedPatterns.Count >= _maxLoadedPatterns)
         {
-            Debug.LogWarning($"[TilemapStreamingManager] Max loaded patterns reached ({_maxLoadedPatterns}). Unloading distant patterns...");
+            this.DebugLogWarning($"Max loaded patterns reached ({_maxLoadedPatterns}). Unloading distant patterns...");
             await UnloadDistantPatterns(_cameraPosition, 1);
         }
     }
@@ -321,13 +327,13 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (patternData == null)
         {
-            Debug.LogError($"[TilemapStreamingManager] Pattern not found: {patternID}");
+            this.DebugLogError($"Pattern not found: {patternID}");
             return false;
         }
 
         if (patternData.TilemapPrefab == null || !patternData.TilemapPrefab.RuntimeKeyIsValid())
         {
-            Debug.LogError($"[TilemapStreamingManager] Invalid Addressable reference for pattern: {patternID}");
+            this.DebugLogError($"Invalid Addressable reference for pattern: {patternID}");
             return false;
         }
 
@@ -370,7 +376,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[TilemapStreamingManager] Exception loading pattern {patternID}: {ex.Message}");
+            this.DebugLogError($"Exception loading pattern {patternID}: {ex.Message}");
             _loadingKeys.Remove(gridOffset);
             return null;
         }
@@ -418,7 +424,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             // 로드된 사다리 저장
             _loadedLadders[new LadderKey(gridOffset, upGridOffset)] = ladderEntity;
 
-            Debug.Log($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
+            this.DebugLog($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
         }
 
         // 아래 방향에 연결된 노드가 있는지
@@ -454,7 +460,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             // 로드된 사다리 저장
             _loadedLadders[new LadderKey(gridOffset, downGridOffset)] = ladderEntity;
 
-            Debug.Log($"Ladder created at {ladderPosition} between {gridOffset} and {downGridOffset}");
+            this.DebugLog($"Ladder created at {ladderPosition} between {gridOffset} and {downGridOffset}");
         }
     }
 
@@ -465,7 +471,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         if (instance == null)
         {
-            Debug.LogError($"[TilemapStreamingManager] Failed to instantiate pattern");
+            this.DebugLogError($"Failed to instantiate pattern");
             return null;
         }
 
@@ -479,7 +485,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (!patternData.SubScene.IsReferenceValid)
         {
-            LogDebug($"No SubScene reference for pattern: {patternID}");
+            this.DebugLog($"No SubScene reference for pattern: {patternID}");
             return Entity.Null;
         }
 
@@ -491,7 +497,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null || !world.IsCreated)
         {
-            Debug.LogWarning($"[TilemapStreamingManager] World not available for SubScene loading: {patternID}");
+            this.DebugLogWarning($"World not available for SubScene loading: {patternID}");
             return Entity.Null;
         }
 
@@ -512,7 +518,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             SceneSystem.IsSceneLoaded(world.Unmanaged, subSceneEntity)
         );
 
-        LogDebug($"SubScene loaded for pattern: {patternID} at offset {gridOffset} (Entity: {subSceneEntity})");
+        this.DebugLog($"SubScene loaded for pattern: {patternID} at offset {gridOffset} (Entity: {subSceneEntity})");
 
         return subSceneEntity;
     }
@@ -595,10 +601,18 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         _loadedPatterns[gridOffset] = loadedPattern;
 
-        LogDebug($"Pattern loaded: {gridOffset}");
+        this.DebugLog($"Pattern loaded: {gridOffset}");
 
         return loadedPattern;
     }
+
+    private bool IsLadderLoaded(LadderKey key)
+    {
+        return _loadedLadders.ContainsKey(key);
+    }
+
+    public Rect CreateRect(in Vector2 position, in Vector2 size)
+    => new Rect(position - size * 0.5f, size);
 
     #endregion
 
@@ -608,7 +622,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
         {
-            LogDebug($"Pattern not loaded: {gridOffset}");
+            this.DebugLog($"Pattern not loaded: {gridOffset}");
             return;
         }
 
@@ -622,11 +636,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             if (_mapDatas.TryGetValue(gridOffset, out var node))
                 node.IsLoaded = false;
 
-            LogDebug($"Pattern unloaded and saved to history: {gridOffset}");
+            this.DebugLog($"Pattern unloaded and saved to history: {gridOffset}");
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[TilemapStreamingManager] Exception unloading pattern {gridOffset}: {ex.Message}");
+            this.DebugLogError($"Exception unloading pattern {gridOffset}: {ex.Message}");
         }
 
         await UniTask.Yield();
@@ -656,7 +670,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         _loadedPatterns.Clear();
 
-        LogDebug("All patterns unloaded");
+        this.DebugLog("All patterns unloaded");
     }
 
     public async UniTask UnloadDistantPatterns(Vector2 position, int countToUnload = 1)
@@ -757,7 +771,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         if (patternsToUnload.Count > 0)
         {
-            LogDebug($"Auto-unloaded {patternsToUnload.Count} patterns outside camera view");
+            this.DebugLog($"Auto-unloaded {patternsToUnload.Count} patterns outside camera view");
         }
     }
 
@@ -793,18 +807,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     #endregion
 
     #region Calculation Helpers
-
-    private Vector2Int CalculateNeighborOffset(Vector2Int currentOffset, FourDirection direction)
-    {
-        return direction switch
-        {
-            FourDirection.Up => new Vector2Int(currentOffset.x, currentOffset.y + 1),
-            FourDirection.Down => new Vector2Int(currentOffset.x, currentOffset.y - 1),
-            FourDirection.Left => new Vector2Int(currentOffset.x - 1, currentOffset.y),
-            FourDirection.Right => new Vector2Int(currentOffset.x + 1, currentOffset.y),
-            _ => currentOffset
-        };
-    }
 
     private Vector2 CalculatePatternCenter(int2 gridOffset)
     {
@@ -868,41 +870,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         var patternRect = CalculatePatternRect(pattern.GridOffset);
         return !Utility.Geometry.IsAABBOverlap(in cameraRect, in patternRect);
-    }
-
-    #endregion
-
-    #region Utility
-    public Vector3 GetCameraPosition() => _cameraPosition;
-    public int LoadedPatternCount => _loadedPatterns.Count;
-
-    public List<int2> GetLoadedPatternKeys()
-    {
-        return new List<int2>(_loadedPatterns.Keys);
-    }
-
-    public MapLoadState GetMapLoadState(int2 gridOffset)
-    {
-        if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
-            return MapLoadState.None;
-
-        return loadedPattern.IsLoaded ? MapLoadState.All : MapLoadState.OnlyPhysics;
-    }
-
-    private bool IsLadderLoaded(LadderKey key)
-    {
-        return _loadedLadders.ContainsKey(key);
-    }
-
-    public Rect CreateRect(in Vector2 position, in Vector2 size)
-    => new Rect(position - size * 0.5f, size);
-
-    private void LogDebug(string message)
-    {
-        if (_showDebugInfo)
-        {
-            Debug.Log($"[TilemapStreamingManager] {message}");
-        }
     }
 
     #endregion
@@ -975,7 +942,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null)
         {
-            Debug.LogError("DefaultGameObjectInjectionWorld is null!");
+            this.DebugLogError("DefaultGameObjectInjectionWorld is null!");
             return Entity.Null;
         }
 
