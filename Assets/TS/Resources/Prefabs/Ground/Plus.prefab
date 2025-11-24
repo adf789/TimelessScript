@@ -72,9 +72,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 6040735230909383124}
-        m_TargetAssemblyTypeName: GroundExtensionEventAddon, MiddleLevel
-        m_MethodName: Test
-        m_Mode: 0
+        m_TargetAssemblyTypeName: GroundExtensionButtonAddon, MiddleLevel
+        m_MethodName: OnClickExtension
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -184,7 +184,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0

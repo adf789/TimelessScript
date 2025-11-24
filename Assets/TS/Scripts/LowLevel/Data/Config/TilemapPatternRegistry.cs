@@ -21,7 +21,6 @@ public class TilemapPatternRegistry : ScriptableObject
 
     // 런타임 캐시
     private Dictionary<string, TilemapPatternData> _patternCache;
-    private Dictionary<FourDirection, List<TilemapPatternData>> _shapeCache;
     private bool _isInit = false;
 
     private void OnValidate()
@@ -44,7 +43,7 @@ public class TilemapPatternRegistry : ScriptableObject
 
             if (_patternCache.ContainsKey(pattern.PatternID))
             {
-                Debug.LogWarning($"[TilemapPatternRegistry] Duplicate PatternID found: {pattern.PatternID}");
+                this.DebugLogWarning($"Duplicate PatternID found: {pattern.PatternID}");
                 continue;
             }
 
@@ -52,7 +51,7 @@ public class TilemapPatternRegistry : ScriptableObject
         }
 
         _isInit = true;
-        Debug.Log($"[TilemapPatternRegistry] Initialized with {_patternCache.Count} patterns");
+        this.DebugLog($"Initialized with {_patternCache.Count} patterns");
     }
 
     /// <summary>
@@ -65,7 +64,7 @@ public class TilemapPatternRegistry : ScriptableObject
 
         if (string.IsNullOrEmpty(patternID))
         {
-            Debug.LogWarning("[TilemapPatternRegistry] PatternID is null or empty");
+            this.DebugLogWarning("PatternID is null or empty");
             return null;
         }
 
@@ -74,44 +73,41 @@ public class TilemapPatternRegistry : ScriptableObject
             return pattern;
         }
 
-        Debug.LogWarning($"[TilemapPatternRegistry] Pattern not found: {patternID}");
+        this.DebugLogWarning($"Pattern not found: {patternID}");
         return null;
     }
 
+#if UNITY_EDITOR
     /// <summary>
-    /// 패턴 Shape으로 패턴 목록 가져오기
+    /// 패턴 ID로 패턴 데이터 생성, 있는 경우는 기존 데이터를 가져옴
     /// </summary>
-    public List<TilemapPatternData> GetPatternsByShape(FourDirection direction)
+    public TilemapPatternData AddPattern(string patternID, Unity.Entities.Serialization.EntitySceneReference sceneRef)
     {
-        if (!_isInit)
-            Initialize();
+        var data = GetPattern(patternID);
 
-        if (_shapeCache.TryGetValue(direction, out var patterns))
+        if (data == null)
         {
-            return new List<TilemapPatternData>(patterns);
+            string path = UnityEditor.AssetDatabase.GetAssetPath(this);
+            string fileName = System.IO.Path.GetFileName(path);
+            path = path.Substring(0, path.Length - fileName.Length);
+            data = System.Activator.CreateInstance<TilemapPatternData>();
+            data.PatternID = patternID;
+            data.SubScene = sceneRef;
+
+            AllPatterns.Add(data);
+            _patternCache[data.PatternID] = data;
+
+            UnityEditor.AssetDatabase.CreateAsset(data, path);
+            UnityEditor.EditorUtility.SetDirty(this);
+            UnityEditor.AssetDatabase.SaveAssets();
+            UnityEditor.AssetDatabase.Refresh();
+
+            UnityEditor.EditorGUIUtility.PingObject(data);
         }
 
-        return new List<TilemapPatternData>();
+        return data;
     }
-
-    /// <summary>
-    /// 랜덤 패턴 가져오기
-    /// </summary>
-    public TilemapPatternData GetRandomPattern(FourDirection direction)
-    {
-        if (!_isInit)
-            Initialize();
-
-        List<TilemapPatternData> targetList = GetPatternsByShape(direction);
-
-        if (targetList.Count == 0)
-        {
-            Debug.LogWarning("[TilemapPatternRegistry] No patterns available for random selection");
-            return null;
-        }
-
-        return targetList[Random.Range(0, targetList.Count)];
-    }
+#endif
 
     /// <summary>
     /// 패턴이 존재하는지 확인

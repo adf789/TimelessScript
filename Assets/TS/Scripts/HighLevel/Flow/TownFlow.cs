@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Unity.Mathematics;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "HomeFlow", menuName = "TS/Flow/Town Flow")]
@@ -26,11 +27,12 @@ public class TownFlow : BaseFlow
     {
         if (TilemapStreamingManager.Instance == null)
         {
-            Debug.LogWarning("[TownFlow] TilemapStreamingManager is not initialized. Skipping tilemap loading.");
+            this.DebugLogWarning("TilemapStreamingManager is not initialized. Skipping tilemap loading.");
             return;
         }
 
         TilemapStreamingManager.Instance.SetTestMapData();
+        TilemapStreamingManager.Instance.SetEventExtensionMap(OnExtensionMap);
         TilemapStreamingManager.Instance.SetEnableAutoStreaming(true);
     }
 
@@ -56,16 +58,23 @@ public class TownFlow : BaseFlow
             return;
         }
 
-        Debug.Log("[TownFlow] Unloading tilemap patterns");
+        this.DebugLog("Unloading tilemap patterns");
 
         try
         {
             await TilemapStreamingManager.Instance.UnloadAllPatterns();
-            Debug.Log("[TownFlow] Tilemap patterns unloaded successfully");
+            this.DebugLog("Tilemap patterns unloaded successfully");
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[TownFlow] Failed to unload tilemap patterns: {ex.Message}");
+            this.DebugLogError($"Failed to unload tilemap patterns: {ex.Message}");
         }
+    }
+
+    private async void OnExtensionMap(int2 grid)
+    {
+        this.DebugLog($"Load map: {grid}");
+
+        var randomMap = TilemapStreamingManager.Instance.GetRandomMap(grid);
     }
 }

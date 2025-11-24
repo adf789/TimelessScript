@@ -99,6 +99,9 @@ MonoBehaviour:
   - guid: e59810f912172d94c87af1abff93b0fd
     assetPath: Assets/TS/Resources/Prefabs/Effect/RewardEffect.prefab
     displayName: RewardEffect
+  - guid: 967221a751382a54fb699112443e2538
+    assetPath: Assets/TS/Resources/Prefabs/Ground/Plus.prefab
+    displayName: Plus
 --- !u!114 &-25286370874405263
 MonoBehaviour:
   m_ObjectHideFlags: 0

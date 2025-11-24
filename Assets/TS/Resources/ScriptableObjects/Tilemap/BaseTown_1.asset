@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9bb10135347b324da745d98067f8138, type: 3}
-  m_Name: TilemapPattern_1
+  m_Name: BaseTown_1
   m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternData
   PatternID: BaseTown_1
   DisplayName: BaseTown_1

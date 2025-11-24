@@ -52,6 +52,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     // 패턴 캐시
     private readonly Dictionary<int2, LoadedPattern> _loadedPatterns = new Dictionary<int2, LoadedPattern>();
     private readonly Dictionary<LadderKey, Entity> _loadedLadders = new Dictionary<LadderKey, Entity>();
+    private readonly Dictionary<int2, GroundExtensionButtonAddon> _loadedExtensionButtons = new Dictionary<int2, GroundExtensionButtonAddon>();
 
     // 로딩 관리
     private readonly Queue<LoadRequest> _loadQueue = new Queue<LoadRequest>();
@@ -67,6 +68,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     // 모든 맵 데이터
     private Dictionary<int2, MapNode> _mapDatas = new Dictionary<int2, MapNode>();
+
+    // 콜백 이벤트
+    private System.Action<int2> _onEventExtensionMap = null;
     #endregion
 
     #region Unity Lifecycle
@@ -120,7 +124,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     public async UniTask LoadMapDatas()
     {
         _patternRegistry = await ResourcesTypeRegistry.Get()
-        .LoadAsyncWithName<ScriptableObject, TilemapPatternRegistry>("TilemapPatternRegistry");
+        .LoadAsyncWithName<TilemapPatternRegistry>("TilemapPatternRegistry");
 
         if (_patternRegistry == null)
         {
@@ -148,6 +152,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         _mapDatas[basePosition] = baseMap;
         _mapDatas[secondPosition] = secondMap;
+    }
+
+    public void SetEventExtensionMap(System.Action<int2> onEvent)
+    {
+        _onEventExtensionMap = onEvent;
     }
 
     private bool ValidateRegistry()
@@ -363,6 +372,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 ApplyOffsetToSubSceneEntities(World.DefaultGameObjectInjectionWorld.EntityManager, loadedPattern, gridOffset);
 
                 await LoadLadders(gridOffset);
+
+                await LoadExtensionButton(gridOffset);
             }
             else
             {
@@ -614,6 +625,58 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     public Rect CreateRect(in Vector2 position, in Vector2 size)
     => new Rect(position - size * 0.5f, size);
 
+    private MapNode[] GetNeighborNodes(int2 grid)
+    {
+        MapNode[] neighborNodes = new MapNode[4];
+
+        if (_mapDatas.TryGetValue(new int2(grid.x, grid.y + 1), out var upNode))
+            neighborNodes[(int) FourDirection.Up] = upNode;
+
+        if (_mapDatas.TryGetValue(new int2(grid.x, grid.y - 1), out var downNode))
+            neighborNodes[(int) FourDirection.Down] = downNode;
+
+        if (_mapDatas.TryGetValue(new int2(grid.x - 1, grid.y), out var leftNode))
+            neighborNodes[(int) FourDirection.Left] = leftNode;
+
+        if (_mapDatas.TryGetValue(new int2(grid.x + 1, grid.y), out var rightNode))
+            neighborNodes[(int) FourDirection.Right] = rightNode;
+
+        return neighborNodes;
+    }
+
+    public TilemapPatternData GetRandomMap(int2 grid)
+    {
+        if (_patternRegistry == null)
+            return null;
+
+        MapNode[] neighborNodes = GetNeighborNodes(grid);
+        List<string> possiblePatterns = new List<string>();
+
+        foreach (var pattern in _patternRegistry.AllPatterns)
+        {
+            bool pass = false;
+            foreach (var neighborNode in neighborNodes)
+            {
+                if (neighborNode == null)
+                    continue;
+            }
+
+            if (!pass)
+            {
+
+
+            }
+        }
+
+        if (possiblePatterns.Count == 0)
+            return null;
+
+        int randomIndex = UnityEngine.Random.Range(0, possiblePatterns.Count);
+        string randomPattern = possiblePatterns[randomIndex];
+
+        return _patternRegistry.GetPattern(randomPattern);
+    }
+
     #endregion
 
     #region Pattern Unloading
@@ -773,6 +836,62 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         {
             this.DebugLog($"Auto-unloaded {patternsToUnload.Count} patterns outside camera view");
         }
+    }
+
+    private async UniTask LoadExtensionButton(int2 grid)
+    {
+        GroundExtensionButtonAddon extensionButtonPrefab = null;
+
+        _loadedExtensionButtons.Remove(grid, out var removeExtensionButton);
+
+        removeExtensionButton?.gameObject.SetActive(false);
+
+        foreach (var neighborGrid in GetNeighborGrids(grid))
+        {
+            // 그리드에 맵이 있거나 로드된 버튼이 있으면 패스
+            if (_mapDatas.ContainsKey(neighborGrid)
+            || _loadedExtensionButtons.ContainsKey(neighborGrid))
+                continue;
+
+            GroundExtensionButtonAddon newButton = null;
+
+            if (removeExtensionButton != null)
+            {
+                newButton = removeExtensionButton;
+            }
+            else
+            {
+                if (extensionButtonPrefab == null)
+                {
+                    extensionButtonPrefab = await ResourcesTypeRegistry.Get().LoadAsyncWithName<GroundExtensionButtonAddon>("Plus");
+                }
+
+                newButton = Instantiate(extensionButtonPrefab);
+            }
+
+            newButton.SetGrid(neighborGrid);
+            newButton.SetEventExtension(_onEventExtensionMap);
+            newButton.transform.position = new Vector3(IntDefine.MAP_TOTAL_GRID_WIDTH * neighborGrid.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * neighborGrid.y);
+
+            _loadedExtensionButtons[neighborGrid] = newButton;
+
+            newButton.gameObject.SetActive(true);
+        }
+    }
+
+    private IEnumerable<int2> GetNeighborGrids(int2 currentGrid)
+    {
+        // Up
+        yield return new int2(currentGrid.x, currentGrid.y + 1);
+
+        // Down
+        yield return new int2(currentGrid.x, currentGrid.y - 1);
+
+        // Left
+        yield return new int2(currentGrid.x - 1, currentGrid.y);
+
+        // Right
+        yield return new int2(currentGrid.x + 1, currentGrid.y);
     }
 
     #endregion

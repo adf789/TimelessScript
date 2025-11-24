@@ -2,11 +2,13 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using Unity.Entities.Serialization;
 
 [CustomEditor(typeof(GroundReferenceAuthoring))]
 public class GroundReferenceAuthoringInspector : Editor
 {
-    private GroundReferenceAuthoring inspectorTarget;
+    private GroundReferenceAuthoring _inspectorTarget;
+    private TilemapPatternData _pattern;
     private SerializedProperty _groundsProperty;
     private SerializedProperty _laddersProperty;
     private SerializedProperty _groundParentProperty;
@@ -20,7 +22,7 @@ public class GroundReferenceAuthoringInspector : Editor
     private int _selectBottomGroundIndex;
     private void OnEnable()
     {
-        inspectorTarget = (GroundReferenceAuthoring) target;
+        _inspectorTarget = (GroundReferenceAuthoring) target;
         _groundsProperty = serializedObject.FindProperty("_grounds");
         _laddersProperty = serializedObject.FindProperty("_ladders");
         _groundParentProperty = serializedObject.FindProperty("_groundParent");
@@ -76,10 +78,32 @@ public class GroundReferenceAuthoringInspector : Editor
         _filteredGroundNames = groundNames.ToArray();
     }
 
-    private void InitializePorts()
+    private async void InitializePorts()
     {
         if (_ports == null)
             _ports = new long[4];
+
+        if (EditorApplication.isPlaying)
+            return;
+
+        if (_pattern == null)
+        {
+            var registry = await ResourcesTypeRegistry.Get().LoadAsyncWithName<TilemapPatternRegistry>("TilemapPatternRegistry");
+
+            var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            _pattern = registry.GetPattern(activeScene.name);
+
+            // Scene의 GUID 가져오기
+            var scenePath = activeScene.path;
+            var guid = AssetDatabase.GUIDFromAssetPath(scenePath);
+
+            var sceneRef = new EntitySceneReference(new Unity.Entities.Hash128(guid.ToString()), 0);
+
+            if (_pattern == null)
+            {
+                _pattern = registry.AddPattern(activeScene.name, sceneRef);
+            }
+        }
 
         bool top = false, bottom = false;
         int topMinX = int.MaxValue, topMaxX = -1, topY = -1;

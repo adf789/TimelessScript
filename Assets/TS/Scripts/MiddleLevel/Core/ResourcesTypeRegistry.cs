@@ -199,7 +199,33 @@ public class ResourcesTypeRegistry : ScriptableObject
     /// <summary>
     /// Load asset using type-specific ResourcesPath with Name
     /// </summary>
-    public async UniTask<V> LoadAsyncWithName<T, V>(string name) where T : UnityEngine.Object where V : T
+    public async UniTask<T> LoadAsyncWithName<T>(string name) where T : UnityEngine.Object
+    {
+        var type = typeof(T);
+
+        if (type.IsSubclassOf(typeof(MonoBehaviour)))
+        {
+            var loadObj = await LoadAsyncWithName<GameObject, GameObject>(name);
+
+            if (loadObj != null)
+                return loadObj.GetComponent<T>();
+        }
+        else if (type.IsSubclassOf(typeof(ScriptableObject)))
+        {
+            return await LoadAsyncWithName<ScriptableObject, T>(name);
+        }
+        else
+        {
+            return await LoadAsyncWithName<T, T>(name);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Load asset using type-specific ResourcesPath with Name
+    /// </summary>
+    private async UniTask<V> LoadAsyncWithName<T, V>(string name) where T : UnityEngine.Object where V : UnityEngine.Object
     {
         var resourcesPath = GetResourcesPath<T>();
 

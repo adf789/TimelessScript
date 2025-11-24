@@ -37,7 +37,7 @@ public class PickingAddon : MonoBehaviour
     private float touchTime;
 
     private readonly LinkedList<PickedAddon> pickObjects = new();
-    private SortedSet<PickedAddon> prevOverlapObjects = new();
+    private List<PickedAddon> prevOverlapObjects = new();
     private Vector2 prevPosition;
 
     private bool isPickStart;
@@ -212,9 +212,9 @@ public class PickingAddon : MonoBehaviour
         ResetPickValues();
     }
 
-    private SortedSet<PickedAddon> GetPickTargets(Vector2 position)
+    private List<PickedAddon> GetPickTargets(Vector2 position)
     {
-        var targets = new SortedSet<PickedAddon>();
+        var targets = new List<PickedAddon>();
         if (EventSystem.current.IsPointerOverGameObject()) return targets;
 
         foreach (var collider in Physics2D.OverlapPointAll(position))
