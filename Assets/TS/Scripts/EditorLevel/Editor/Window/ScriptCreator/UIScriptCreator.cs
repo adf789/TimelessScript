@@ -15,7 +15,7 @@ public class UIScriptCreator : BaseScriptCreator
         Unit,
     }
 
-    private ScriptType selectedType;
+    private ScriptType _selectedType;
 
     private readonly string PATH_UI_ENUM = "Assets/TS/Scripts/LowLevel/Enum/UIEnum.cs";
     private readonly string[] PATHS_VIEW =
@@ -55,11 +55,11 @@ public class UIScriptCreator : BaseScriptCreator
             return;
         }
 
-        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType, assetName);
-        string createViewName = $"{assetName}{selectedType}";
-        string createModelName = $"{assetName}{selectedType}Model";
-        string modelPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_MODEL[(int) selectedType]);
-        string viewPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_VIEW[(int) selectedType]);
+        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, _selectedType, assetName);
+        string createViewName = $"{assetName}{_selectedType}";
+        string createModelName = $"{assetName}{_selectedType}Model";
+        string modelPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_MODEL[(int) _selectedType]);
+        string viewPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_VIEW[(int) _selectedType]);
 
         if (!string.IsNullOrEmpty(addPath))
             modelPath = Path.Combine(modelPath, addPath);
@@ -71,7 +71,7 @@ public class UIScriptCreator : BaseScriptCreator
         CreateDirectoryIfNotExist(viewPath);
 
         // Unit �� ���
-        if (selectedType == ScriptType.Unit)
+        if (_selectedType == ScriptType.Unit)
         {
             CreateScript(modelPath, createModelName, GenerateUnitModelCode(assetName));
             CreateScript(viewPath, createViewName, GenerateUnitCode(assetName));
@@ -79,13 +79,13 @@ public class UIScriptCreator : BaseScriptCreator
         // View, Popup �� ���
         else
         {
-            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_CONTROLLER[(int) selectedType]);
+            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_CONTROLLER[(int) _selectedType]);
 
             if (!string.IsNullOrEmpty(addPath))
                 controllerPath = Path.Combine(controllerPath, addPath);
 
             CreateDirectoryIfNotExist(controllerPath);
-            CreateScript(controllerPath, $"{assetName}{SUFFIX_CONTROLLER}", GenerateControllerCode(createViewName, selectedType == ScriptType.Popup));
+            CreateScript(controllerPath, $"{assetName}{SUFFIX_CONTROLLER}", GenerateControllerCode(createViewName, _selectedType == ScriptType.Popup));
 
             AddEnum(createViewName);
 
@@ -93,13 +93,13 @@ public class UIScriptCreator : BaseScriptCreator
             CreateScript(viewPath, createViewName, GenerateViewCode(createViewName));
         }
 
-        createPrefabPath = $"{createPrefabPath}{selectedType}.prefab";
+        createPrefabPath = $"{createPrefabPath}{_selectedType}.prefab";
 
         CreatePrefab(createPrefabPath, createViewName);
 
         EditorPrefs.SetString(PREFS_KEY_CREATE_PREFAB_PATH, createPrefabPath);
         EditorPrefs.SetString(PREFS_KEY_ATTACH_SCRIPT_NAME, createViewName);
-        EditorPrefs.SetInt(PREFS_KEY_CRETE_UI_TYPE, (int) selectedType);
+        EditorPrefs.SetInt(PREFS_KEY_CRETE_UI_TYPE, (int) _selectedType);
     }
 
     public override void OnAfterReload()
@@ -164,10 +164,10 @@ public class UIScriptCreator : BaseScriptCreator
 
         EditorGUILayout.BeginVertical("helpbox");
         {
-            selectedType = (ScriptType) EditorGUILayout.EnumPopup("UI 타입 선택", selectedType);
+            _selectedType = (ScriptType) EditorGUILayout.EnumPopup("UI 타입 선택", _selectedType);
 
             // UI 타입에 따른 설명 제공
-            string description = selectedType switch
+            string description = _selectedType switch
             {
                 ScriptType.View => "View: 전체 화면을 차지하는 UI (예: 메인 메뉴, 게임 화면)",
                 ScriptType.Popup => "Popup: 임시로 나타나는 UI (예: 대화상자, 알림창)",
@@ -187,11 +187,11 @@ public class UIScriptCreator : BaseScriptCreator
     {
         var paths = new List<string>();
 
-        string modelPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_MODEL[(int) selectedType]);
-        string viewPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_VIEW[(int) selectedType]);
-        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, selectedType, assetName);
-        string createViewName = $"{assetName}{selectedType}";
-        string createModelName = $"{assetName}{selectedType}Model";
+        string modelPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_MODEL[(int) _selectedType]);
+        string viewPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_VIEW[(int) _selectedType]);
+        string createPrefabPath = string.Format(StringDefine.PATH_VIEW_PREFAB, _selectedType, assetName);
+        string createViewName = $"{assetName}{_selectedType}";
+        string createModelName = $"{assetName}{_selectedType}Model";
 
         if (!string.IsNullOrEmpty(addPath))
         {
@@ -200,7 +200,7 @@ public class UIScriptCreator : BaseScriptCreator
         }
 
         // Unit 타입은 다른 구조
-        if (selectedType == ScriptType.Unit)
+        if (_selectedType == ScriptType.Unit)
         {
             paths.Add($"{modelPath.Replace("\\", "/")}{createModelName}.cs");
             paths.Add($"{viewPath.Replace("\\", "/")}{createViewName}.cs");
@@ -208,7 +208,7 @@ public class UIScriptCreator : BaseScriptCreator
         else
         {
             // View, Popup 타입
-            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_CONTROLLER[(int) selectedType]);
+            string controllerPath = string.Format(StringDefine.PATH_SCRIPT, PATHS_CONTROLLER[(int) _selectedType]);
             if (!string.IsNullOrEmpty(addPath))
                 controllerPath = Path.Combine(controllerPath, addPath);
 

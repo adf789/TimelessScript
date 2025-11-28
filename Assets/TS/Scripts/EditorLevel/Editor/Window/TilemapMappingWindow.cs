@@ -261,7 +261,6 @@ public class TilemapMappingWindow : EditorWindow
         // Basic info
         EditorGUILayout.LabelField("Basic Information", EditorStyles.boldLabel);
         EditorGUILayout.LabelField($"Pattern ID: {pattern.PatternID}");
-        EditorGUILayout.LabelField($"Display Name: {pattern.DisplayName}");
         EditorGUILayout.LabelField($"Grid Size: {_registry.GridSize.x} x {_registry.GridSize.y}");
 
         EditorGUILayout.Space(10);

@@ -3,12 +3,13 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using Unity.Entities.Serialization;
+using Cysharp.Threading.Tasks;
 
 [CustomEditor(typeof(GroundReferenceAuthoring))]
 public class GroundReferenceAuthoringInspector : Editor
 {
     private GroundReferenceAuthoring _inspectorTarget;
-    private TilemapPatternData _pattern;
+    private TilemapPatternData _mapData;
     private SerializedProperty _groundsProperty;
     private SerializedProperty _laddersProperty;
     private SerializedProperty _groundParentProperty;
@@ -80,30 +81,41 @@ public class GroundReferenceAuthoringInspector : Editor
 
     private async void InitializePorts()
     {
-        if (_ports == null)
-            _ports = new long[4];
-
         if (EditorApplication.isPlaying)
             return;
 
-        if (_pattern == null)
+        if (_mapData == null)
+            await SetTilemapData();
+
+        SetPortValues();
+    }
+
+    private async UniTask SetTilemapData()
+    {
+        if (_mapData != null)
+            return;
+
+        var _registry = await ResourcesTypeRegistry.Get().LoadAsyncWithName<TilemapPatternRegistry>("TilemapPatternRegistry");
+
+        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        _mapData = _registry.GetPattern(activeScene.name);
+
+        // 맵 데이터가 없으면 새로 생성
+        if (_mapData == null)
         {
-            var registry = await ResourcesTypeRegistry.Get().LoadAsyncWithName<TilemapPatternRegistry>("TilemapPatternRegistry");
-
-            var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-            _pattern = registry.GetPattern(activeScene.name);
-
             // Scene의 GUID 가져오기
             var scenePath = activeScene.path;
             var guid = AssetDatabase.GUIDFromAssetPath(scenePath);
+            var sceneRef = new EntitySceneReference(guid, IntDefine.EDITOR_REF_ENTITY_SCENE_SECTION_INDEX);
 
-            var sceneRef = new EntitySceneReference(new Unity.Entities.Hash128(guid.ToString()), 0);
-
-            if (_pattern == null)
-            {
-                _pattern = registry.AddPattern(activeScene.name, sceneRef);
-            }
+            _mapData = _registry.AddPattern(activeScene.name, sceneRef);
         }
+    }
+
+    private void SetPortValues()
+    {
+        if (_ports == null)
+            _ports = new long[4];
 
         bool top = false, bottom = false;
         int topMinX = int.MaxValue, topMaxX = -1, topY = -1;
@@ -153,6 +165,10 @@ public class GroundReferenceAuthoringInspector : Editor
                 _ports[(int) FourDirection.Down] |= 1L << num;
             }
         }
+
+        _mapData?.SetPortValues(_ports);
+        _mapData?.SetMinHeight(bottomMaxX);
+        _mapData?.SetMaxHeight(topMaxX);
     }
 
     public override void OnInspectorGUI()
@@ -188,9 +204,13 @@ public class GroundReferenceAuthoringInspector : Editor
     {
         EditorGUILayout.LabelField("Ports", EditorStyles.boldLabel);
 
-        for (FourDirection direction = FourDirection.Up; System.Enum.IsDefined(typeof(FourDirection), direction); direction++)
+        for (FourDirection direction = FourDirection.Up;
+        System.Enum.IsDefined(typeof(FourDirection), direction);
+        direction++)
         {
-            EditorGUILayout.LabelField($"{direction}: {_ports[(int) direction]}");
+            int index = (int) direction;
+            long value = _ports != null && _ports.Length > index ? _ports[index] : 0;
+            EditorGUILayout.LabelField($"{direction}: {value}");
         }
     }
 
@@ -243,7 +263,7 @@ public class GroundReferenceAuthoringInspector : Editor
                     }
                     if (EditorGUI.EndChangeCheck())
                     {
-                        InitializePorts();
+                        SetPortValues();
                     }
                 }
                 EditorGUILayout.EndVertical();

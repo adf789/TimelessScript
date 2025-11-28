@@ -13,7 +13,7 @@ public class EditorScriptCreator : BaseScriptCreator
     }
 
     // 선택된 에디터 스크립트 타입
-    private EditorScriptType selectedScriptType = EditorScriptType.Window;
+    private EditorScriptType _selectedType = EditorScriptType.Window;
 
     private readonly string PATH_WINDOW = "EditorLevel/Editor/Window";
     private readonly string PATH_INSPECTOR = "EditorLevel/Editor/Inspector";
@@ -28,7 +28,7 @@ public class EditorScriptCreator : BaseScriptCreator
             return;
         }
 
-        switch (selectedScriptType)
+        switch (_selectedType)
         {
             case EditorScriptType.Window:
                 {
@@ -62,10 +62,10 @@ public class EditorScriptCreator : BaseScriptCreator
 
         EditorGUILayout.BeginVertical("helpbox");
         {
-            selectedScriptType = (EditorScriptType) EditorGUILayout.EnumPopup("에디터 스크립트 타입 선택", selectedScriptType);
+            _selectedType = (EditorScriptType) EditorGUILayout.EnumPopup("에디터 스크립트 타입 선택", _selectedType);
 
             // 에디터 스크립트 타입에 따른 설명 제공
-            string description = selectedScriptType switch
+            string description = _selectedType switch
             {
                 EditorScriptType.Window => "Window: Unity 에디터에 커스텀 윈도우 추가",
                 EditorScriptType.Inspector => "Inspector: 커스텀 인스펙터 UI 제작",
@@ -84,7 +84,7 @@ public class EditorScriptCreator : BaseScriptCreator
     {
         var paths = new List<string>();
 
-        switch (selectedScriptType)
+        switch (_selectedType)
         {
             case EditorScriptType.Window:
                 {
@@ -124,7 +124,7 @@ public class EditorScriptCreator : BaseScriptCreator
             }
             else
             {
-                EditorGUILayout.LabelField($"{selectedScriptType} 스크립트가 생성됩니다:", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"{_selectedType} 스크립트가 생성됩니다:", EditorStyles.miniLabel);
                 EditorGUILayout.Space();
 
                 for (int i = 0; i < finalPaths.Count; i++)
@@ -200,11 +200,11 @@ using UnityEditor;
 [CustomEditor(typeof({name}))]
 public class {name}{SUFFIX_INSPECTOR} : Editor
 {{
-    private {name} inspectorTarget;
+    private {name} _inspectorTarget;
 
     private void OnEnable()
     {{
-        inspectorTarget = ({name})target;
+        _inspectorTarget = ({name})target;
     }}
 
     public override void OnInspectorGUI()

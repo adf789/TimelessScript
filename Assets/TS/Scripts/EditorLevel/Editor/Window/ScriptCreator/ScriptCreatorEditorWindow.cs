@@ -18,13 +18,13 @@ public class ScriptCreatorEditorWindow : EditorWindow
         Editor,
     }
 
-    private string objectName = "";
-    private string[] tabTitles = { "스크립트 생성", "스크립트 삭제" };
-    private int selectedTab = 0;
-    private CreateScriptType selectedScriptType = CreateScriptType.UI;
-    private List<string> objectAddPaths = null;
-    private Dictionary<CreateScriptType, BaseScriptCreator> creators = null;
-    private static ScriptCreatorEditorWindow instance;
+    private string _objectName = "";
+    private string[] _tabTitles = { "스크립트 생성", "스크립트 삭제" };
+    private int _selectedTab = 0;
+    private CreateScriptType _selectedScriptType = CreateScriptType.UI;
+    private List<string> _objectAddPaths = null;
+    private Dictionary<CreateScriptType, BaseScriptCreator> _creators = null;
+    private static ScriptCreatorEditorWindow _instance;
 
     [MenuItem("TS/Create Script %&e")] // Ctrl + Shift + E 단축키 설정
     public static void ShowWindow()
@@ -37,10 +37,10 @@ public class ScriptCreatorEditorWindow : EditorWindow
     // CreateScriptType 타입 추가 시 수정 필요
     private BaseScriptCreator GetCurrentCreator()
     {
-        if (creators.TryGetValue(selectedScriptType, out var creator))
+        if (_creators.TryGetValue(_selectedScriptType, out var creator))
             return creator;
 
-        switch (selectedScriptType)
+        switch (_selectedScriptType)
         {
             case CreateScriptType.UI:
                 creator = new UIScriptCreator();
@@ -75,25 +75,25 @@ public class ScriptCreatorEditorWindow : EditorWindow
                 break;
 
             default:
-                throw new Exception($"Wrong script type: {selectedScriptType}");
+                throw new Exception($"Wrong script type: {_selectedScriptType}");
         }
 
         if (creator != null)
-            creators.Add(selectedScriptType, creator);
+            _creators.Add(_selectedScriptType, creator);
 
         return creator;
     }
 
     private void OnEnable()
     {
-        objectAddPaths = new List<string>();
-        creators = new Dictionary<CreateScriptType, BaseScriptCreator>();
-        instance = this;
+        _objectAddPaths = new List<string>();
+        _creators = new Dictionary<CreateScriptType, BaseScriptCreator>();
+        _instance = this;
     }
 
     private void OnDisable()
     {
-        instance = null;
+        _instance = null;
     }
 
     private void OnGUI()
@@ -114,14 +114,14 @@ public class ScriptCreatorEditorWindow : EditorWindow
         EditorGUILayout.Space();
 
         // 탭 영역
-        selectedTab = GUILayout.Toolbar(selectedTab, tabTitles);
+        _selectedTab = GUILayout.Toolbar(_selectedTab, _tabTitles);
 
         EditorGUILayout.Space();
 
         // 각 탭에 대한 내용 표시
         EditorGUILayout.BeginVertical("box");
         {
-            switch (selectedTab)
+            switch (_selectedTab)
             {
                 case 0:
                     DrawScriptGenerator();
@@ -153,7 +153,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
         EditorGUILayout.Space();
 
         // 생성 버튼
-        GUI.enabled = !string.IsNullOrEmpty(objectName);
+        GUI.enabled = !string.IsNullOrEmpty(_objectName);
         if (GUILayout.Button("스크립트 생성", GUILayout.Height(30)))
         {
             Create();
@@ -169,9 +169,9 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private bool DrawScriptTypes()
     {
         EditorGUILayout.LabelField("스크립트 타입", EditorStyles.boldLabel);
-        CreateScriptType type = (CreateScriptType) EditorGUILayout.EnumPopup("타입 선택", selectedScriptType);
-        bool change = type != selectedScriptType;
-        selectedScriptType = type;
+        CreateScriptType type = (CreateScriptType) EditorGUILayout.EnumPopup("타입 선택", _selectedScriptType);
+        bool change = type != _selectedScriptType;
+        _selectedScriptType = type;
 
         return change;
     }
@@ -179,7 +179,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private bool DrawInputName()
     {
         // 경로 표시 영역
-        if (objectAddPaths.Count > 0)
+        if (_objectAddPaths.Count > 0)
         {
             EditorGUILayout.LabelField("추가 경로", EditorStyles.boldLabel);
 
@@ -189,15 +189,15 @@ public class ScriptCreatorEditorWindow : EditorWindow
                 {
                     EditorGUILayout.LabelField("경로: ", GUILayout.Width(40));
 
-                    foreach (string path in objectAddPaths.ToArray())
+                    foreach (string path in _objectAddPaths.ToArray())
                     {
                         if (GUILayout.Button(path, "label", GUILayout.ExpandWidth(false)))
                         {
-                            objectAddPaths.Remove(path);
+                            _objectAddPaths.Remove(path);
                             break;
                         }
 
-                        if (path != objectAddPaths[^1])
+                        if (path != _objectAddPaths[^1])
                             EditorGUILayout.LabelField("/", GUILayout.Width(10));
                     }
                 }
@@ -215,8 +215,8 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         {
-            objectName = EditorGUILayout.TextField("스크립트 이름", objectName);
-            objectName = objectName.Trim();
+            _objectName = EditorGUILayout.TextField("스크립트 이름", _objectName);
+            _objectName = _objectName.Trim();
         }
         return EditorGUI.EndChangeCheck();
     }
@@ -228,31 +228,31 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
     private void DrawPathPreviewSection()
     {
-        if (string.IsNullOrEmpty(objectName))
+        if (string.IsNullOrEmpty(_objectName))
             return;
 
         string addPath = null;
-        if (objectAddPaths.Count > 0)
-            addPath = $"{string.Join('/', objectAddPaths)}/";
+        if (_objectAddPaths.Count > 0)
+            addPath = $"{string.Join('/', _objectAddPaths)}/";
 
-        GetCurrentCreator()?.DrawPathPreview(addPath, objectName);
+        GetCurrentCreator()?.DrawPathPreview(addPath, _objectName);
     }
 
     private void ConvertToObjectNameFromPath()
     {
-        if (TryGetSeperatePath(ref objectName, out string path))
+        if (TryGetSeperatePath(ref _objectName, out string path))
         {
-            objectAddPaths.Add(path);
+            _objectAddPaths.Add(path);
 
-            if (!string.IsNullOrEmpty(objectName))
-                objectName = char.ToUpper(objectName[0]) + objectName.Substring(1);
+            if (!string.IsNullOrEmpty(_objectName))
+                _objectName = char.ToUpper(_objectName[0]) + _objectName.Substring(1);
         }
     }
 
     private void ResetObjectName()
     {
-        objectAddPaths.Clear();
-        objectName = string.Empty;
+        _objectAddPaths.Clear();
+        _objectName = string.Empty;
     }
 
     // 문자열 중 경로가 될 수 있는 부분이 있으면 분리.
@@ -290,15 +290,15 @@ public class ScriptCreatorEditorWindow : EditorWindow
 
     private void Create()
     {
-        if (string.IsNullOrEmpty(objectName))
+        if (string.IsNullOrEmpty(_objectName))
             return;
 
         string addPath = null;
 
-        if (objectAddPaths.Count > 0)
-            addPath = $"{string.Join('/', objectAddPaths)}/";
+        if (_objectAddPaths.Count > 0)
+            addPath = $"{string.Join('/', _objectAddPaths)}/";
 
-        GetCurrentCreator()?.Create(addPath, objectName);
+        GetCurrentCreator()?.Create(addPath, _objectName);
 
         FullRefresh();
     }
@@ -329,10 +329,10 @@ public class ScriptCreatorEditorWindow : EditorWindow
     [UnityEditor.Callbacks.DidReloadScripts]
     private static void AttachScriptToPrefab()
     {
-        if (instance == null)
+        if (_instance == null)
             return;
 
-        instance.GetCurrentCreator()?.OnAfterReload();
+        _instance.GetCurrentCreator()?.OnAfterReload();
     }
 
     static void OnCompilationStarted(object obj)

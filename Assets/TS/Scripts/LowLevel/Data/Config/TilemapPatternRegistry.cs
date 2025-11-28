@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Entities.Serialization;
 
 /// <summary>
 /// 타일맵 패턴 레지스트리
@@ -81,7 +82,7 @@ public class TilemapPatternRegistry : ScriptableObject
     /// <summary>
     /// 패턴 ID로 패턴 데이터 생성, 있는 경우는 기존 데이터를 가져옴
     /// </summary>
-    public TilemapPatternData AddPattern(string patternID, Unity.Entities.Serialization.EntitySceneReference sceneRef)
+    public TilemapPatternData AddPattern(string patternID, EntitySceneReference sceneRef)
     {
         var data = GetPattern(patternID);
 
@@ -89,7 +90,7 @@ public class TilemapPatternRegistry : ScriptableObject
         {
             string path = UnityEditor.AssetDatabase.GetAssetPath(this);
             string fileName = System.IO.Path.GetFileName(path);
-            path = path.Substring(0, path.Length - fileName.Length);
+            string directoryPath = path.Substring(0, path.Length - fileName.Length);
             data = System.Activator.CreateInstance<TilemapPatternData>();
             data.PatternID = patternID;
             data.SubScene = sceneRef;
@@ -97,7 +98,7 @@ public class TilemapPatternRegistry : ScriptableObject
             AllPatterns.Add(data);
             _patternCache[data.PatternID] = data;
 
-            UnityEditor.AssetDatabase.CreateAsset(data, path);
+            UnityEditor.AssetDatabase.CreateAsset(data, $"{directoryPath}{patternID}.asset");
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssets();
             UnityEditor.AssetDatabase.Refresh();

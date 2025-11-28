@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternRegistry
   AllPatterns:
   - {fileID: 11400000, guid: c4f0ed27ccf5ed04386dff109ef7e0c1, type: 2}
+  - {fileID: 11400000, guid: 3183b44b5b0da044da2c7bed915cf460, type: 2}
   Categories: []

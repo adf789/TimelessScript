@@ -12,7 +12,7 @@ public class ManagerScriptCreator : BaseScriptCreator
         SubManager,
     }
 
-    private ScriptType selectedType;
+    private ScriptType _selectedType;
 
     private readonly string PATH_MANAGER = "HighLevel/Manager";
     private readonly string PATH_SUBMANAGER = "MiddleLevel/SubManager";
@@ -29,7 +29,7 @@ public class ManagerScriptCreator : BaseScriptCreator
 
         string path = null;
 
-        switch (selectedType)
+        switch (_selectedType)
         {
             case ScriptType.Manager:
                 path = string.Format(StringDefine.PATH_SCRIPT, PATH_MANAGER);
@@ -47,7 +47,7 @@ public class ManagerScriptCreator : BaseScriptCreator
 
         CreateDirectoryIfNotExist(path);
 
-        switch (selectedType)
+        switch (_selectedType)
         {
             case ScriptType.Manager:
                 CreateScript(path, $"{assetName}{SUFFIX_MANAGER}", GenerateManagerCode(assetName));
@@ -62,7 +62,7 @@ public class ManagerScriptCreator : BaseScriptCreator
     {
         var paths = new List<string>();
 
-        switch (selectedType)
+        switch (_selectedType)
         {
             case ScriptType.Manager:
                 {
@@ -147,10 +147,10 @@ public class ManagerScriptCreator : BaseScriptCreator
 
         EditorGUILayout.BeginVertical("helpbox");
         {
-            selectedType = (ScriptType) EditorGUILayout.EnumPopup("Manager 타입 선택", selectedType);
+            _selectedType = (ScriptType) EditorGUILayout.EnumPopup("Manager 타입 선택", _selectedType);
 
             // UI 타입에 따른 설명 제공
-            string description = selectedType switch
+            string description = _selectedType switch
             {
                 ScriptType.Manager => "Manager: 게임 오브젝트를 가지는 매니저 (예: 카메라, UI)",
                 ScriptType.SubManager => "SubManager: 오브젝트 없이 데이터 및 함수만 가지는 매니저 (예: 미션, 네트워크)",

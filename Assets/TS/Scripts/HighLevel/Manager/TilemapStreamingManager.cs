@@ -625,56 +625,97 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     public Rect CreateRect(in Vector2 position, in Vector2 size)
     => new Rect(position - size * 0.5f, size);
 
-    private MapNode[] GetNeighborNodes(int2 grid)
+    private TilemapPatternData[] GetNeighborDatas(int2 grid)
     {
-        MapNode[] neighborNodes = new MapNode[4];
+        TilemapPatternData[] neighborNodes = new TilemapPatternData[4];
 
         if (_mapDatas.TryGetValue(new int2(grid.x, grid.y + 1), out var upNode))
-            neighborNodes[(int) FourDirection.Up] = upNode;
+            neighborNodes[(int) FourDirection.Up] = _patternRegistry.GetPattern(upNode.PatternID);
 
         if (_mapDatas.TryGetValue(new int2(grid.x, grid.y - 1), out var downNode))
-            neighborNodes[(int) FourDirection.Down] = downNode;
+            neighborNodes[(int) FourDirection.Down] = _patternRegistry.GetPattern(downNode.PatternID);
 
         if (_mapDatas.TryGetValue(new int2(grid.x - 1, grid.y), out var leftNode))
-            neighborNodes[(int) FourDirection.Left] = leftNode;
+            neighborNodes[(int) FourDirection.Left] = _patternRegistry.GetPattern(leftNode.PatternID);
 
         if (_mapDatas.TryGetValue(new int2(grid.x + 1, grid.y), out var rightNode))
-            neighborNodes[(int) FourDirection.Right] = rightNode;
+            neighborNodes[(int) FourDirection.Right] = _patternRegistry.GetPattern(rightNode.PatternID);
 
         return neighborNodes;
     }
 
-    public TilemapPatternData GetRandomMap(int2 grid)
+    public RandomMapResult GetRandomMap(int2 grid)
     {
         if (_patternRegistry == null)
-            return null;
-
-        MapNode[] neighborNodes = GetNeighborNodes(grid);
-        List<string> possiblePatterns = new List<string>();
-
-        foreach (var pattern in _patternRegistry.AllPatterns)
         {
-            bool pass = false;
-            foreach (var neighborNode in neighborNodes)
-            {
-                if (neighborNode == null)
-                    continue;
-            }
-
-            if (!pass)
-            {
-
-
-            }
+            this.DebugLogError("Failed to map: registry is null");
+            return default;
         }
 
-        if (possiblePatterns.Count == 0)
-            return null;
+        var neighborDatas = GetNeighborDatas(grid);
+        TilemapPatternData selectPatternData = null;
+        int randomCount = 0;
 
-        int randomIndex = UnityEngine.Random.Range(0, possiblePatterns.Count);
-        string randomPattern = possiblePatterns[randomIndex];
+        foreach (TilemapPatternData pattern in _patternRegistry.AllPatterns)
+        {
+            bool pass = false;
+            for (FourDirection dir = FourDirection.Up;
+            System.Enum.IsDefined(typeof(FourDirection), dir);
+            dir++)
+            {
+                var neighborData = neighborDatas[(int) dir];
+                if (neighborData == null)
+                    continue;
 
-        return _patternRegistry.GetPattern(randomPattern);
+                if (!pattern.CheckOverlap(neighborData, dir))
+                {
+                    pass = true;
+                    break;
+                }
+            }
+
+            if (pass)
+                continue;
+
+            if (UnityEngine.Random.Range(0, ++randomCount) == 0)
+                selectPatternData = pattern;
+        }
+
+        if (selectPatternData == null)
+            return default;
+
+        int topCount = 0, bottomCount = 0;
+        int topPosition = -1, bottomPosition = -1;
+        long topOverlap = 0;
+        long bottomOverlap = 0;
+
+        if (neighborDatas[(int) FourDirection.Up] != null)
+            topOverlap = selectPatternData.GetOverlap(neighborDatas[(int) FourDirection.Up], FourDirection.Up);
+
+        if (neighborDatas[(int) FourDirection.Down] != null)
+            bottomOverlap = selectPatternData.GetOverlap(neighborDatas[(int) FourDirection.Down], FourDirection.Down);
+
+        for (int num = 0; num < IntDefine.MAP_TOTAL_GRID_WIDTH; num++)
+        {
+            var bit = 1L << num;
+            var compareTop = topOverlap | bit;
+            var compareBottom = bottomOverlap | bit;
+            if (topOverlap > 0
+            && compareTop > 0
+            && UnityEngine.Random.Range(0, ++topCount) == 0)
+                topPosition = num;
+
+            if (bottomOverlap > 0
+            && compareBottom > 0
+            && UnityEngine.Random.Range(0, ++bottomCount) == 0)
+                bottomPosition = num;
+        }
+
+        string id = selectPatternData.PatternID;
+        int2 topPos = new int2(topPosition, topPosition >= 0 ? selectPatternData.MaxHeight : -1);
+        int2 bottomPos = new int2(bottomPosition, bottomPosition >= 0 ? selectPatternData.MinHeight : -1);
+
+        return new RandomMapResult(id, topPos, bottomPos);
     }
 
     #endregion

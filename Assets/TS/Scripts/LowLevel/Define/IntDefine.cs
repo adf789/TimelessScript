@@ -11,4 +11,8 @@ public class IntDefine
     public const int MAP_TOTAL_GRID_WIDTH = 50;
     public const int MAP_TOTAL_GRID_HEIGHT = 10;
     #endregion MAP
+
+    #region EDITOR REFERENCE
+    public const int EDITOR_REF_ENTITY_SCENE_SECTION_INDEX = 102900000;
+    #endregion EDITOR REFERENCE
 }
