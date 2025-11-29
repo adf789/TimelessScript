@@ -50,8 +50,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private TilemapPatternRegistry _patternRegistry;
 
     // 패턴 캐시
-    private readonly Dictionary<int2, LoadedPattern> _loadedPatterns = new Dictionary<int2, LoadedPattern>();
-    private readonly Dictionary<LadderKey, Entity> _loadedLadders = new Dictionary<LadderKey, Entity>();
     private readonly Dictionary<int2, GroundExtensionButtonAddon> _loadedExtensionButtons = new Dictionary<int2, GroundExtensionButtonAddon>();
 
     // 로딩 관리
@@ -67,18 +65,14 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private bool _isInitialized;
 
     // 모든 맵 데이터
-    private Dictionary<int2, MapNode> _mapDatas = new Dictionary<int2, MapNode>();
+    private Dictionary<int2, MapNodeEntry> _mapDatas = new Dictionary<int2, MapNodeEntry>();
+    private Dictionary<GridPair, int> _ladderDatas = new Dictionary<GridPair, int>();
 
     // 콜백 이벤트
     private System.Action<int2> _onEventExtensionMap = null;
     #endregion
 
     #region Unity Lifecycle
-
-    private void Start()
-    {
-        Initialize();
-    }
 
     private void Update()
     {
@@ -106,7 +100,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Initialization
 
-    public async void Initialize()
+    public async UniTask Initialize()
     {
         if (_isInitialized) return;
 
@@ -142,13 +136,20 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         // 테스트 데이터
         var basePosition = new int2(0, 0);
-        var baseMap = new MapNode("BaseTown", basePosition);
+        var baseMap = new MapNodeEntry("BaseTown")
+        {
+            GridOffset = basePosition,
+            PatternData = _patternRegistry.GetPattern("BaseTown")
+        };
 
         var secondPosition = new int2(0, -1);
-        var secondMap = new MapNode("BaseTown_1", secondPosition);
+        var secondMap = new MapNodeEntry("BaseTown_1")
+        {
+            GridOffset = secondPosition,
+            PatternData = _patternRegistry.GetPattern("BaseTown_1")
+        };
 
-        baseMap.SetNodeInDirection(secondMap, FourDirection.Down, new int2(33, 3));
-        secondMap.SetNodeInDirection(baseMap, FourDirection.Up, new int2(33, 11));
+        _ladderDatas[new GridPair(basePosition, secondPosition)] = 33;
 
         _mapDatas[basePosition] = baseMap;
         _mapDatas[secondPosition] = secondMap;
@@ -261,12 +262,12 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Pattern Loading - Core
 
-    public async UniTask<GameObject> LoadPattern(string patternID, int2 gridOffset)
+    public async UniTask<bool> LoadPattern(string patternID, int2 gridOffset)
     {
         if (!_isInitialized)
         {
             this.DebugLogError("Not initialized!");
-            return null;
+            return false;
         }
 
         // 중복 로드 체크
@@ -281,14 +282,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             return await WaitForPatternLoad(gridOffset);
         }
 
-        // 용량 체크
-        await EnsureLoadCapacity();
-
         // 패턴 데이터 검증
         var patternData = _patternRegistry.GetPattern(patternID);
         if (!ValidatePatternData(patternData, patternID))
         {
-            return null;
+            return false;
         }
 
         // 로딩 실행
@@ -297,7 +295,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private bool TryGetLoadedPattern(int2 key, out GameObject instance)
     {
-        if (_loadedPatterns.TryGetValue(key, out var loaded))
+        if (_mapDatas.TryGetValue(key, out var loaded))
         {
             instance = loaded.TilemapInstance;
             return instance != null;
@@ -319,17 +317,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private async UniTask<GameObject> WaitForPatternLoad(int2 key)
     {
-        await UniTask.WaitUntil(() => _loadedPatterns.ContainsKey(key) || !_loadingKeys.Contains(key));
-        return _loadedPatterns.TryGetValue(key, out var loaded) ? loaded.TilemapInstance : null;
-    }
-
-    private async UniTask EnsureLoadCapacity()
-    {
-        if (_loadedPatterns.Count >= _maxLoadedPatterns)
-        {
-            this.DebugLogWarning($"Max loaded patterns reached ({_maxLoadedPatterns}). Unloading distant patterns...");
-            await UnloadDistantPatterns(_cameraPosition, 1);
-        }
+        await UniTask.WaitUntil(() => _mapDatas.ContainsKey(key) || !_loadingKeys.Contains(key));
+        return _mapDatas.TryGetValue(key, out var loaded) ? loaded.TilemapInstance : null;
     }
 
     private bool ValidatePatternData(TilemapPatternData patternData, string patternID)
@@ -349,127 +338,108 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return true;
     }
 
-    private async UniTask<GameObject> LoadPatternInternal(string patternID, int2 gridOffset, TilemapPatternData patternData)
+    private async UniTask<bool> LoadPatternInternal(string patternID, int2 gridOffset, TilemapPatternData patternData)
     {
         _loadingKeys.Add(gridOffset);
 
         try
         {
-            var instance = await InstantiateTilemap(patternData, gridOffset);
-            if (instance == null)
+            var newTilemap = await InstantiateTilemap(patternData, gridOffset);
+            if (newTilemap == null)
             {
                 _loadingKeys.Remove(gridOffset);
-                return null;
+                return false;
             }
 
-            if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
+            if (_mapDatas.TryGetValue(gridOffset, out var mapNode))
             {
-                var subSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
+                mapNode.TilemapInstance = newTilemap;
 
-                loadedPattern = RegisterLoadedPattern(patternID, gridOffset, patternData, instance, subSceneEntity);
+                if (!mapNode.IsLoaded)
+                {
+                    var subSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
 
-                // SubScene의 모든 Entity에 offset 적용
-                ApplyOffsetToSubSceneEntities(World.DefaultGameObjectInjectionWorld.EntityManager, loadedPattern, gridOffset);
+                    mapNode.SubSceneEntity = subSceneEntity;
 
-                await LoadLadders(gridOffset);
+                    // SubScene의 모든 Entity에 offset 적용
+                    ApplyOffsetToSubSceneEntities(mapNode);
 
-                await LoadExtensionButton(gridOffset);
-            }
-            else
-            {
-                loadedPattern.IsLoaded = true;
-                loadedPattern.TilemapInstance = instance;
+                    await LoadLadders(gridOffset);
+                    await LoadExtensionButton(gridOffset);
+                }
             }
 
             _loadingKeys.Remove(gridOffset);
 
-            return instance;
+            return true;
         }
         catch (System.Exception ex)
         {
             this.DebugLogError($"Exception loading pattern {patternID}: {ex.Message}");
             _loadingKeys.Remove(gridOffset);
-            return null;
+            return false;
         }
     }
 
     private async UniTask LoadLadders(int2 gridOffset)
     {
         // 해당 그리드의 패턴이 로드되었는지
-        if (!_loadedPatterns.TryGetValue(gridOffset, out var pattern))
+        if (!_mapDatas.TryGetValue(gridOffset, out var node)
+        && node.IsLoaded)
             return;
 
-        if (!_mapDatas.TryGetValue(gridOffset, out var node))
-            return;
+        var upGridOffset = new int2(gridOffset.x, gridOffset.y + 1);
+        var downGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
 
         // 위 방향에 연결된 노드가 있는지
-        if (node.TryGetConnectionInDirection(FourDirection.Up, out var upLink))
+        if (_mapDatas.TryGetValue(upGridOffset, out MapNodeEntry upNode))
         {
-            var upGridOffset = new int2(gridOffset.x, gridOffset.y + 1);
-            if (!_loadedPatterns.TryGetValue(upGridOffset, out var upPattern))
+            if (!_ladderDatas.TryGetValue(new GridPair(gridOffset, upGridOffset), out int ladderPositionX))
+            {
+                this.DebugLogError($"Failed to found up ladder position: {gridOffset} -> {upGridOffset}");
                 return;
-
-            if (IsLadderLoaded(new LadderKey(gridOffset, upGridOffset)))
-                return;
+            }
 
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
-            var basePosition = node.GetLinkPosition(FourDirection.Up);
-            var oppsitionPosition = upLink.Node.GetLinkPosition(FourDirection.Down);
-            float x = basePosition.x;
-            float y = (basePosition.y + oppsitionPosition.y) * 0.5f;
+            float3 ladderPosition = GetLadderPosition(upNode, node, ladderPositionX);
 
-            float3 ladderPosition = new float3(x, y, 0);
-
-            // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
-            // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
-            Entity bottomGroundEntity = pattern.MaxGroundEntity;
-            Entity topGroundEntity = upPattern.MinGroundEntity;
+            // 지형 Entity 가져옴
+            Entity bottomGroundEntity = node.MaxGroundEntity;
+            Entity topGroundEntity = upNode.MinGroundEntity;
 
             // 사다리 Entity 생성
-            Entity ladderEntity = CreateLadderEntity(
+            CreateLadderEntity(
                 ladderPosition,
                 topGroundEntity,
                 bottomGroundEntity);
-
-            // 로드된 사다리 저장
-            _loadedLadders[new LadderKey(gridOffset, upGridOffset)] = ladderEntity;
 
             this.DebugLog($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
         }
 
         // 아래 방향에 연결된 노드가 있는지
-        if (node.TryGetConnectionInDirection(FourDirection.Down, out var downLink))
+        if (_mapDatas.TryGetValue(downGridOffset, out var downNode))
         {
-            var downGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
-            if (!_loadedPatterns.TryGetValue(downGridOffset, out var downPattern))
+            if (!_ladderDatas.TryGetValue(new GridPair(gridOffset, downGridOffset), out int ladderPositionX))
+            {
+                this.DebugLogError($"Failed to found down ladder position: {gridOffset} -> {downGridOffset}");
                 return;
-
-            if (IsLadderLoaded(new LadderKey(gridOffset, downGridOffset)))
-                return;
+            }
 
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
-            var basePosition = node.GetLinkPosition(FourDirection.Down);
-            var oppsitionPosition = downLink.Node.GetLinkPosition(FourDirection.Up);
-            float x = basePosition.x;
-            float y = (basePosition.y + oppsitionPosition.y) * 0.5f;
-
-            float3 ladderPosition = new float3(x, y, 0);
+            float3 ladderPosition = GetLadderPosition(node, downNode, ladderPositionX);
 
             // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
             // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
-            Entity bottomGroundEntity = downPattern.MaxGroundEntity;
-            Entity topGroundEntity = pattern.MinGroundEntity;
+            Entity bottomGroundEntity = downNode.MaxGroundEntity;
+            Entity topGroundEntity = node.MinGroundEntity;
 
             // 사다리 Entity 생성
-            Entity ladderEntity = CreateLadderEntity(
+            CreateLadderEntity(
                 ladderPosition,
                 topGroundEntity,
                 bottomGroundEntity);
-
-            // 로드된 사다리 저장
-            _loadedLadders[new LadderKey(gridOffset, downGridOffset)] = ladderEntity;
 
             this.DebugLog($"Ladder created at {ladderPosition} between {gridOffset} and {downGridOffset}");
         }
@@ -498,11 +468,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         {
             this.DebugLog($"No SubScene reference for pattern: {patternID}");
             return Entity.Null;
-        }
-
-        if (_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
-        {
-            return loadedPattern.SubSceneEntity;
         }
 
         var world = World.DefaultGameObjectInjectionWorld;
@@ -534,23 +499,25 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return subSceneEntity;
     }
 
-    private void ApplyOffsetToSubSceneEntities(EntityManager entityManager, LoadedPattern loadedPattern, int2 gridOffset)
+    private void ApplyOffsetToSubSceneEntities(MapNodeEntry mapNode)
     {
-        if (loadedPattern == null)
+        if (mapNode == null)
             return;
 
+        EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+
         // SubScene의 SceneReference 가져오기
-        if (!entityManager.HasComponent<SceneReference>(loadedPattern.SubSceneEntity))
+        if (!entityManager.HasComponent<SceneReference>(mapNode.SubSceneEntity))
             return;
 
         // gridOffset 계산
         float3 offset = new float3(
-            gridOffset.x * IntDefine.MAP_TOTAL_GRID_WIDTH,
-            gridOffset.y * IntDefine.MAP_TOTAL_GRID_HEIGHT,
+            mapNode.GridOffset.x * IntDefine.MAP_TOTAL_GRID_WIDTH,
+            mapNode.GridOffset.y * IntDefine.MAP_TOTAL_GRID_HEIGHT,
             0
         );
 
-        var sceneRef = entityManager.GetComponentData<SceneReference>(loadedPattern.SubSceneEntity);
+        var sceneRef = entityManager.GetComponentData<SceneReference>(mapNode.SubSceneEntity);
 
         // SubScene에 속한 모든 Entity 쿼리
         using var query = entityManager.CreateEntityQuery(
@@ -582,44 +549,19 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                     {
                         if (min > reference.Max.y)
                         {
-                            loadedPattern.MinGroundEntity = reference.Ground;
+                            mapNode.MinGroundEntity = reference.Ground;
                             min = reference.Max.y;
                         }
 
                         if (max < reference.Max.y)
                         {
-                            loadedPattern.MaxGroundEntity = reference.Ground;
+                            mapNode.MaxGroundEntity = reference.Ground;
                             max = reference.Max.y;
                         }
                     }
                 }
             }
         }
-    }
-
-    private LoadedPattern RegisterLoadedPattern(string patternID, int2 gridOffset, TilemapPatternData patternData, GameObject instance, Entity subSceneEntity)
-    {
-        var loadedPattern = new LoadedPattern
-        {
-            PatternID = patternID,
-            GridOffset = gridOffset,
-            PatternData = patternData,
-            TilemapInstance = instance,
-            SubSceneEntity = subSceneEntity,
-            LoadTime = Time.time,
-            IsLoaded = true,
-        };
-
-        _loadedPatterns[gridOffset] = loadedPattern;
-
-        this.DebugLog($"Pattern loaded: {gridOffset}");
-
-        return loadedPattern;
-    }
-
-    private bool IsLadderLoaded(LadderKey key)
-    {
-        return _loadedLadders.ContainsKey(key);
     }
 
     public Rect CreateRect(in Vector2 position, in Vector2 size)
@@ -724,7 +666,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     public async UniTask UnloadPattern(int2 gridOffset)
     {
-        if (!_loadedPatterns.TryGetValue(gridOffset, out var loadedPattern))
+        if (!_mapDatas.TryGetValue(gridOffset, out var mapNode))
         {
             this.DebugLog($"Pattern not loaded: {gridOffset}");
             return;
@@ -732,13 +674,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         try
         {
-            UnloadTilemap(loadedPattern);
-
-            loadedPattern.IsLoaded = false;
-            loadedPattern.TilemapInstance = null;
-
-            if (_mapDatas.TryGetValue(gridOffset, out var node))
-                node.IsLoaded = false;
+            UnloadTilemap(mapNode);
 
             this.DebugLog($"Pattern unloaded and saved to history: {gridOffset}");
         }
@@ -750,11 +686,15 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         await UniTask.Yield();
     }
 
-    private void UnloadTilemap(LoadedPattern loaded)
+    private void UnloadTilemap(MapNodeEntry mapNode)
     {
-        if (loaded.TilemapInstance != null)
+        if (mapNode == null)
+            return;
+
+        if (mapNode.TilemapInstance != null)
         {
-            Object.Destroy(loaded.TilemapInstance);
+            Object.Destroy(mapNode.TilemapInstance);
+            mapNode.TilemapInstance = null;
         }
     }
 
@@ -762,7 +702,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         var patternsToUnload = new List<int2>();
 
-        foreach (var loaded in _loadedPatterns.Values)
+        foreach (var loaded in _mapDatas.Values)
         {
             patternsToUnload.Add(loaded.GridOffset);
         }
@@ -772,38 +712,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             await UnloadPattern(gridOffset);
         }
 
-        _loadedPatterns.Clear();
+        _mapDatas.Clear();
 
         this.DebugLog("All patterns unloaded");
-    }
-
-    public async UniTask UnloadDistantPatterns(Vector2 position, int countToUnload = 1)
-    {
-        var distantPatterns = FindDistantPatterns(position, countToUnload);
-
-        foreach (var pattern in distantPatterns)
-        {
-            await UnloadPattern(pattern.GridOffset);
-        }
-    }
-
-    private List<LoadedPattern> FindDistantPatterns(Vector2 position, int count)
-    {
-        var patterns = new List<LoadedPattern>(_loadedPatterns.Values);
-        patterns.Sort((a, b) =>
-        {
-            var distA = GetDistanceToPattern(a, position);
-            var distB = GetDistanceToPattern(b, position);
-            return distB.CompareTo(distA);
-        });
-
-        var result = new List<LoadedPattern>();
-        for (int i = 0; i < count && i < patterns.Count; i++)
-        {
-            result.Add(patterns[i]);
-        }
-
-        return result;
     }
 
     #endregion
@@ -846,8 +757,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                     if (node.IsLoaded)
                         continue;
 
-                    if (await LoadPattern(node.PatternID, grid) != null)
-                        node.IsLoaded = true;
+                    await LoadPattern(node.PatternID, grid);
                 }
             }
         }
@@ -855,27 +765,33 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private async UniTask UnloadPatternsOutsideCameraView(Rect cameraRect)
     {
-        var patternsToUnload = new List<LoadedPattern>();
+        List<int2> unloadGrids = null;
 
-        foreach (var loaded in _loadedPatterns.Values)
+        foreach (var mapData in _mapDatas)
         {
-            if (ShouldUnloadByCamera(loaded, cameraRect))
+            if (ShouldUnloadByCamera(mapData.Value, cameraRect))
             {
-                if (!loaded.IsLoaded)
+                if (!mapData.Value.IsLoaded)
                     continue;
 
-                patternsToUnload.Add(loaded);
+                if (unloadGrids == null)
+                    unloadGrids = new List<int2> { mapData.Key };
+                else
+                    unloadGrids.Add(mapData.Key);
             }
         }
 
-        foreach (var pattern in patternsToUnload)
+        if (unloadGrids != null)
         {
-            await UnloadPattern(pattern.GridOffset);
-        }
+            foreach (var grid in unloadGrids)
+            {
+                await UnloadPattern(grid);
+            }
 
-        if (patternsToUnload.Count > 0)
-        {
-            this.DebugLog($"Auto-unloaded {patternsToUnload.Count} patterns outside camera view");
+            if (unloadGrids.Count > 0)
+            {
+                this.DebugLog($"Auto-unloaded {unloadGrids.Count} patterns outside camera view");
+            }
         }
     }
 
@@ -933,6 +849,22 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         // Right
         yield return new int2(currentGrid.x + 1, currentGrid.y);
+    }
+
+    private Vector3 GetLadderPosition(MapNodeEntry upNode, MapNodeEntry downNode, int ladderOffsetX)
+    {
+        if (upNode == null || downNode == null)
+            return Vector3.zero;
+
+        int2 upGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * upNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * upNode.GridOffset.y);
+        int2 downGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * downNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * downNode.GridOffset.y);
+        float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f;
+        float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f;
+
+        float ladderX = upGridPosition.x + IntDefine.MAP_TOTAL_GRID_WIDTH * ladderOffsetX + IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f;
+        float ladderY = (upNodeOffsetY + downNodeOffsetY) * 0.5f;
+
+        return new Vector3(ladderX, ladderY, 0);
     }
 
     #endregion
@@ -1020,15 +952,15 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return CreateRect(_cameraPosition, size);
     }
 
-    private float GetDistanceToPattern(LoadedPattern pattern, Vector2 position)
+    private float GetDistanceToPattern(MapNodeEntry mapNode, Vector2 position)
     {
-        var patternCenter = CalculatePatternCenter(pattern.GridOffset);
+        var patternCenter = CalculatePatternCenter(mapNode.GridOffset);
         return Vector2.SqrMagnitude(position - patternCenter);
     }
 
-    private bool ShouldUnloadByCamera(LoadedPattern pattern, Rect cameraRect)
+    private bool ShouldUnloadByCamera(MapNodeEntry mapNode, Rect cameraRect)
     {
-        var patternRect = CalculatePatternRect(pattern.GridOffset);
+        var patternRect = CalculatePatternRect(mapNode.GridOffset);
         return !Utility.Geometry.IsAABBOverlap(in cameraRect, in patternRect);
     }
 
@@ -1050,7 +982,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         Gizmos.color = _debugColor;
         var size = new Vector3(_patternRegistry.GridSize.x, _patternRegistry.GridSize.y, 0);
 
-        foreach (var loaded in _loadedPatterns.Values)
+        foreach (var loaded in _mapDatas.Values)
         {
             var center = CalculatePatternCenter(loaded.GridOffset);
 
@@ -1216,82 +1148,12 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Nested Classes
 
-    private class LoadedPattern
-    {
-        public string PatternID;
-        public int2 GridOffset;
-        public TilemapPatternData PatternData;
-        public GameObject TilemapInstance;
-        public Entity SubSceneEntity;
-        public Entity MinGroundEntity;
-        public Entity MaxGroundEntity;
-        public float LoadTime;
-        public bool IsLoaded;
-    }
-
     private struct LoadRequest
     {
         public string PatternID;
         public int2 GridOffset;
         public int Priority;
         public float RequestTime;
-    }
-
-    private class PatternHistory
-    {
-        public string PatternID;
-        public int2 GridOffset;
-        public float UnloadTime;
-    }
-
-    private struct LadderKey
-    {
-        public int2 FirstGrid => _firstGrid;
-        public int2 SecondGrid => _secondGrid;
-
-        private int2 _firstGrid;
-        private int2 _secondGrid;
-
-        public LadderKey(int2 firstGrid, int2 secondGrid)
-        {
-            // x좌표 비교
-            if (firstGrid.x < secondGrid.x)
-            {
-                _firstGrid = firstGrid;
-                _secondGrid = secondGrid;
-                return;
-            }
-            else if (firstGrid.x > secondGrid.x)
-            {
-                _firstGrid = secondGrid;
-                _secondGrid = firstGrid;
-                return;
-            }
-
-            // y좌표 비교
-            if (firstGrid.y < secondGrid.y)
-            {
-                _firstGrid = firstGrid;
-                _secondGrid = secondGrid;
-                return;
-            }
-            else if (firstGrid.y > secondGrid.y)
-            {
-                _firstGrid = secondGrid;
-                _secondGrid = firstGrid;
-                return;
-            }
-
-            // 완전히 같은 그리드인 경우
-            Debug.LogError("[LadderKey]: Create same grid!");
-            _firstGrid = firstGrid;
-            _secondGrid = secondGrid;
-        }
-
-        public override int GetHashCode()
-        {
-            return System.HashCode.Combine(FirstGrid, SecondGrid);
-        }
     }
 
     #endregion

@@ -31,6 +31,8 @@ public class TownFlow : BaseFlow
             return;
         }
 
+        await TilemapStreamingManager.Instance.Initialize();
+
         TilemapStreamingManager.Instance.SetTestMapData();
         TilemapStreamingManager.Instance.SetEventExtensionMap(OnExtensionMap);
         TilemapStreamingManager.Instance.SetEnableAutoStreaming(true);
