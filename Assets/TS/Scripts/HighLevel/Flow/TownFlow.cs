@@ -17,13 +17,13 @@ public class TownFlow : BaseFlow
         await OpenScene();
 
         // 2. Tilemap 패턴 로드
-        await LoadTilemapPatterns();
+        await InitializeMap();
 
         // 3. UI 오픈
         OpenUI();
     }
 
-    private async UniTask LoadTilemapPatterns()
+    private async UniTask InitializeMap()
     {
         if (TilemapStreamingManager.Instance == null)
         {
@@ -31,11 +31,33 @@ public class TownFlow : BaseFlow
             return;
         }
 
+        var dto = await LoadMapDto();
+
         await TilemapStreamingManager.Instance.Initialize();
 
-        TilemapStreamingManager.Instance.SetTestMapData();
+        TilemapStreamingManager.Instance.SetMapData(in dto);
         TilemapStreamingManager.Instance.SetEventExtensionMap(OnExtensionMap);
         TilemapStreamingManager.Instance.SetEnableAutoStreaming(true);
+    }
+
+    private async UniTask<MapDto> LoadMapDto()
+    {
+        string playerId = AuthManager.Instance.PlayerID;
+        var mapDoc = await DatabaseSubManager.Instance.GetDocumentAsync("maps", playerId);
+
+        if (mapDoc != null)
+        {
+            var mapDic = mapDoc.ToDictionary();
+            if (mapDic.TryGetValue("maps", out var value)
+            && value is string valueJson)
+            {
+                var dto = JsonUtility.FromJson<MapDto>(valueJson);
+
+                return dto;
+            }
+        }
+
+        return default;
     }
 
     public override async UniTask Exit()
@@ -78,5 +100,23 @@ public class TownFlow : BaseFlow
         this.DebugLog($"Load map: {grid}");
 
         var randomMap = TilemapStreamingManager.Instance.GetRandomMap(grid);
+        var mapDto = TilemapStreamingManager.Instance.CreateDto();
+
+        var mapData = new System.Collections.Generic.Dictionary<string, object>
+            {
+                { "maps", JsonUtility.ToJson(mapDto) }
+            };
+
+        // Firebase Firestore에 저장 (users 컬렉션의 {userId} 문서)
+        bool success = await DatabaseSubManager.Instance.SetDocumentAsync("maps", AuthManager.Instance.PlayerID, mapData);
+
+        if (success)
+        {
+
+        }
+        else
+        {
+            this.DebugLogError($"Failed to save maps");
+        }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 
+[Serializable]
 public struct GridPair : IEquatable<GridPair>
 {
     private int2 _firstGrid;

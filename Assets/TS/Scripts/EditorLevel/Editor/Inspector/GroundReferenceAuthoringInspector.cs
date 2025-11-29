@@ -18,7 +18,7 @@ public class GroundReferenceAuthoringInspector : Editor
     private Vector2 _ladderScrollPosition;
     private string[] _groundNames;
     private string[] _filteredGroundNames;
-    private long[] _ports;
+    private MapLinkInfo _mapLinkInfo;
     private int _selectTopGroundIndex;
     private int _selectBottomGroundIndex;
     private void OnEnable()
@@ -87,6 +87,8 @@ public class GroundReferenceAuthoringInspector : Editor
         if (_mapData == null)
             await SetTilemapData();
 
+        _mapLinkInfo = new MapLinkInfo();
+
         SetPortValues();
     }
 
@@ -114,9 +116,6 @@ public class GroundReferenceAuthoringInspector : Editor
 
     private void SetPortValues()
     {
-        if (_ports == null)
-            _ports = new long[4];
-
         bool top = false, bottom = false;
         int topMinX = int.MaxValue, topMaxX = -1, topY = -1;
         int bottomMinX = int.MaxValue, bottomMaxX = -1, bottomY = int.MaxValue;
@@ -128,10 +127,10 @@ public class GroundReferenceAuthoringInspector : Editor
             Vector2Int max = element.FindPropertyRelative("_max").vector2IntValue;
 
             if (min.x == 0)
-                _ports[(int) FourDirection.Left] |= 1L << max.y;
+                _mapLinkInfo.Left |= 1L << max.y;
 
             if (max.x == IntDefine.MAP_TOTAL_GRID_WIDTH - 1)
-                _ports[(int) FourDirection.Right] |= 1L << max.y;
+                _mapLinkInfo.Right |= 1L << max.y;
 
             if (max.y > topY)
             {
@@ -152,23 +151,19 @@ public class GroundReferenceAuthoringInspector : Editor
 
         if (top)
         {
-            for (int num = topMinX; num <= topMaxX; num++)
-            {
-                _ports[(int) FourDirection.Up] |= 1L << num;
-            }
+            _mapLinkInfo.UpMin = topMinX;
+            _mapLinkInfo.UpMax = topMaxX;
+            _mapLinkInfo.UpY = topY;
         }
 
         if (bottom)
         {
-            for (int num = bottomMinX; num <= bottomMaxX; num++)
-            {
-                _ports[(int) FourDirection.Down] |= 1L << num;
-            }
+            _mapLinkInfo.DownMin = bottomMinX;
+            _mapLinkInfo.DownMax = bottomMaxX;
+            _mapLinkInfo.DownY = bottomY;
         }
 
-        _mapData?.SetPortValues(_ports);
-        _mapData?.SetMinHeight(bottomMaxX);
-        _mapData?.SetMaxHeight(topMaxX);
+        _mapData?.SetLinkInfo(_mapLinkInfo);
     }
 
     public override void OnInspectorGUI()
@@ -204,13 +199,30 @@ public class GroundReferenceAuthoringInspector : Editor
     {
         EditorGUILayout.LabelField("Ports", EditorStyles.boldLabel);
 
-        for (FourDirection direction = FourDirection.Up;
-        System.Enum.IsDefined(typeof(FourDirection), direction);
-        direction++)
+        for (FourDirection dir = FourDirection.Up;
+        System.Enum.IsDefined(typeof(FourDirection), dir);
+        dir++)
         {
-            int index = (int) direction;
-            long value = _ports != null && _ports.Length > index ? _ports[index] : 0;
-            EditorGUILayout.LabelField($"{direction}: {value}");
+            switch (dir)
+            {
+                case FourDirection.Left:
+                case FourDirection.Right:
+                    {
+                        long value = _mapLinkInfo.GetHorizontal(dir);
+
+                        EditorGUILayout.LabelField($"{dir}: {value}");
+                    }
+                    break;
+
+                case FourDirection.Up:
+                case FourDirection.Down:
+                    {
+                        var value = _mapLinkInfo.GetVertical(dir);
+
+                        EditorGUILayout.LabelField($"{dir}: min {value.min} max {value.max}");
+                    }
+                    break;
+            }
         }
     }
 

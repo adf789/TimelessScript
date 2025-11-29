@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using System.Collections.Generic;
 using Unity.Entities.Serialization;
 
 /// <summary>
@@ -21,42 +20,53 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("씬 엔티티 Addressable 참조")]
     public EntitySceneReference SubScene;
 
-    [HideInInspector]
-    public int MinHeight { get; private set; }
-    [HideInInspector]
-    public int MaxHeight { get; private set; }
+    public int MinHeight => _mapLinkInfo.GetVerticalY(FourDirection.Down);
+    public int MaxHeight => _mapLinkInfo.GetVerticalY(FourDirection.Up);
 
     [Tooltip("맵 연결부")]
     [HideInInspector]
-    [SerializeField] private long[] _portValues;
+    [SerializeField] private MapLinkInfo _mapLinkInfo;
 
     public bool CheckOverlap(TilemapPatternData data, FourDirection dir)
     {
         if (data == null)
             return false;
 
-        if (!CheckPortCount() || !data.CheckPortCount())
-            return false;
+        var oppositeDirection = GetOppositeDirection(dir);
 
-        var overlap = GetOverlap(data, dir);
+        switch (dir)
+        {
+            case FourDirection.Left:
+            case FourDirection.Right:
+                {
+                    long baseValue = _mapLinkInfo.GetHorizontal(dir);
+                    long compareValue = data._mapLinkInfo.GetHorizontal(oppositeDirection);
 
-        return overlap > 0;
+                    return (baseValue | compareValue) > 0;
+                }
+
+            case FourDirection.Up:
+            case FourDirection.Down:
+                {
+                    var baseValue = _mapLinkInfo.GetVertical(dir);
+                    var compareValue = data._mapLinkInfo.GetVertical(oppositeDirection);
+
+                    return baseValue.min <= compareValue.max && compareValue.min <= baseValue.max;
+                }
+
+            default:
+                return false;
+        }
     }
 
-    public long GetOverlap(TilemapPatternData data, FourDirection dir)
+    public (int min, int max) GetHighGroundSize()
     {
-        if (!CheckPortCount())
-            return 0;
+        return _mapLinkInfo.GetVertical(FourDirection.Up);
+    }
 
-        int dirIndex = (int) dir;
-
-        if (data == null || !data.CheckPortCount())
-            return _portValues[dirIndex];
-
-        int oppsiteDirIndex = (int) GetOppositeDirection(dir);
-        long compareValue = data._portValues[oppsiteDirIndex];
-
-        return _portValues[dirIndex] | compareValue;
+    public (int min, int max) GetLowGroundSize()
+    {
+        return _mapLinkInfo.GetVertical(FourDirection.Down);
     }
 
     private FourDirection GetOppositeDirection(FourDirection dir)
@@ -71,14 +81,6 @@ public class TilemapPatternData : ScriptableObject
         };
     }
 
-    private bool CheckPortCount()
-    {
-        if (_portValues == null)
-            return false;
-
-        return _portValues.Length >= 4;
-    }
-
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -89,19 +91,9 @@ public class TilemapPatternData : ScriptableObject
         }
     }
 
-    public void SetPortValues(long[] values)
+    public void SetLinkInfo(MapLinkInfo info)
     {
-        _portValues = values;
-    }
-
-    public void SetMinHeight(int value)
-    {
-        MinHeight = value;
-    }
-
-    public void SetMaxHeight(int value)
-    {
-        MaxHeight = value;
+        _mapLinkInfo = info;
     }
 #endif
 }

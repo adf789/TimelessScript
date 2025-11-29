@@ -7,12 +7,12 @@ using UnityEditor;
 public class TilemapPatternDataInspector : Editor
 {
     private TilemapPatternData _inspectorTarget;
-    private SerializedProperty _portValues;
+    private SerializedProperty _mapLinkInfo;
 
     private void OnEnable()
     {
         _inspectorTarget = (TilemapPatternData) target;
-        _portValues = serializedObject.FindProperty("_portValues");
+        _mapLinkInfo = serializedObject.FindProperty("_mapLinkInfo");
     }
 
     public override void OnInspectorGUI()
@@ -21,7 +21,7 @@ public class TilemapPatternDataInspector : Editor
 
         EditorGUI.BeginDisabledGroup(true);
         {
-            EditorGUILayout.PropertyField(_portValues);
+            EditorGUILayout.PropertyField(_mapLinkInfo);
         }
         EditorGUI.EndDisabledGroup();
     }

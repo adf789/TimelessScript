@@ -5,5 +5,5 @@ using Unity.Mathematics;
 public struct MapGridDto
 {
     public int2 Grid;
-    public int MapDataID;
+    public string MapDataID;
 }

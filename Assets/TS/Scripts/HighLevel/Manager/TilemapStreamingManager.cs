@@ -66,7 +66,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     // 모든 맵 데이터
     private Dictionary<int2, MapNodeEntry> _mapDatas = new Dictionary<int2, MapNodeEntry>();
-    private Dictionary<GridPair, int> _ladderDatas = new Dictionary<GridPair, int>();
 
     // 콜백 이벤트
     private System.Action<int2> _onEventExtensionMap = null;
@@ -132,27 +131,41 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     /// <summary>
     /// 테스트용
     /// </summary>
-    public void SetTestMapData()
+    public void SetMapData(in MapDto dto)
     {
-        // 테스트 데이터
-        var basePosition = new int2(0, 0);
-        var baseMap = new MapNodeEntry("BaseTown")
+        // // 테스트 데이터
+        // var basePosition = new int2(0, 0);
+        // var baseMap = new MapNodeEntry("BaseTown")
+        // {
+        //     GridOffset = basePosition,
+        //     PatternData = _patternRegistry.GetPattern("BaseTown")
+        // };
+
+        // var secondPosition = new int2(0, -1);
+        // var secondMap = new MapNodeEntry("BaseTown_1")
+        // {
+        //     GridOffset = secondPosition,
+        //     PatternData = _patternRegistry.GetPattern("BaseTown_1")
+        // };
+
+        // _mapDatas[basePosition] = baseMap;
+        // _mapDatas[secondPosition] = secondMap;
+
+        // var gridPair = new GridPair(basePosition, secondPosition);
+        // _ladderDatas[gridPair] = 33;
+
+        for (int i = 0; i < dto.MapCount; i++)
         {
-            GridOffset = basePosition,
-            PatternData = _patternRegistry.GetPattern("BaseTown")
-        };
+            var position = dto.MapGrids[i].Grid;
+            var id = dto.MapGrids[i].MapDataID;
+            var map = new MapNodeEntry(id)
+            {
+                GridOffset = position,
+                PatternData = _patternRegistry.GetPattern(id)
+            };
 
-        var secondPosition = new int2(0, -1);
-        var secondMap = new MapNodeEntry("BaseTown_1")
-        {
-            GridOffset = secondPosition,
-            PatternData = _patternRegistry.GetPattern("BaseTown_1")
-        };
-
-        _ladderDatas[new GridPair(basePosition, secondPosition)] = 33;
-
-        _mapDatas[basePosition] = baseMap;
-        _mapDatas[secondPosition] = secondMap;
+            _mapDatas[position] = map;
+        }
     }
 
     public void SetEventExtensionMap(System.Action<int2> onEvent)
@@ -394,12 +407,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         // 위 방향에 연결된 노드가 있는지
         if (_mapDatas.TryGetValue(upGridOffset, out MapNodeEntry upNode))
         {
-            if (!_ladderDatas.TryGetValue(new GridPair(gridOffset, upGridOffset), out int ladderPositionX))
-            {
-                this.DebugLogError($"Failed to found up ladder position: {gridOffset} -> {upGridOffset}");
-                return;
-            }
-
+            int ladderPositionX = 1;
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
             float3 ladderPosition = GetLadderPosition(upNode, node, ladderPositionX);
@@ -420,11 +428,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         // 아래 방향에 연결된 노드가 있는지
         if (_mapDatas.TryGetValue(downGridOffset, out var downNode))
         {
-            if (!_ladderDatas.TryGetValue(new GridPair(gridOffset, downGridOffset), out int ladderPositionX))
-            {
-                this.DebugLogError($"Failed to found down ladder position: {gridOffset} -> {downGridOffset}");
-                return;
-            }
+            int ladderPositionX = 1;
 
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
@@ -609,7 +613,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 if (neighborData == null)
                     continue;
 
-                if (!pattern.CheckOverlap(neighborData, dir))
+                if (neighborData != null
+                && !pattern.CheckOverlap(neighborData, dir))
                 {
                     pass = true;
                     break;
@@ -626,38 +631,40 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (selectPatternData == null)
             return default;
 
-        int topCount = 0, bottomCount = 0;
         int topPosition = -1, bottomPosition = -1;
-        long topOverlap = 0;
-        long bottomOverlap = 0;
+        var topGroundSize = selectPatternData.GetHighGroundSize();
+        var bottomGroundSize = selectPatternData.GetLowGroundSize();
 
-        if (neighborDatas[(int) FourDirection.Up] != null)
-            topOverlap = selectPatternData.GetOverlap(neighborDatas[(int) FourDirection.Up], FourDirection.Up);
+        if (topGroundSize.max > 0)
+            topPosition = (int) ((topGroundSize.min + topGroundSize.max) * 0.5f);
 
-        if (neighborDatas[(int) FourDirection.Down] != null)
-            bottomOverlap = selectPatternData.GetOverlap(neighborDatas[(int) FourDirection.Down], FourDirection.Down);
-
-        for (int num = 0; num < IntDefine.MAP_TOTAL_GRID_WIDTH; num++)
-        {
-            var bit = 1L << num;
-            var compareTop = topOverlap | bit;
-            var compareBottom = bottomOverlap | bit;
-            if (topOverlap > 0
-            && compareTop > 0
-            && UnityEngine.Random.Range(0, ++topCount) == 0)
-                topPosition = num;
-
-            if (bottomOverlap > 0
-            && compareBottom > 0
-            && UnityEngine.Random.Range(0, ++bottomCount) == 0)
-                bottomPosition = num;
-        }
+        if (bottomGroundSize.max > 0)
+            bottomPosition = (int) ((bottomGroundSize.min + bottomGroundSize.max) * 0.5f);
 
         string id = selectPatternData.PatternID;
         int2 topPos = new int2(topPosition, topPosition >= 0 ? selectPatternData.MaxHeight : -1);
         int2 bottomPos = new int2(bottomPosition, bottomPosition >= 0 ? selectPatternData.MinHeight : -1);
 
         return new RandomMapResult(id, topPos, bottomPos);
+    }
+
+    public MapDto CreateDto()
+    {
+        MapDto dto = new MapDto();
+
+        dto.MapGrids = new MapGridDto[_mapDatas.Count];
+
+        int index = 0;
+        foreach (var map in _mapDatas)
+        {
+            dto.MapGrids[index++] = new MapGridDto()
+            {
+                Grid = map.Key,
+                MapDataID = map.Value.PatternID
+            };
+        }
+
+        return dto;
     }
 
     #endregion
