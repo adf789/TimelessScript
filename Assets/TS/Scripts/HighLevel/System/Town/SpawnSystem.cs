@@ -30,11 +30,7 @@ public partial struct SpawnSystem : ISystem
         // 없어진 엔티티 처리
         var spawnCleanupJob = new SpawnCleanupJob
         {
-            currentTime = currentTime,
-            entityLookup = state.GetEntityStorageInfoLookup(),
-            spawnedObjectLookup = state.GetComponentLookup<SpawnedObjectComponent>(),
-            tsObjectLookup = SystemAPI.GetComponentLookup<TSObjectComponent>(true),
-            animationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(true)
+            entityLookup = SystemAPI.GetEntityStorageInfoLookup()
         };
 
         state.Dependency = spawnCleanupJob.ScheduleParallel(state.Dependency);

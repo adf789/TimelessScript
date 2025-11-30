@@ -14,7 +14,7 @@ public class GroundReferenceAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+            AddComponent(entity, new SetNameComponent(authoring.name));
 
             var referenceBuffer = AddBuffer<GroundReferenceBuffer>(entity);
 

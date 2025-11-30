@@ -57,7 +57,24 @@ public class TownFlow : BaseFlow
             }
         }
 
-        return default;
+        return await CreateBaseMapDto();
+    }
+
+    private async UniTask<MapDto> CreateBaseMapDto()
+    {
+        var mapDto = new MapDto()
+        {
+            MapGrids = new MapGridDto[1] { new MapGridDto() { Grid = int2.zero, MapDataID = "BaseTown" } }
+        };
+        var mapData = new System.Collections.Generic.Dictionary<string, object>
+            {
+                { "maps", JsonUtility.ToJson(mapDto) }
+            };
+
+        // Firebase Firestore에 저장
+        bool success = await DatabaseSubManager.Instance.SetDocumentAsync("maps", AuthManager.Instance.PlayerID, mapData);
+
+        return mapDto;
     }
 
     public override async UniTask Exit()
@@ -99,7 +116,8 @@ public class TownFlow : BaseFlow
     {
         this.DebugLog($"Load map: {grid}");
 
-        var randomMap = TilemapStreamingManager.Instance.GetRandomMap(grid);
+        TilemapStreamingManager.Instance.AddRandomMap(grid);
+
         var mapDto = TilemapStreamingManager.Instance.CreateDto();
 
         var mapData = new System.Collections.Generic.Dictionary<string, object>
@@ -110,11 +128,7 @@ public class TownFlow : BaseFlow
         // Firebase Firestore에 저장 (users 컬렉션의 {userId} 문서)
         bool success = await DatabaseSubManager.Instance.SetDocumentAsync("maps", AuthManager.Instance.PlayerID, mapData);
 
-        if (success)
-        {
-
-        }
-        else
+        if (!success)
         {
             this.DebugLogError($"Failed to save maps");
         }

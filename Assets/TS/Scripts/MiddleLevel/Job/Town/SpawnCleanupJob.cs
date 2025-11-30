@@ -1,16 +1,11 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 
 [BurstCompile]
 public partial struct SpawnCleanupJob : IJobEntity
 {
-    [ReadOnly] public float currentTime;
     [ReadOnly] public EntityStorageInfoLookup entityLookup;
-    [ReadOnly] public ComponentLookup<SpawnedObjectComponent> spawnedObjectLookup;
-    [ReadOnly] public ComponentLookup<TSObjectComponent> tsObjectLookup;
-    [ReadOnly] public ComponentLookup<SpriteSheetAnimationComponent> animationComponentLookup;
 
     public void Execute(
         Entity entity,
@@ -26,21 +21,9 @@ public partial struct SpawnCleanupJob : IJobEntity
             var spawnedEntity = spawnedObjects[i].SpawnedEntity;
 
             // Entity가 존재하고 SpawnedObjectComponent를 가지고 있는지 확인
-            if (entityLookup.Exists(spawnedEntity) &&
-                spawnedObjectLookup.HasComponent(spawnedEntity))
+            if (entityLookup.Exists(spawnedEntity))
             {
-                var spawnedObj = spawnedObjectLookup[spawnedEntity];
-
-                // 이 스포너에 의해 생성된 오브젝트인지 확인
-                if (spawnedObj.Spawner == entity)
-                {
-                    validSpawnCount++;
-                }
-                else
-                {
-                    // 다른 스포너의 오브젝트이면 버퍼에서 제거
-                    spawnedObjects.RemoveAt(i);
-                }
+                validSpawnCount++;
             }
             else
             {

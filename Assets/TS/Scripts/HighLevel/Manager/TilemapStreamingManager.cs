@@ -407,10 +407,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         // 위 방향에 연결된 노드가 있는지
         if (_mapDatas.TryGetValue(upGridOffset, out MapNodeEntry upNode))
         {
-            int ladderPositionX = 1;
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
-            float3 ladderPosition = GetLadderPosition(upNode, node, ladderPositionX);
+            float3 ladderPosition = GetLadderPosition(upNode, node);
 
             // 지형 Entity 가져옴
             Entity bottomGroundEntity = node.MaxGroundEntity;
@@ -428,11 +427,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         // 아래 방향에 연결된 노드가 있는지
         if (_mapDatas.TryGetValue(downGridOffset, out var downNode))
         {
-            int ladderPositionX = 1;
-
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
-            float3 ladderPosition = GetLadderPosition(node, downNode, ladderPositionX);
+            float3 ladderPosition = GetLadderPosition(node, downNode);
 
             // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
             // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
@@ -590,12 +587,12 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return neighborNodes;
     }
 
-    public RandomMapResult GetRandomMap(int2 grid)
+    public void AddRandomMap(int2 grid)
     {
         if (_patternRegistry == null)
         {
-            this.DebugLogError("Failed to map: registry is null");
-            return default;
+            this.DebugLogError("Failed to add random map: registry is null");
+            return;
         }
 
         var neighborDatas = GetNeighborDatas(grid);
@@ -604,6 +601,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         foreach (TilemapPatternData pattern in _patternRegistry.AllPatterns)
         {
+            if (!pattern.IsRandomCreate)
+                continue;
+
             bool pass = false;
             for (FourDirection dir = FourDirection.Up;
             System.Enum.IsDefined(typeof(FourDirection), dir);
@@ -629,23 +629,21 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
 
         if (selectPatternData == null)
-            return default;
+        {
+            this.DebugLogError($"Not found any random map: ({grid.x},{grid.y})");
+            return;
+        }
 
-        int topPosition = -1, bottomPosition = -1;
-        var topGroundSize = selectPatternData.GetHighGroundSize();
-        var bottomGroundSize = selectPatternData.GetLowGroundSize();
+        var id = selectPatternData.PatternID;
+        var map = new MapNodeEntry(id)
+        {
+            GridOffset = grid,
+            PatternData = _patternRegistry.GetPattern(id)
+        };
 
-        if (topGroundSize.max > 0)
-            topPosition = (int) ((topGroundSize.min + topGroundSize.max) * 0.5f);
+        _mapDatas[grid] = map;
 
-        if (bottomGroundSize.max > 0)
-            bottomPosition = (int) ((bottomGroundSize.min + bottomGroundSize.max) * 0.5f);
-
-        string id = selectPatternData.PatternID;
-        int2 topPos = new int2(topPosition, topPosition >= 0 ? selectPatternData.MaxHeight : -1);
-        int2 bottomPos = new int2(bottomPosition, bottomPosition >= 0 ? selectPatternData.MinHeight : -1);
-
-        return new RandomMapResult(id, topPos, bottomPos);
+        LoadExtensionButton(grid).Forget();
     }
 
     public MapDto CreateDto()
@@ -858,17 +856,23 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         yield return new int2(currentGrid.x + 1, currentGrid.y);
     }
 
-    private Vector3 GetLadderPosition(MapNodeEntry upNode, MapNodeEntry downNode, int ladderOffsetX)
+    private Vector3 GetLadderPosition(MapNodeEntry upNode, MapNodeEntry downNode)
     {
         if (upNode == null || downNode == null)
             return Vector3.zero;
+
+        var upGround = upNode.PatternData.GetHighGroundSize();
+        var downGround = downNode.PatternData.GetLowGroundSize();
+        int groundMin = Mathf.Max(upGround.min, downGround.min);
+        int groundMax = Mathf.Max(upGround.max, downGround.max);
+        int groundMiddle = (groundMin + groundMax) / 2;
 
         int2 upGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * upNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * upNode.GridOffset.y);
         int2 downGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * downNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * downNode.GridOffset.y);
         float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f;
         float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f;
 
-        float ladderX = upGridPosition.x + IntDefine.MAP_TOTAL_GRID_WIDTH * ladderOffsetX + IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f;
+        float ladderX = upGridPosition.x + IntDefine.MAP_TOTAL_GRID_WIDTH * groundMiddle + IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f;
         float ladderY = (upNodeOffsetY + downNodeOffsetY) * 0.5f;
 
         return new Vector3(ladderX, ladderY, 0);
@@ -1052,7 +1056,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
 #if UNITY_EDITOR
         // 2. 디버깅용 이름 설정
-        entityManager.AddComponentData(ladderEntity, new SetNameComponent() { Name = $"Ladder_{position.x:F1}_{position.y:F1}" });
+        entityManager.AddComponentData(ladderEntity, new SetNameComponent($"Ladder_{position.x:F1}_{position.y:F1}"));
 #endif
 
         // 3. Transform 컴포넌트 추가

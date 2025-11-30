@@ -32,3 +32,13 @@ MonoBehaviour:
             w: 2204986069
         IdentifierType: 1
       GenerationType: 4
+  IsRandomCreate: 0
+  _mapLinkInfo:
+    Left: 0
+    Right: 0
+    UpMin: 0
+    UpMax: 0
+    UpY: 0
+    DownMin: 0
+    DownMax: 0
+    DownY: 0

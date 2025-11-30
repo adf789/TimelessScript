@@ -16,8 +16,7 @@ public class TSGimmickAuthoring : TSObjectAuthoring
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
-
-            AddComponent(entity, new SetNameComponent() { Name = authoring.name });
+            AddComponent(entity, new SetNameComponent(authoring.name));
 
             AddComponent(entity, new TSObjectComponent()
             {

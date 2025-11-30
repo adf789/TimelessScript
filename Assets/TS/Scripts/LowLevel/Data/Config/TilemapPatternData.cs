@@ -17,14 +17,19 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("타일맵 프리팹 Addressable 참조")]
     public AssetReference TilemapPrefab;
 
+    [Header("Entity Scene Reference")]
     [Tooltip("씬 엔티티 Addressable 참조")]
     public EntitySceneReference SubScene;
+
+    [Header("Possible Random Create")]
+    [Tooltip("맵 확장 시 랜덤풀 내 존재 유무")]
+    public bool IsRandomCreate = true;
 
     public int MinHeight => _mapLinkInfo.GetVerticalY(FourDirection.Down);
     public int MaxHeight => _mapLinkInfo.GetVerticalY(FourDirection.Up);
 
     [Tooltip("맵 연결부")]
-    [HideInInspector]
+    [TS.ReadOnly]
     [SerializeField] private MapLinkInfo _mapLinkInfo;
 
     public bool CheckOverlap(TilemapPatternData data, FourDirection dir)
