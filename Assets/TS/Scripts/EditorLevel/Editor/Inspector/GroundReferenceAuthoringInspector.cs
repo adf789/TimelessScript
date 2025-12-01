@@ -162,8 +162,8 @@ public class GroundReferenceAuthoringInspector : Editor
             _mapLinkInfo.DownMax = bottomMaxX;
             _mapLinkInfo.DownY = bottomY;
         }
-
-        _mapData?.SetLinkInfo(_mapLinkInfo);
+        if (_mapData != null && _mapData.SetLinkInfo(_mapLinkInfo))
+            SaveMapData();
     }
 
     public override void OnInspectorGUI()
@@ -717,5 +717,17 @@ public class GroundReferenceAuthoringInspector : Editor
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 ((Component) target).gameObject.scene);
         }
+    }
+
+    private void SaveMapData()
+    {
+        if (!_mapData)
+            return;
+
+        string path = UnityEditor.AssetDatabase.GetAssetPath(_mapData);
+
+        UnityEditor.EditorUtility.SetDirty(_mapData);
+        UnityEditor.AssetDatabase.SaveAssets();
+        UnityEditor.AssetDatabase.Refresh();
     }
 }

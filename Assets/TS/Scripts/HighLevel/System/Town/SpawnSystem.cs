@@ -52,6 +52,7 @@ public partial struct SpawnSystem : ISystem
             currentTime = currentTime,
             availableActorLookup = SystemAPI.GetBufferLookup<AvailableActorBuffer>(false),
             spawnConfigLookup = SystemAPI.GetComponentLookup<SpawnConfigComponent>(false),
+            localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
             ecb = ecb
         };
 

@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: BaseTown_1
   m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternData
   PatternID: BaseTown_1
-  DisplayName: BaseTown_1
-  Description: 
   TilemapPrefab:
     m_AssetGUID: 1767d01e7b673e841897b0f1212dedfb
     m_SubObjectName: 
@@ -34,3 +32,13 @@ MonoBehaviour:
             w: 553600546
         IdentifierType: 1
       GenerationType: 4
+  IsRandomCreate: 1
+  _mapLinkInfo:
+    Left: 2
+    Right: 2
+    UpMin: 32
+    UpMax: 47
+    UpY: 8
+    DownMin: 0
+    DownMax: 49
+    DownY: 1

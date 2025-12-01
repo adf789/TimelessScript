@@ -1,7 +1,7 @@
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 
 [BurstCompile]
@@ -11,6 +11,7 @@ public partial struct SpawnExecutionJob : IJobEntity
     public EntityCommandBuffer ecb;
     public BufferLookup<AvailableActorBuffer> availableActorLookup;
     public ComponentLookup<SpawnConfigComponent> spawnConfigLookup;
+    [ReadOnly] public ComponentLookup<LocalToWorld> localToWorldLookup;
 
     public void Execute(
         Entity entity,
@@ -34,7 +35,11 @@ public partial struct SpawnExecutionJob : IJobEntity
 
         // 스폰된 오브젝트의 위치 설정
         ecb.AddComponent(spawnedEntity, new Parent { Value = spawnRequest.SpawnParent });
-        ecb.SetComponent(spawnedEntity, LocalTransform.FromPosition(spawnRequest.SpawnPosition));
+
+        // World 좌표를 Parent의 Local 좌표로 변환
+        var parentLocalToWorld = localToWorldLookup[spawnRequest.SpawnParent];
+        var localPosition = math.transform(math.inverse(parentLocalToWorld.Value), spawnRequest.SpawnPosition);
+        ecb.SetComponent(spawnedEntity, LocalTransform.FromPosition(localPosition));
 
         switch (spawnRequest.ObjectType)
         {

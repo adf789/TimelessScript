@@ -2,7 +2,7 @@
 using System;
 
 [Serializable]
-public struct MapLinkInfo
+public struct MapLinkInfo : IEquatable<MapLinkInfo>
 {
     public long Left;
     public long Right;
@@ -41,5 +41,17 @@ public struct MapLinkInfo
             return DownY;
         else
             return 0;
+    }
+
+    public bool Equals(MapLinkInfo other)
+    {
+        return Left == other.Left
+        && Right == other.Right
+        && UpMin == other.UpMin
+        && UpMax == other.UpMax
+        && UpY == other.UpY
+        && DownMin == other.DownMin
+        && DownMax == other.DownMax
+        && DownY == other.DownY;
     }
 }

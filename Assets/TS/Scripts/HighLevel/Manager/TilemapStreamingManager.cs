@@ -828,7 +828,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                     extensionButtonPrefab = await ResourcesTypeRegistry.Get().LoadAsyncWithName<GroundExtensionButtonAddon>("Plus");
                 }
 
-                newButton = Instantiate(extensionButtonPrefab);
+                newButton = Instantiate(extensionButtonPrefab, transform);
             }
 
             newButton.SetGrid(neighborGrid);

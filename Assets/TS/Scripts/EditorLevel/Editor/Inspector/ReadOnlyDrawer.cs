@@ -2,12 +2,8 @@
 using UnityEngine;
 using UnityEditor;
 
-/// <summary>
-/// ReadOnly Attribute용 PropertyDrawer
-/// 인스펙터에서 필드를 읽기 전용(비활성화)으로 표시
-/// </summary>
-[CustomPropertyDrawer(typeof(TS.ReadOnlyAttribute))]
-public class ReadOnlyDrawer : PropertyDrawer
+[CustomPropertyDrawer(typeof(DisableInspectorAttribute))]
+public class DisableInspectorDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {

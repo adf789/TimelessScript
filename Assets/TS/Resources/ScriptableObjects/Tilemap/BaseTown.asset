@@ -34,11 +34,11 @@ MonoBehaviour:
       GenerationType: 4
   IsRandomCreate: 0
   _mapLinkInfo:
-    Left: 0
-    Right: 0
-    UpMin: 0
-    UpMax: 0
-    UpY: 0
+    Left: 2
+    Right: 2
+    UpMin: 32
+    UpMax: 47
+    UpY: 8
     DownMin: 0
-    DownMax: 0
-    DownY: 0
+    DownMax: 49
+    DownY: 1

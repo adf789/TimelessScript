@@ -29,7 +29,7 @@ public class TilemapPatternData : ScriptableObject
     public int MaxHeight => _mapLinkInfo.GetVerticalY(FourDirection.Up);
 
     [Tooltip("맵 연결부")]
-    [TS.ReadOnly]
+    [DisableInspector]
     [SerializeField] private MapLinkInfo _mapLinkInfo;
 
     public bool CheckOverlap(TilemapPatternData data, FourDirection dir)
@@ -96,9 +96,13 @@ public class TilemapPatternData : ScriptableObject
         }
     }
 
-    public void SetLinkInfo(MapLinkInfo info)
+    public bool SetLinkInfo(MapLinkInfo info)
     {
+        bool isModify = !_mapLinkInfo.Equals(info);
+
         _mapLinkInfo = info;
+
+        return isModify;
     }
 #endif
 }
