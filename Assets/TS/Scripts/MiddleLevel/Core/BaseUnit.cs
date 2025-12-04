@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class BaseUnit<T> : BaseUnit where T : struct
+public class BaseUnit<T> : BaseUnit where T : struct, IUnitModel
 {
     protected T model;
 
