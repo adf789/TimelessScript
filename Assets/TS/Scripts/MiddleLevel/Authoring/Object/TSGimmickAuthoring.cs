@@ -1,30 +1,20 @@
 
 using UnityEngine;
 using Unity.Entities;
-using Unity.Mathematics;
 
 public class TSGimmickAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Gimmick;
+    public override ColliderLayer Layer => ColliderLayer.Gimmick;
+    public override bool IsStatic => true;
 
-    [SerializeField] private uint gimmickID;
     [SerializeField] private float radius;
 
-    private class Baker : Baker<TSGimmickAuthoring>
+    private class Baker : BaseObjectBaker<TSGimmickAuthoring>
     {
-        public override void Bake(TSGimmickAuthoring authoring)
+        protected override void BakeDerived(TSGimmickAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-
-            AddComponent(entity, new SetNameComponent(authoring.name));
-
-            AddComponent(entity, new TSObjectComponent()
-            {
-                Self = entity,
-                DataID = authoring.gimmickID,
-                ObjectType = authoring.Type,
-                RootOffset = authoring.GetRootOffset(),
-            });
 
             AddComponent(entity, new TSGimmickComponent()
             {
@@ -33,7 +23,7 @@ public class TSGimmickAuthoring : TSObjectAuthoring
         }
     }
 
-    void OnDrawGizmos()
+    protected override void OnDrawGizmosDerived()
     {
         Vector2 center = (Vector2) transform.position;
 

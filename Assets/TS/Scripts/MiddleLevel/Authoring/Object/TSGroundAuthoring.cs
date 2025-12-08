@@ -1,34 +1,22 @@
 using UnityEngine;
 using Unity.Entities;
-using Unity.Mathematics;
 
 public class TSGroundAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Ground;
-    public Vector3 Position => transform.position;
-    public Vector2 Size => _size;
+    public override ColliderLayer Layer => ColliderLayer.Ground;
+    public override bool IsStatic => true;
 
     [Header("Ground Settings")]
     [SerializeField] private float _bounciness = 0.3f;
     [SerializeField] private float _friction = 0.8f;
     [SerializeField] private GroundType _groundType = GroundType.Normal;
-    [SerializeField] private Vector2 _size = Vector2.one;
-    [SerializeField] private Vector2 _offset = Vector2.zero;
 
-    private class Baker : Baker<TSGroundAuthoring>
+    private class Baker : BaseObjectBaker<TSGroundAuthoring>
     {
-        public override void Bake(TSGroundAuthoring authoring)
+        protected override void BakeDerived(TSGroundAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-
-            AddComponent(entity, new SetNameComponent(authoring.name));
-
-            AddComponent(entity, new TSObjectComponent()
-            {
-                Self = entity,
-                ObjectType = authoring.Type,
-                RootOffset = authoring.GetRootOffset(),
-            });
 
             AddComponent(entity, new TSGroundComponent
             {
@@ -36,18 +24,6 @@ public class TSGroundAuthoring : TSObjectAuthoring
                 Friction = authoring._friction,
                 GroundType = authoring._groundType
             });
-
-            AddComponent(entity, PhysicsComponent.GetStaticPhysic(entity));
-
-            AddComponent(entity, new ColliderComponent
-            {
-                Layer = ColliderLayer.Ground,
-                Size = new float2(authoring._size.x, authoring._size.y),
-                Offset = new float2(authoring._offset.x, authoring._offset.y),
-                IsTrigger = false,
-            });
-
-            AddComponent(entity, new ColliderBoundsComponent());
         }
     }
 

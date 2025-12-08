@@ -261,6 +261,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MiddleLevel::TSLadderAuthoring
+  _dataId: 0
+  _size: {x: 1, y: 1}
+  _offset: {x: 0, y: 0}
   _firstConnectedGround: {fileID: 7010944743627693600}
   _secondConnectedGround: {fileID: 7010944742738787248}
 --- !u!1 &1635684061
@@ -342,7 +345,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 3268465435861632508, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  spawnParent: {fileID: 0}
   lifeTime: 0
   layerOffset: 0
   maxSpawnCount: 1
@@ -360,7 +362,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
-  layer: 0
+  layer: 2
   size: {x: 5, y: 0}
   offset: {x: 0, y: 0}
   isTrigger: 1
@@ -408,6 +410,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a52f4728929d24ea6f5e950236873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MiddleLevel::TSLadderAuthoring
+  _dataId: 0
+  _size: {x: 1, y: 1}
+  _offset: {x: 0, y: 0}
   _firstConnectedGround: {fileID: 7010944742738787248}
   _secondConnectedGround: {fileID: 7010944744099340687}
 --- !u!4 &2220680538200424030
@@ -564,7 +569,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
-  spawnParent: {fileID: 0}
   lifeTime: 0
   layerOffset: 9800
   maxSpawnCount: 10
@@ -583,7 +587,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
-  spawnParent: {fileID: 0}
   lifeTime: 0
   layerOffset: 10000
   maxSpawnCount: 10
@@ -602,7 +605,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
-  spawnParent: {fileID: 0}
   lifeTime: 0
   layerOffset: 9900
   maxSpawnCount: 10
@@ -620,11 +622,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
+  _dataId: 0
+  _size: {x: 20, y: 1}
+  _offset: {x: 0, y: 0}
   _bounciness: 0.3
   _friction: 0.8
   _groundType: 0
-  _size: {x: 20, y: 1}
-  _offset: {x: 0, y: 0}
 --- !u!114 &7010944743627693600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -637,11 +640,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
+  _dataId: 0
+  _size: {x: 50, y: 1}
+  _offset: {x: 0, y: 0}
   _bounciness: 0.3
   _friction: 0.8
   _groundType: 0
-  _size: {x: 50, y: 1}
-  _offset: {x: 0, y: 0}
 --- !u!114 &7010944744099340687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -654,11 +658,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9792a30d7e913e046ad76d7a1adb5e96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::GroundAuthoring
+  _dataId: 0
+  _size: {x: 16, y: 1}
+  _offset: {x: 0, y: 0}
   _bounciness: 0.3
   _friction: 0.8
   _groundType: 0
-  _size: {x: 16, y: 1}
-  _offset: {x: 0, y: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

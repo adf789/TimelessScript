@@ -40,39 +40,5 @@ namespace Utility
 
             return separation;
         }
-
-        /// <summary>
-        /// Physics
-        /// </summary>
-        public static void AddForce(ref PhysicsComponent physics, float2 force)
-        {
-            physics.Velocity += force / physics.Mass;
-        }
-
-        /// <summary>
-        /// Physics
-        /// </summary>
-        public static void SetVelocity(ref PhysicsComponent physics, float2 velocity)
-        {
-            physics.Velocity = velocity;
-        }
-
-        public static bool CheckAffectLayer(ColliderLayer layer1, ColliderLayer layer2)
-        {
-            return (layer1, layer2) switch
-            {
-                (ColliderLayer.Actor,
-                ColliderLayer.Ground
-                or ColliderLayer.Ladder
-                or ColliderLayer.Gimmick) => true,
-
-                (ColliderLayer.Ground
-                or ColliderLayer.Ladder
-                or ColliderLayer.Gimmick,
-                ColliderLayer.Actor) => true,
-
-                _ => false
-            };
-        }
     }
 }

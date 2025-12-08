@@ -308,8 +308,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4448617964647131482}
-  - component: {fileID: 4019544190974294588}
-  - component: {fileID: 1210792406335689658}
   - component: {fileID: 4772863480542143071}
   - component: {fileID: 1172464439533719287}
   - component: {fileID: 3268465435861632508}
@@ -337,40 +335,6 @@ Transform:
   - {fileID: 7485921729570137606}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4019544190974294588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7497076683051236044}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdf5bf0bda3d82645bf8084584b230a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::PhysicsAuthoring
-  velocity: {x: 0, y: 0}
-  gravity: {x: 0, y: -9.81}
-  mass: 1
-  drag: 0.98
-  useGravity: 1
-  isStatic: 0
---- !u!114 &1210792406335689658
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7497076683051236044}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
-  layer: 1
-  size: {x: 0.43, y: 0.97}
-  offset: {x: 0, y: 0.03}
-  isTrigger: 0
 --- !u!114 &4772863480542143071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,4 +373,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d30f4accc8ffcbb4c97fe98c1b2523f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSActorAuthoring
+  _dataId: 0
+  _size: {x: 0.43, y: 0.97}
+  _offset: {x: 0, y: 0.03}
   _select: {fileID: 1475965510492644303}

@@ -9,8 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5526500853505737115}
-  - component: {fileID: 3397996780441163628}
-  - component: {fileID: 6515036797142997821}
   - component: {fileID: 534198486437448583}
   - component: {fileID: 7602456729251230026}
   m_Layer: 0
@@ -36,40 +34,6 @@ Transform:
   - {fileID: 8163630450329106993}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3397996780441163628
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 853595635999183450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdf5bf0bda3d82645bf8084584b230a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::PhysicsAuthoring
-  velocity: {x: 0, y: 0}
-  gravity: {x: 0, y: -9.81}
-  mass: 1
-  drag: 0.98
-  useGravity: 1
-  isStatic: 1
---- !u!114 &6515036797142997821
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 853595635999183450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d88ca1a20f7dee346b7c22ed93ed40d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Game.MiddleLevel::ColliderAuthoring
-  layer: 4
-  size: {x: 0.55, y: 3.55}
-  offset: {x: 0, y: 1.5}
-  isTrigger: 1
 --- !u!114 &534198486437448583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95,6 +59,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f91e6c2c2bbb07f4f913091d01f8e62c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::TSGimmickAuthoring
+  _dataId: 200001
+  _size: {x: 0.55, y: 3.55}
+  _offset: {x: 0, y: 1.5}
   gimmickID: 200001
   radius: 0.41
 --- !u!1001 &4056129256683206653

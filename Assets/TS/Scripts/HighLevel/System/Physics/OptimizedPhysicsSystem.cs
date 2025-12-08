@@ -52,8 +52,8 @@ public partial struct OptimizedPhysicsSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
 
         // Gimmick Bounds 업데이트
-        var updateJob = new UpdateGroundBoundsJob();
-        state.Dependency = updateJob.ScheduleParallel(environmentQuery, state.Dependency);
+        var updateJob = new UpdateColliderBoundsJob();
+        state.Dependency = updateJob.ScheduleParallel(state.Dependency);
         state.Dependency.Complete();
 
         var groundEntities = groundQuery.ToEntityArray(Allocator.TempJob);

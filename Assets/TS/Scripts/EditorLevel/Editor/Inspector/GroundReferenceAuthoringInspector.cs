@@ -484,8 +484,9 @@ public class GroundReferenceAuthoringInspector : Editor
         float halfGridSize = IntDefine.MAP_GRID_SIZE * 0.5f;
 
         // Remove half grid offset
-        float x = ground.Position.x - halfGridSize;
-        float y = ground.Position.y - halfGridSize;
+        Vector3 groundPosition = ground.transform.position;
+        float x = groundPosition.x - halfGridSize;
+        float y = groundPosition.y - halfGridSize;
 
         // Convert to grid coordinates
         float gridX = (x / IntDefine.MAP_GRID_SIZE) + halfWidth;
@@ -519,8 +520,8 @@ public class GroundReferenceAuthoringInspector : Editor
         var result = ConvertFromGrid(min, max);
         bool isModify = false;
 
-        if (ground.Position.x != result.position.x
-        || ground.Position.y != result.position.y)
+        if (ground.transform.position.x != result.position.x
+        || ground.transform.position.y != result.position.y)
         {
             ground.SetPosition(result.position.x, result.position.y);
             isModify = true;
@@ -551,7 +552,7 @@ public class GroundReferenceAuthoringInspector : Editor
         float halfGridSize = IntDefine.MAP_GRID_SIZE * 0.5f;
         int positionX = positionProp.intValue;
         float x = (positionX - halfWidth) * IntDefine.MAP_GRID_SIZE;
-        float y = (topGround.Position.y + bottomGround.Position.y) * 0.5f;
+        float y = (topGround.transform.position.y + bottomGround.transform.position.y) * 0.5f;
 
         x += halfGridSize;
 

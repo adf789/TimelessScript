@@ -60,11 +60,8 @@ public partial struct OptimizedPhysicsJob : IJobEntity
         // 중력 적용
         if (physics.UseGravity && !physics.IsGrounded)
         {
-            physics.Velocity += physics.Gravity * dt;
+            physics.Velocity += new float2(0, FloatDefine.PHYSICS_GRAVITY * dt);
         }
-
-        // 드래그 적용
-        physics.Velocity *= physics.Drag;
 
         // 위치 업데이트
         float2 newPos = transform.Position.xy + physics.Velocity * dt;

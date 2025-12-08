@@ -9,17 +9,17 @@ using Unity.Transforms;
               OptimizeFor = OptimizeFor.Performance,
               FloatMode = FloatMode.Fast,
               FloatPrecision = FloatPrecision.Low)]
-public partial struct UpdateGroundBoundsJob : IJobEntity
+public partial struct UpdateColliderBoundsJob : IJobEntity
 {
 
 
     public void Execute(
         ref ColliderBoundsComponent bounds,
-        in Parent parent,
         in LocalTransform transform,
+        in WorldPositionComponent worldPosition,
         in ColliderComponent collider)
     {
-        var position = transform.Position.xy;
+        var position = transform.Position.xy + worldPosition.Offset.xy;
         var halfSize = collider.Size * 0.5f;
 
         bounds.Center = position + collider.Offset;

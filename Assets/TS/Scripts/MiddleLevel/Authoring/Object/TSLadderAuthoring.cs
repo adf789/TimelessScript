@@ -5,25 +5,20 @@ using UnityEngine;
 public class TSLadderAuthoring : TSObjectAuthoring
 {
     public override TSObjectType Type => TSObjectType.Ladder;
+    public override ColliderLayer Layer => ColliderLayer.Ladder;
+    public override bool IsStatic => true;
+    public override Vector2 Size => new Vector2(0.5f, CalculateLadderHeight());
+    public override Vector2 Offset => new Vector2(0f, .5f);
 
     [Header("Ground Connection")]
     [SerializeField] private TSGroundAuthoring _firstConnectedGround;
     [SerializeField] private TSGroundAuthoring _secondConnectedGround;
 
-    private class Baker : Baker<TSLadderAuthoring>
+    private class Baker : BaseObjectBaker<TSLadderAuthoring>
     {
-        public override void Bake(TSLadderAuthoring authoring)
+        protected override void BakeDerived(TSLadderAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-
-            AddComponent(entity, new SetNameComponent(authoring.name));
-
-            AddComponent(entity, new TSObjectComponent()
-            {
-                Self = entity,
-                ObjectType = authoring.Type,
-                RootOffset = 0f,
-            });
 
             // 사다리 특화 컴포넌트 추가
             var topGround = authoring.GetTopConnectGround();
@@ -35,60 +30,7 @@ public class TSLadderAuthoring : TSObjectAuthoring
                     bottomGround, TransformUsageFlags.Dynamic) : Entity.Null
             });
 
-            // ConnectedGround 위치를 기반으로 높이 계산
-            float calculatedHeight = CalculateLadderHeight(authoring);
-
-            AddComponent(entity, new ColliderComponent
-            {
-                Layer = ColliderLayer.Ladder,
-                Size = new float2(0.5f, calculatedHeight),
-                Offset = new float2(0f, .5f),
-                IsTrigger = true, // 사다리는 트리거여야 캐릭터가 내부에서 움직일 수 있음
-            });
-
-            AddComponent(entity, new ColliderBoundsComponent());
-
             AddBuffer<CollisionBuffer>(entity);
-        }
-
-        private float CalculateLadderHeight(TSLadderAuthoring authoring)
-        {
-            float defaultHeight = 3.0f; // 기본 높이
-            var topGround = authoring.GetTopConnectGround();
-            var bottomGround = authoring.GetBottomConnectGround();
-
-            // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
-            if (topGround && bottomGround)
-            {
-                float topY = topGround.transform.position.y;
-                float bottomY = bottomGround.transform.position.y;
-                float groundDistance = math.abs(topY - bottomY);
-
-                // TopConnectedGround보다 1 높게 설정
-                return groundDistance + 1.0f;
-            }
-            // TopConnectedGround만 있는 경우
-            else if (topGround)
-            {
-                float topY = topGround.transform.position.y;
-                float ladderY = authoring.transform.position.y;
-                float distanceToTop = math.abs(topY - ladderY);
-
-                // TopConnectedGround보다 1 높게 설정
-                return distanceToTop + 1.0f;
-            }
-            // BottomConnectedGround만 있는 경우
-            else if (bottomGround)
-            {
-                float bottomY = bottomGround.transform.position.y;
-                float ladderY = authoring.transform.position.y;
-                float distanceToBottom = math.abs(ladderY - bottomY);
-
-                // 기본적으로 하단에서 위로 올라가는 높이 + 1
-                return distanceToBottom + 1.0f;
-            }
-
-            return defaultHeight;
         }
     }
 
@@ -112,6 +54,46 @@ public class TSLadderAuthoring : TSObjectAuthoring
     {
         // 오름차순 정리
         return GetConnectGround((ground1, ground2) => ground1.transform.position.y.CompareTo(ground2.transform.position.y));
+    }
+
+    public float CalculateLadderHeight()
+    {
+        float defaultHeight = 3.0f; // 기본 높이
+        var topGround = GetTopConnectGround();
+        var bottomGround = GetBottomConnectGround();
+
+        // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
+        if (topGround && bottomGround)
+        {
+            float topY = topGround.transform.position.y;
+            float bottomY = bottomGround.transform.position.y;
+            float groundDistance = math.abs(topY - bottomY);
+
+            // TopConnectedGround보다 1 높게 설정
+            return groundDistance + 1.0f;
+        }
+        // TopConnectedGround만 있는 경우
+        else if (topGround)
+        {
+            float topY = topGround.transform.position.y;
+            float ladderY = transform.position.y;
+            float distanceToTop = math.abs(topY - ladderY);
+
+            // TopConnectedGround보다 1 높게 설정
+            return distanceToTop + 1.0f;
+        }
+        // BottomConnectedGround만 있는 경우
+        else if (bottomGround)
+        {
+            float bottomY = bottomGround.transform.position.y;
+            float ladderY = transform.position.y;
+            float distanceToBottom = math.abs(ladderY - bottomY);
+
+            // 기본적으로 하단에서 위로 올라가는 높이 + 1
+            return distanceToBottom + 1.0f;
+        }
+
+        return defaultHeight;
     }
 
     private TSGroundAuthoring GetConnectGround(System.Comparison<TSGroundAuthoring> comparison)

@@ -1,28 +1,19 @@
 
 using UnityEngine;
 using Unity.Entities;
-using Unity.Mathematics;
 
 public class TSActorAuthoring : TSObjectAuthoring
 {
-    [SerializeField] private GameObject _select;
-
+    public override ColliderLayer Layer => ColliderLayer.Actor;
     public override TSObjectType Type => TSObjectType.Actor;
 
-    private class Baker : Baker<TSActorAuthoring>
+    [SerializeField] private GameObject _select;
+
+    private class Baker : BaseObjectBaker<TSActorAuthoring>
     {
-        public override void Bake(TSActorAuthoring authoring)
+        protected override void BakeDerived(TSActorAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-
-            AddComponent(entity, new SetNameComponent(authoring.name));
-
-            AddComponent(entity, new TSObjectComponent()
-            {
-                Self = entity,
-                ObjectType = authoring.Type,
-                RootOffset = authoring.GetRootOffset(),
-            });
 
             AddComponent(entity, new TSActorComponent()
             {
