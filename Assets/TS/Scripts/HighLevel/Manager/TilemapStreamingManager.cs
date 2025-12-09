@@ -53,7 +53,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private readonly Dictionary<int2, GroundExtensionButtonAddon> _loadedExtensionButtons = new Dictionary<int2, GroundExtensionButtonAddon>();
 
     // 로딩 관리
-    private readonly Queue<LoadRequest> _loadQueue = new Queue<LoadRequest>();
+    private readonly Queue<LoadMapRequest> _loadQueue = new Queue<LoadMapRequest>();
     private readonly HashSet<int2> _loadingKeys = new HashSet<int2>();
 
     // 카메라 추적
@@ -898,7 +898,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     public void EnqueueLoadRequest(string patternID, int2 gridOffset, int priority = 50)
     {
-        _loadQueue.Enqueue(new LoadRequest
+        _loadQueue.Enqueue(new LoadMapRequest
         {
             PatternID = patternID,
             GridOffset = gridOffset,
@@ -1153,18 +1153,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
 
         return defaultHeight;
-    }
-
-    #endregion
-
-    #region Nested Classes
-
-    private struct LoadRequest
-    {
-        public string PatternID;
-        public int2 GridOffset;
-        public int Priority;
-        public float RequestTime;
     }
 
     #endregion

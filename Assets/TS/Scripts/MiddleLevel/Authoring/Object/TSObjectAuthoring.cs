@@ -75,7 +75,7 @@ public class TSObjectAuthoring : MonoBehaviour
 
             AddComponent(entity, new WorldPositionComponent()
             {
-                Offset = authoring.GetWorldOffset()
+                WorldOffset = authoring.GetWorldOffset()
             });
         }
 

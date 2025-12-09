@@ -19,7 +19,7 @@ public partial struct UpdateColliderBoundsJob : IJobEntity
         in WorldPositionComponent worldPosition,
         in ColliderComponent collider)
     {
-        var position = transform.Position.xy + worldPosition.Offset.xy;
+        var position = transform.Position.xy + worldPosition.WorldOffset.xy;
         var halfSize = collider.Size * 0.5f;
 
         bounds.Center = position + collider.Offset;

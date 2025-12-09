@@ -36,6 +36,12 @@ public partial struct SpawnExecutionJob : IJobEntity
         // 스폰된 오브젝트의 위치 설정
         ecb.AddComponent(spawnedEntity, new Parent { Value = spawnRequest.SpawnParent });
 
+        // 월드 좌표 설정
+        ecb.AddComponent(spawnedEntity, new WorldPositionComponent()
+        {
+            WorldOffset = spawnRequest.ParentPosition
+        });
+
         // World 좌표를 Parent의 Local 좌표로 변환
         var parentLocalToWorld = localToWorldLookup[spawnRequest.SpawnParent];
         var localPosition = math.transform(math.inverse(parentLocalToWorld.Value), spawnRequest.SpawnPosition);

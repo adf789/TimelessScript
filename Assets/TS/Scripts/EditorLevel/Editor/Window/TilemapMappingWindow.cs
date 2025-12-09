@@ -16,11 +16,6 @@ public class TilemapMappingWindow : EditorWindow
     private int _selectedPatternIndex = -1;
     private string _patternSearchFilter = "";
 
-    // Port 추가 UI 상태
-    private bool _showAddPortSection = false;
-    private FourDirection _newPortDirection = FourDirection.Right;
-    private int _newPortPosition = 0;
-
     private GUIStyle _headerStyle;
     private GUIStyle _subHeaderStyle;
     private GUIStyle _boxStyle;

@@ -4,5 +4,5 @@ using Unity.Mathematics;
 
 public struct WorldPositionComponent : IComponentData
 {
-    public float3 Offset;
+    public float3 WorldOffset;
 }

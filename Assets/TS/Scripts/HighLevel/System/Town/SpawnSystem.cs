@@ -39,7 +39,8 @@ public partial struct SpawnSystem : ISystem
         // 스폰 요청 실행
         var spawnJob = new SpawnJob
         {
-            currentTime = currentTime,
+            CurrentTime = currentTime,
+            WorldPositionLookup = SystemAPI.GetComponentLookup<WorldPositionComponent>(true),
             ecb = ecb.AsParallelWriter()
         };
 

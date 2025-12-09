@@ -98,11 +98,14 @@ public partial class GamePreprocessingSystem : SystemBase
         collectItems.Clear();
     }
 
-    private bool CheckEndLifeTime(float deltaTime, float lifeTime, ref TSActorComponent actor)
+    private bool CheckEndLifeTime(float deltaTime, float maxLifeTime, ref TSActorComponent actor)
     {
+        if (maxLifeTime <= 0)
+            return false;
+
         actor.LifePassingTime += deltaTime;
 
-        if (lifeTime > 0 && actor.LifePassingTime >= lifeTime)
+        if (actor.LifePassingTime >= maxLifeTime)
             return true;
 
         return false;
