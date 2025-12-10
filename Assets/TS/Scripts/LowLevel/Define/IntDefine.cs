@@ -10,6 +10,8 @@ public class IntDefine
     public const int MAP_GRID_SIZE = 1;
     public const int MAP_TOTAL_GRID_WIDTH = 50;
     public const int MAP_TOTAL_GRID_HEIGHT = 10;
+    public const int MAP_TOTAL_GRID_HALF_WIDTH = 25;
+    public const int MAP_TOTAL_GRID_HALF_HEIGHT = 5;
     #endregion MAP
 
     #region EDITOR REFERENCE

@@ -17,7 +17,7 @@ public class MapNodeEntry
     public Entity SubSceneEntity;
     public Entity MinGroundEntity;
     public Entity MaxGroundEntity;
-    public bool IsLoaded => SubSceneEntity != Entity.Null;
+    public bool IsLoaded => TilemapInstance != null;
 
     /// <summary>
     /// 생성자

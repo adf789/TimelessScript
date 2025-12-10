@@ -79,7 +79,7 @@ public partial struct SpawnJob : IJobEntity
 
         var random = new Random(seed);
         float3 randomOffset = new float3(random.NextFloat(-halfWidth, halfWidth), halfHeight, 0);
-        float3 candidatePosition = transform.Position.xyz + randomOffset;
+        float3 candidatePosition = randomOffset;
 
         candidatePosition.y += yOffset;
 

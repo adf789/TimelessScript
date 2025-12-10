@@ -2,7 +2,7 @@ public class FloatDefine
 {
     #region CALCULATE
     public const float INVERSE_MAP_GRID_WIDTH = 0.02f;
-    public const float INVERSE_MAP_GRID_HEIGHT = 0.0625f;
+    public const float INVERSE_MAP_GRID_HEIGHT = 0.1f;
     #endregion CALCULATE
 
     #region PHYSICS

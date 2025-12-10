@@ -273,6 +273,84 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #endregion
 
+    #region Auto Streaming
+
+    /// <summary>
+    /// 카메라 가시 영역 기반 자동 스트리밍 (히스테리시스 적용)
+    /// 로드 범위: 카메라 + loadBufferSize
+    /// 언로드 범위: 카메라 + loadBufferSize + unloadMargin
+    /// 이를 통해 경계에서 로드/언로드 반복을 방지
+    /// </summary>
+    public async UniTask UpdateStreamingByCameraView()
+    {
+        if (!_isInitialized || _targetCamera == null || !_enableAutoStreaming) return;
+
+        SetCameraPosition(_targetCamera.transform.position);
+
+        var loadRect = GetCameraRect();
+        var unloadRect = GetCameraUnloadRect();
+
+        await LoadPatternsInCameraView(loadRect);
+        await UnloadPatternsOutsideCameraView(unloadRect);
+    }
+
+    private async UniTask LoadPatternsInCameraView(Rect cameraRect)
+    {
+        // 맵 로드 영역 체크 (y좌표 무시, 영역 내 그리드만 탐색)
+        Vector2Int minGrid = CalculateGrid(new Vector3(cameraRect.min.x, cameraRect.min.y));
+        Vector2Int maxGrid = CalculateGrid(new Vector3(cameraRect.max.x, cameraRect.max.y));
+
+        for (int x = minGrid.x; x <= maxGrid.x; x++)
+        {
+            for (int y = minGrid.y; y <= maxGrid.y; y++)
+            {
+                int2 grid = new int2(x, y);
+
+                if (_mapDatas.TryGetValue(grid, out var node))
+                {
+                    if (node.IsLoaded)
+                        continue;
+
+                    await LoadPattern(node.PatternID, grid);
+                }
+            }
+        }
+    }
+
+    private async UniTask UnloadPatternsOutsideCameraView(Rect cameraRect)
+    {
+        List<int2> unloadGrids = null;
+
+        foreach (var mapData in _mapDatas)
+        {
+            if (ShouldUnloadByCamera(mapData.Value, cameraRect))
+            {
+                if (!mapData.Value.IsLoaded)
+                    continue;
+
+                if (unloadGrids == null)
+                    unloadGrids = new List<int2> { mapData.Key };
+                else
+                    unloadGrids.Add(mapData.Key);
+            }
+        }
+
+        if (unloadGrids != null)
+        {
+            foreach (var grid in unloadGrids)
+            {
+                await UnloadPattern(grid);
+            }
+
+            if (unloadGrids.Count > 0)
+            {
+                this.DebugLog($"Auto-unloaded {unloadGrids.Count} patterns outside camera view");
+            }
+        }
+    }
+
+    #endregion
+
     #region Pattern Loading - Core
 
     public async UniTask<bool> LoadPattern(string patternID, int2 gridOffset)
@@ -368,11 +446,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             {
                 mapNode.TilemapInstance = newTilemap;
 
-                if (!mapNode.IsLoaded)
+                if (mapNode.SubSceneEntity == Entity.Null)
                 {
-                    var subSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
-
-                    mapNode.SubSceneEntity = subSceneEntity;
+                    mapNode.SubSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
 
                     // SubScene의 모든 Entity에 offset 적용
                     ApplyOffsetToSubSceneEntities(mapNode);
@@ -397,8 +473,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     private async UniTask LoadLadders(int2 gridOffset)
     {
         // 해당 그리드의 패턴이 로드되었는지
-        if (!_mapDatas.TryGetValue(gridOffset, out var node)
-        && node.IsLoaded)
+        if (!_mapDatas.TryGetValue(gridOffset, out var node))
             return;
 
         var upGridOffset = new int2(gridOffset.x, gridOffset.y + 1);
@@ -534,13 +609,13 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             var sceneSection = entityManager.GetSharedComponent<SceneSection>(entity);
             if (sceneSection.SceneGUID == sceneRef.SceneGUID)
             {
-                // LocalTransform에 offset 적용
-                var transform = entityManager.GetComponentData<LocalTransform>(entity);
-                transform.Position += offset;
-                entityManager.SetComponentData(entity, transform);
-
                 if (entityManager.HasBuffer<GroundReferenceBuffer>(entity))
                 {
+                    // LocalTransform에 offset 적용
+                    var transform = entityManager.GetComponentData<LocalTransform>(entity);
+                    transform.Position += offset;
+                    entityManager.SetComponentData(entity, transform);
+
                     var referenceBuffer = entityManager.GetBuffer<GroundReferenceBuffer>(entity);
 
                     int min = int.MaxValue;
@@ -561,6 +636,29 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                         }
                     }
                 }
+            }
+        }
+
+        foreach (var entity in entities)
+        {
+            // 해당 SubScene의 Entity인지 확인
+            var sceneSection = entityManager.GetSharedComponent<SceneSection>(entity);
+            if (sceneSection.SceneGUID == sceneRef.SceneGUID)
+            {
+                float3 worldOffset = float3.zero;
+                Entity parentEntity = entity;
+                while (entityManager.HasComponent<Parent>(parentEntity))
+                {
+                    var parent = entityManager.GetComponentData<Parent>(parentEntity);
+
+                    var parentTransform = entityManager.GetComponentData<LocalTransform>(parent.Value);
+
+                    worldOffset += parentTransform.Position;
+                    parentEntity = parent.Value;
+                }
+
+                var worldPosition = new WorldPositionComponent() { WorldOffset = worldOffset };
+                entityManager.AddComponentData(entity, worldPosition);
             }
         }
     }
@@ -724,82 +822,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #endregion
 
-    #region Auto Streaming
-
-    /// <summary>
-    /// 카메라 가시 영역 기반 자동 스트리밍 (히스테리시스 적용)
-    /// 로드 범위: 카메라 + loadBufferSize
-    /// 언로드 범위: 카메라 + loadBufferSize + unloadMargin
-    /// 이를 통해 경계에서 로드/언로드 반복을 방지
-    /// </summary>
-    public async UniTask UpdateStreamingByCameraView()
-    {
-        if (!_isInitialized || _targetCamera == null || !_enableAutoStreaming) return;
-
-        SetCameraPosition(_targetCamera.transform.position);
-
-        var loadRect = GetCameraRect();
-        var unloadRect = GetCameraUnloadRect();
-
-        await LoadPatternsInCameraView(loadRect);
-        await UnloadPatternsOutsideCameraView(unloadRect);
-    }
-
-    private async UniTask LoadPatternsInCameraView(Rect cameraRect)
-    {
-        // 맵 로드 영역 체크 (y좌표 무시, 영역 내 그리드만 탐색)
-        Vector2Int minGrid = CalculateGrid(new Vector3(cameraRect.min.x, cameraRect.min.y));
-        Vector2Int maxGrid = CalculateGrid(new Vector3(cameraRect.max.x, cameraRect.max.y));
-
-        for (int x = minGrid.x; x <= maxGrid.x; x++)
-        {
-            for (int y = minGrid.y; y <= maxGrid.y; y++)
-            {
-                int2 grid = new int2(x, y);
-
-                if (_mapDatas.TryGetValue(grid, out var node))
-                {
-                    if (node.IsLoaded)
-                        continue;
-
-                    await LoadPattern(node.PatternID, grid);
-                }
-            }
-        }
-    }
-
-    private async UniTask UnloadPatternsOutsideCameraView(Rect cameraRect)
-    {
-        List<int2> unloadGrids = null;
-
-        foreach (var mapData in _mapDatas)
-        {
-            if (ShouldUnloadByCamera(mapData.Value, cameraRect))
-            {
-                if (!mapData.Value.IsLoaded)
-                    continue;
-
-                if (unloadGrids == null)
-                    unloadGrids = new List<int2> { mapData.Key };
-                else
-                    unloadGrids.Add(mapData.Key);
-            }
-        }
-
-        if (unloadGrids != null)
-        {
-            foreach (var grid in unloadGrids)
-            {
-                await UnloadPattern(grid);
-            }
-
-            if (unloadGrids.Count > 0)
-            {
-                this.DebugLog($"Auto-unloaded {unloadGrids.Count} patterns outside camera view");
-            }
-        }
-    }
-
     private async UniTask LoadExtensionButton(int2 grid)
     {
         GroundExtensionButtonAddon extensionButtonPrefab = null;
@@ -878,8 +900,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return new Vector3(ladderX, ladderY, 0);
     }
 
-    #endregion
-
     #region Queue Processing
 
     private async UniTask ProcessLoadQueue()
@@ -894,17 +914,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             await LoadPattern(request.PatternID, request.GridOffset);
             processedCount++;
         }
-    }
-
-    public void EnqueueLoadRequest(string patternID, int2 gridOffset, int priority = 50)
-    {
-        _loadQueue.Enqueue(new LoadMapRequest
-        {
-            PatternID = patternID,
-            GridOffset = gridOffset,
-            Priority = priority,
-            RequestTime = Time.time
-        });
     }
 
     #endregion
@@ -929,8 +938,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private Vector2Int CalculateGrid(Vector3 position)
     {
-        int x = Mathf.FloorToInt(position.x * FloatDefine.INVERSE_MAP_GRID_WIDTH);
-        int y = Mathf.FloorToInt(position.y * FloatDefine.INVERSE_MAP_GRID_HEIGHT);
+        int x = Mathf.FloorToInt((position.x + IntDefine.MAP_TOTAL_GRID_HALF_WIDTH) * FloatDefine.INVERSE_MAP_GRID_WIDTH);
+        int y = Mathf.FloorToInt((position.y + IntDefine.MAP_TOTAL_GRID_HALF_HEIGHT) * FloatDefine.INVERSE_MAP_GRID_HEIGHT);
 
         return new Vector2Int(x, y);
     }
