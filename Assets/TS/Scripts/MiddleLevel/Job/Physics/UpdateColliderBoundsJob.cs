@@ -1,5 +1,6 @@
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 
 /// <summary>
@@ -15,11 +16,10 @@ public partial struct UpdateColliderBoundsJob : IJobEntity
 
     public void Execute(
         ref ColliderBoundsComponent bounds,
-        in LocalTransform transform,
-        in WorldPositionComponent worldPosition,
+        in LocalToWorld worldPosition,
         in ColliderComponent collider)
     {
-        var position = transform.Position.xy + worldPosition.WorldOffset.xy;
+        var position = worldPosition.Position.xy;
         var halfSize = collider.Size * 0.5f;
 
         bounds.Center = position + collider.Offset;

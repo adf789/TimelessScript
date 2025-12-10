@@ -72,11 +72,6 @@ public class TSObjectAuthoring : MonoBehaviour
             });
 
             AddComponent(entity, new ColliderBoundsComponent());
-
-            AddComponent(entity, new WorldPositionComponent()
-            {
-                WorldOffset = authoring.GetWorldOffset()
-            });
         }
 
         public override void Bake(T authoring)

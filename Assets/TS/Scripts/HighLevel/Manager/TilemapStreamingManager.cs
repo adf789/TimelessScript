@@ -638,29 +638,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 }
             }
         }
-
-        foreach (var entity in entities)
-        {
-            // 해당 SubScene의 Entity인지 확인
-            var sceneSection = entityManager.GetSharedComponent<SceneSection>(entity);
-            if (sceneSection.SceneGUID == sceneRef.SceneGUID)
-            {
-                float3 worldOffset = float3.zero;
-                Entity parentEntity = entity;
-                while (entityManager.HasComponent<Parent>(parentEntity))
-                {
-                    var parent = entityManager.GetComponentData<Parent>(parentEntity);
-
-                    var parentTransform = entityManager.GetComponentData<LocalTransform>(parent.Value);
-
-                    worldOffset += parentTransform.Position;
-                    parentEntity = parent.Value;
-                }
-
-                var worldPosition = new WorldPositionComponent() { WorldOffset = worldOffset };
-                entityManager.AddComponentData(entity, worldPosition);
-            }
-        }
     }
 
     public Rect CreateRect(in Vector2 position, in Vector2 size)

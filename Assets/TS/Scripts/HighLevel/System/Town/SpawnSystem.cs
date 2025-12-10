@@ -40,7 +40,6 @@ public partial struct SpawnSystem : ISystem
         var spawnJob = new SpawnJob
         {
             CurrentTime = currentTime,
-            WorldPositionLookup = SystemAPI.GetComponentLookup<WorldPositionComponent>(true),
             ecb = ecb.AsParallelWriter()
         };
 

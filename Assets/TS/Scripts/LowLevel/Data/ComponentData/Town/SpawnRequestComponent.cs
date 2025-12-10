@@ -10,7 +10,6 @@ public struct SpawnRequestComponent : IComponentData
     public TSObjectType ObjectType;
     public FixedString64Bytes Name;
     public float3 SpawnPosition;
-    public float3 ParentPosition;
     public int LayerOffset;
     public bool IsActive;
 }

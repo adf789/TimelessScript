@@ -70,13 +70,6 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     private Dictionary<AnimationState, Sprite[]> loadedSprites = null;
     private Dictionary<AnimationState, Sprite[]> loadedStartSprites = null;
     private Dictionary<AnimationState, Sprite[]> loadedEndSprites = null;
-    private Material rendererMaterial = null;
-
-    void Awake()
-    {
-        if (spriteRenderer)
-            rendererMaterial = spriteRenderer.material;
-    }
 
     private class Baker : Baker<SpriteSheetAnimationAuthoring>
     {

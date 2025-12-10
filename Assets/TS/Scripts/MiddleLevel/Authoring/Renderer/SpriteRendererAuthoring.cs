@@ -18,16 +18,17 @@ public class SpriteRendererAuthoring : MonoBehaviour
 
             authoring.Initialize();
 
+            // authoring MonoBehaviour 인스턴스를 관리형 컴포넌트로 추가합니다.
+            AddComponentObject(entity, authoring);
+
             // 부모 Transform이 있으면 Parent 컴포넌트 추가
             var parentTransform = authoring.transform.parent;
             if (parentTransform != null)
             {
                 var parentEntity = GetEntity(parentTransform, TransformUsageFlags.Dynamic);
                 AddComponent(entity, new Parent { Value = parentEntity });
+                AddComponent(entity, new LocalTransform() { Position = authoring.transform.localPosition });
             }
-
-            // authoring MonoBehaviour 인스턴스를 관리형 컴포넌트로 추가합니다.
-            AddComponentObject(entity, authoring);
 
             AddComponent(entity, new SpriteRendererComponent()
             {

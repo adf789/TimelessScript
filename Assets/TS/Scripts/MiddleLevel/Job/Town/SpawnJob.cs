@@ -8,7 +8,6 @@ using Unity.Transforms;
 public partial struct SpawnJob : IJobEntity
 {
     [ReadOnly] public float CurrentTime;
-    [ReadOnly] public ComponentLookup<WorldPositionComponent> WorldPositionLookup;
 
     public EntityCommandBuffer.ParallelWriter ecb;
 
@@ -30,16 +29,6 @@ public partial struct SpawnJob : IJobEntity
         // 스폰 가능한 위치 찾기
         FindValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in transform, in collider, out float3 spawnPosition);
 
-        // 부모 위치 가져옴
-        float3 parentPosition = float3.zero;
-
-        if (WorldPositionLookup.TryGetComponent(spawnConfig.SpawnParent, out var worldPositionComponent))
-        {
-            parentPosition += worldPositionComponent.WorldOffset;
-        }
-
-        parentPosition += transform.Position;
-
         // 스폰 요청 생성
         var spawnRequestEntity = ecb.CreateEntity(entityInQueryIndex);
         ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, new SpawnRequestComponent
@@ -50,7 +39,6 @@ public partial struct SpawnJob : IJobEntity
             ObjectType = spawnConfig.ObjectType, // Entity 오브젝트 타입
             Name = spawnConfig.Name,
             SpawnPosition = spawnPosition,
-            ParentPosition = parentPosition,
             LayerOffset = spawnConfig.LayerOffset,
             IsActive = true
         });

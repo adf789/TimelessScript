@@ -62,7 +62,6 @@ MonoBehaviour:
   _dataId: 200001
   _size: {x: 0.55, y: 3.55}
   _offset: {x: 0, y: 1.5}
-  gimmickID: 200001
   radius: 0.41
 --- !u!1001 &4056129256683206653
 PrefabInstance:
