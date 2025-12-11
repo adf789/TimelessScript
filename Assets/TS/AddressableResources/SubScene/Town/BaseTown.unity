@@ -571,7 +571,7 @@ MonoBehaviour:
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
   lifeTime: 0
   layerOffset: 9800
-  maxSpawnCount: 0
+  maxSpawnCount: 10
   spawnCooldown: 2
   minSpawnDistance: 1
 --- !u!114 &5324830893101175966
@@ -589,7 +589,7 @@ MonoBehaviour:
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
   lifeTime: 0
   layerOffset: 10000
-  maxSpawnCount: 0
+  maxSpawnCount: 10
   spawnCooldown: 2
   minSpawnDistance: 1
 --- !u!114 &5324830893990621454
@@ -607,7 +607,7 @@ MonoBehaviour:
   spawnObjectPrefab: {fileID: 7602456729251230026, guid: 19613f67e83fe5546a64c2fc8664417f, type: 3}
   lifeTime: 0
   layerOffset: 9900
-  maxSpawnCount: 0
+  maxSpawnCount: 10
   spawnCooldown: 2
   minSpawnDistance: 1
 --- !u!114 &7010944742738787248

@@ -30,11 +30,6 @@ public class TSObjectAuthoring : MonoBehaviour
         return initialPosition;
     }
 
-    public float3 GetWorldOffset()
-    {
-        return transform.position - transform.localPosition;
-    }
-
     public abstract class BaseObjectBaker<T> : Baker<T> where T : TSObjectAuthoring
     {
         // 공통 ComponentData 추가 로직

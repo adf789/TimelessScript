@@ -36,6 +36,15 @@ public partial struct SpawnSystem : ISystem
         state.Dependency = spawnCleanupJob.ScheduleParallel(state.Dependency);
         state.Dependency.Complete();
 
+        // 위치 지정
+        var pendingPositioningJob = new PendingPositioningJob
+        {
+            ecb = ecb.AsParallelWriter()
+        };
+
+        state.Dependency = pendingPositioningJob.ScheduleParallel(state.Dependency);
+        state.Dependency.Complete();
+
         // 스폰 요청 실행
         var spawnJob = new SpawnJob
         {
@@ -53,7 +62,7 @@ public partial struct SpawnSystem : ISystem
             availableActorLookup = SystemAPI.GetBufferLookup<AvailableActorBuffer>(false),
             spawnConfigLookup = SystemAPI.GetComponentLookup<SpawnConfigComponent>(false),
             localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
-            ecb = ecb
+            ecb = ecb,
         };
 
         state.Dependency = spawnExecutionJob.Schedule(state.Dependency);

@@ -16,6 +16,7 @@ public partial struct SpawnJob : IJobEntity
         Entity spawnerEntity,
         ref SpawnConfigComponent spawnConfig,
         in LocalTransform transform,
+        in LocalToWorld worldPosition,
         in ColliderComponent collider)
     {
         // 스폰 쿨다운 체크
@@ -27,21 +28,24 @@ public partial struct SpawnJob : IJobEntity
             return;
 
         // 스폰 가능한 위치 찾기
-        FindValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in transform, in collider, out float3 spawnPosition);
+        FindValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in collider, out float3 spawnPosition);
 
         // 스폰 요청 생성
         var spawnRequestEntity = ecb.CreateEntity(entityInQueryIndex);
-        ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, new SpawnRequestComponent
+
+        var spawnRequest = new SpawnRequestComponent
         {
             SpawnObject = spawnConfig.SpawnObjectPrefab,
             SpawnParent = spawnConfig.SpawnParent,
-            Spawner = spawnerEntity, // 스포너 Entity 참조 설정
+            Spawner = spawnerEntity, // 스포 Entity 참조 설정
             ObjectType = spawnConfig.ObjectType, // Entity 오브젝트 타입
             Name = spawnConfig.Name,
             SpawnPosition = spawnPosition,
             LayerOffset = spawnConfig.LayerOffset,
             IsActive = true
-        });
+        };
+
+        ecb.AddComponent(entityInQueryIndex, spawnRequestEntity, spawnRequest);
 
         // 스폰 카운트 및 다음 스폰 시간 업데이트
         spawnConfig.ReadySpawnCount++;
@@ -53,7 +57,6 @@ public partial struct SpawnJob : IJobEntity
     private void FindValidSpawnPosition(
         int entityIndex,
         float yOffset,
-        in LocalTransform transform,
         in ColliderComponent collider,
         out float3 spawnPosition)
     {
@@ -61,16 +64,10 @@ public partial struct SpawnJob : IJobEntity
         float halfHeight = collider.Size.y * 0.5f;
 
         uint seed = (uint) (CurrentTime * IntDefine.TIME_MILLISECONDS_ONE) +
-                       (uint) (transform.Position.x * 10) +
-                       (uint) (transform.Position.y * 100) +
                        (uint) entityIndex * 13 + 1;
 
         var random = new Random(seed);
-        float3 randomOffset = new float3(random.NextFloat(-halfWidth, halfWidth), halfHeight, 0);
-        float3 candidatePosition = randomOffset;
 
-        candidatePosition.y += yOffset;
-
-        spawnPosition = candidatePosition;
+        spawnPosition = new float3(random.NextFloat(-halfWidth, halfWidth), halfHeight + yOffset, 0);
     }
 }

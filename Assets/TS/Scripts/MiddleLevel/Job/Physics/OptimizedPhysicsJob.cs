@@ -36,26 +36,25 @@ public partial struct OptimizedPhysicsJob : IJobEntity
             return;
 
         // 1. 물리 시뮬레이션 (중력, 속도)
-        ApplyPhysics(ref physics, ref transform, DeltaTime);
+        var delta = ApplyPhysics(ref physics, ref transform, DeltaTime);
 
         // 2. Bounds 업데이트
-        UpdateBounds(ref bounds, transform.Position.xy, collider);
+        UpdateBounds(ref bounds, delta);
 
         // 3. 충돌 검사 및 응답 (Actor vs Ground)
         ResolveCollisions(ref physics, ref transform, ref bounds, collider);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void UpdateBounds(ref ColliderBoundsComponent bounds, float2 position, in ColliderComponent collider)
+    private void UpdateBounds(ref ColliderBoundsComponent bounds, float2 delta)
     {
-        bounds.Center = position + collider.Offset;
-        float2 halfSize = collider.Size * 0.5f;
-        bounds.Min = bounds.Center - halfSize;
-        bounds.Max = bounds.Center + halfSize;
+        bounds.Center += delta;
+        bounds.Min += delta;
+        bounds.Max += delta;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ApplyPhysics(ref PhysicsComponent physics, ref LocalTransform transform, float dt)
+    private float2 ApplyPhysics(ref PhysicsComponent physics, ref LocalTransform transform, float dt)
     {
         // 중력 적용
         if (physics.UseGravity && !physics.IsGrounded)
@@ -64,8 +63,11 @@ public partial struct OptimizedPhysicsJob : IJobEntity
         }
 
         // 위치 업데이트
-        float2 newPos = transform.Position.xy + physics.Velocity * dt;
+        float2 delta = physics.Velocity * dt;
+        float2 newPos = transform.Position.xy + delta;
         transform.Position = new float3(newPos.x, newPos.y, transform.Position.z);
+
+        return delta;
     }
 
     [BurstCompile]
@@ -83,6 +85,8 @@ public partial struct OptimizedPhysicsJob : IJobEntity
             return;
 
         // Actor vs Ground 충돌만 검사
+        float2 delta = float2.zero;
+
         for (int i = 0; i < GroundEntities.Length; i++)
         {
             Entity groundEntity = GroundEntities[i];
@@ -126,6 +130,7 @@ public partial struct OptimizedPhysicsJob : IJobEntity
                 float2 currentPos = transform.Position.xy;
                 currentPos.y += separation.y;
                 transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
+                delta.y += separation.y;
 
                 // 속도 제거
                 physics.Velocity.y = 0;
@@ -137,8 +142,6 @@ public partial struct OptimizedPhysicsJob : IJobEntity
 
                     if (!physics.IsPrevGrounded)
                         physics.IsRandingAnimation = true;
-
-                    break;
                 }
             }
             else
@@ -147,14 +150,15 @@ public partial struct OptimizedPhysicsJob : IJobEntity
                 float2 currentPos = transform.Position.xy;
                 currentPos.x += separation.x;
                 transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
+                delta.x += separation.x;
 
                 // X축 속도 감쇠
                 physics.Velocity.x *= 0.5f;
             }
-
-            // Bounds 재계산 (위치 변경 후)
-            UpdateBounds(ref actorBounds, transform.Position.xy, actorCollider);
         }
+
+        // Bounds 재계산 (위치 변경 후)
+        UpdateBounds(ref actorBounds, delta);
 
         physics.IsPrevGrounded = physics.IsGrounded;
     }

@@ -15,6 +15,7 @@ public partial struct UpdateColliderBoundsJob : IJobEntity
 
 
     public void Execute(
+        Entity entity,
         ref ColliderBoundsComponent bounds,
         in LocalToWorld worldPosition,
         in ColliderComponent collider)

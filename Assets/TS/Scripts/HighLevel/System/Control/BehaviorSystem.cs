@@ -28,7 +28,6 @@ public partial struct BehaviorSystem : ISystem
             AnimationComponentLookup = SystemAPI.GetComponentLookup<SpriteSheetAnimationComponent>(false),
             RendererComponentLookup = SystemAPI.GetComponentLookup<SpriteRendererComponent>(false),
             ObjectTargetComponentLookup = SystemAPI.GetComponentLookup<ObjectTargetComponent>(false),
-            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
             Ecb = ecb.AsParallelWriter(),
             Speed = 1f,
             ClimbSpeed = 0.3f,

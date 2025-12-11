@@ -147,9 +147,9 @@ public partial struct NavigationSystem : ISystem
 
     private float2 CalculateCurrentPosition(Entity entity, ref SystemState state)
     {
-        var transform = state.EntityManager.GetComponentData<LocalTransform>(entity);
+        var localToWorld = state.EntityManager.GetComponentData<LocalToWorld>(entity);
         var tsObject = state.EntityManager.GetComponentData<TSObjectComponent>(entity);
-        var position = transform.Position.xy;
+        var position = localToWorld.Position.xy;
         position.y -= tsObject.RootOffset;
         return position;
     }
@@ -465,9 +465,9 @@ public partial struct NavigationSystem : ISystem
             return;
 
         // 사다리 위치에서 연결된 지형의 표면 높이 계산
-        var ladderTransform = state.EntityManager.GetComponentData<LocalTransform>(ladder.Entity);
+        var ladderColliderBounds = state.EntityManager.GetComponentData<ColliderBoundsComponent>(ladder.Entity);
         float surfaceY = GetGroundSurfaceHeight(connectedGround, ref state);
-        var surfacePosition = new float2(ladderTransform.Position.x, surfaceY);
+        var surfacePosition = new float2(ladderColliderBounds.Center.x, surfaceY);
 
         // 이미 닫힌 목록에 있는지 확인
         if (IsInClosedList(surfacePosition, closedList)) return;
@@ -530,15 +530,10 @@ public partial struct NavigationSystem : ISystem
 
     private float GetGroundSurfaceHeight(Entity ground, ref SystemState state)
     {
-        var collider = state.EntityManager.GetComponentData<ColliderComponent>(ground);
-        var transform = state.EntityManager.GetComponentData<LocalTransform>(ground);
+        var colliderBounds = state.EntityManager.GetComponentData<ColliderBoundsComponent>(ground);
 
-        // 지형 중심점 계산
-        float groundCenterY = transform.Position.y + collider.Offset.y;
-        float halfHeight = collider.Size.y * 0.5f;
-
-        // 다각형 지형 대응: 범위 내외 관계없이 상단 표면 높이 반환
-        return groundCenterY + halfHeight;
+        // 지형 높이 반환
+        return colliderBounds.Max.y;
     }
 
     [BurstCompile]
@@ -777,7 +772,7 @@ public partial struct NavigationSystem : ISystem
                 if (state.EntityManager.HasComponent<TSLadderComponent>(node.LadderUsed))
                 {
                     var ladderComponent = state.EntityManager.GetComponentData<TSLadderComponent>(node.LadderUsed);
-                    var ladderTransform = state.EntityManager.GetComponentData<LocalTransform>(node.LadderUsed);
+                    var ladderColliderBounds = state.EntityManager.GetComponentData<ColliderBoundsComponent>(node.LadderUsed);
 
                     // 이전 노드 정보 가져오기
                     var prevNode = path[i - 1];
@@ -786,10 +781,10 @@ public partial struct NavigationSystem : ISystem
                     if (prevNode.GroundEntity != Entity.Null)
                     {
                         float startSurfaceY = GetGroundSurfaceHeight(prevNode.GroundEntity, ref state);
-                        var moveToLadderStartPosition = new float2(ladderTransform.Position.x, startSurfaceY);
+                        var moveToLadderStartPosition = new float2(ladderColliderBounds.Center.x, startSurfaceY);
 
                         // 거리가 충분히 떨어져 있으면 수평 이동 웨이포인트 추가
-                        float horizontalDistance = math.abs(prevNode.Position.x - ladderTransform.Position.x);
+                        float horizontalDistance = math.abs(prevNode.Position.x - ladderColliderBounds.Center.x);
                         if (horizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
                         {
                             AddWaypoint(waypoints, moveToLadderStartPosition, prevNode.GroundEntity, TSObjectType.Ground, MoveState.Move);
@@ -826,7 +821,7 @@ public partial struct NavigationSystem : ISystem
                     if (endGround != Entity.Null)
                     {
                         float endSurfaceY = GetGroundSurfaceHeight(endGround, ref state);
-                        var ladderEndPosition = new float2(ladderTransform.Position.x, endSurfaceY);
+                        var ladderEndPosition = new float2(ladderColliderBounds.Center.x, endSurfaceY);
 
                         AddWaypoint(waypoints, ladderEndPosition, node.LadderUsed, TSObjectType.Ladder, moveType);
 #if UNITY_EDITOR

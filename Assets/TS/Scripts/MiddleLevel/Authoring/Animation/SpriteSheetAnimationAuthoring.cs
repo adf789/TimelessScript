@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Entities;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using Unity.Transforms;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class SpriteSheetAnimationAuthoring : MonoBehaviour
@@ -75,7 +76,7 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
     {
         public override void Bake(SpriteSheetAnimationAuthoring authoring)
         {
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            var entity = GetEntity(TransformUsageFlags.Renderable);
 
             authoring.Initialize();
 
@@ -89,6 +90,14 @@ public class SpriteSheetAnimationAuthoring : MonoBehaviour
                 IsFlip = authoring.spriteRenderer.flipX
             });
             AddComponent(entity, new ObjectTargetComponent());
+
+            // 부모 Transform이 있으면 Parent 컴포넌트 추가
+            var parentTransform = authoring.transform.parent;
+            if (parentTransform != null)
+            {
+                var parentEntity = GetEntity(parentTransform, TransformUsageFlags.Dynamic);
+                AddComponent(entity, new Parent { Value = parentEntity });
+            }
         }
 
     }

@@ -53,7 +53,7 @@ public partial struct OptimizedPhysicsSystem : ISystem
 
         // Gimmick Bounds 업데이트
         var updateJob = new UpdateColliderBoundsJob();
-        state.Dependency = updateJob.ScheduleParallel(state.Dependency);
+        state.Dependency = updateJob.Schedule(state.Dependency);
         state.Dependency.Complete();
 
         var groundEntities = groundQuery.ToEntityArray(Allocator.TempJob);

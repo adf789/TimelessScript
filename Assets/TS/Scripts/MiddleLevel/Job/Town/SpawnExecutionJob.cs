@@ -35,6 +35,9 @@ public partial struct SpawnExecutionJob : IJobEntity
 
         // 스폰된 오브젝트의 위치 설정
         ecb.AddComponent(spawnedEntity, new Parent { Value = spawnRequest.SpawnParent });
+        ecb.AddComponent(spawnedEntity, new PendingPositionComponent { Position = spawnRequest.SpawnPosition });
+
+        UnityEngine.Debug.Log($"Spawn: {spawnRequest.SpawnPosition}");
 
         switch (spawnRequest.ObjectType)
         {

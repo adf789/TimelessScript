@@ -193,13 +193,9 @@ public partial struct ControlSystem : ISystem
 
         // 이동에 필요한 컴포넌트를 가져옴
         var navigation = SystemAPI.GetComponentRW<NavigationComponent>(controlTarget);
-        var controlTransform = SystemAPI.GetComponent<LocalTransform>(controlTarget);
-        var targetTransform = SystemAPI.GetComponent<LocalTransform>(target.Self);
+        var controlCollider = SystemAPI.GetComponent<ColliderBoundsComponent>(controlTarget);
+        var targetCollider = SystemAPI.GetComponent<ColliderBoundsComponent>(target.Self);
         var actorObject = SystemAPI.GetComponentRW<TSActorComponent>(controlTarget);
-
-        // 시작 지점과 도착 지점
-        float2 selfPosition = controlTransform.Position.xy;
-        float2 targetPosition = targetTransform.Position.xy;
 
         // 현재 타겟 저장(엔티티 재생성 시 복구용)
         SaveMoveTarget(ref actorObject.ValueRW, touchPosition);
@@ -208,12 +204,7 @@ public partial struct ControlSystem : ISystem
         {
             case TSObjectType.Ground:
                 {
-                    var collider = SystemAPI.GetComponent<ColliderComponent>(target.Self);
-                    float2 position = targetPosition + collider.Offset;
-                    float halfHeight = collider.Size.y * 0.5f;
-
-                    position.x = touchPosition.x;
-                    position.y += halfHeight;
+                    float2 position = new float2(touchPosition.x, targetCollider.Max.y);
 
                     // Navigation 시스템으로 이동
                     navigation.ValueRW.IsActive = true;
@@ -227,12 +218,10 @@ public partial struct ControlSystem : ISystem
             case TSObjectType.Gimmick:
                 {
                     // Gimmick의 위치와 반지름 정보 가져오기
-                    var gimmickCollider = SystemAPI.GetComponent<ColliderComponent>(target.Self);
                     var gimmick = SystemAPI.GetComponent<TSGimmickComponent>(target.Self);
-                    float gimmickRadius = gimmick.Radius;
 
                     // 원형의 중심 아래에 접하는 지형 찾기
-                    var groundResult = FindGroundBelowCircle(ref state, selfPosition, targetPosition, gimmickRadius);
+                    var groundResult = FindGroundBelowCircle(ref state, controlCollider.RootPosition, targetCollider.RootPosition, gimmick.Radius);
 
                     if (groundResult.GroundEntity != Entity.Null)
                     {
@@ -243,7 +232,7 @@ public partial struct ControlSystem : ISystem
                         navigation.ValueRW.CurrentWaypointIndex = 0;
                         navigation.ValueRW.State = NavigationState.PathFinding;
 
-                        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmickRadius}, Gimmick Center: {targetPosition}");
+                        Debug.Log($"Moving to ground contact point below gimmick circle. Position: {groundResult.ContactPoint}, Radius: {gimmick.Radius}, Gimmick Center: {targetCollider.Center}");
                     }
                     else
                     {
@@ -267,21 +256,17 @@ public partial struct ControlSystem : ISystem
         float2 searchStart = circleCenter + new float2(0, -circleRadius);
         float searchRange = circleRadius * 2f; // 원의 지름만큼 아래까지 검색
 
-        foreach (var (collider, groundComp, transform, entity) in
-                 SystemAPI.Query<RefRO<ColliderComponent>,
-                 RefRO<TSGroundComponent>,
-                 RefRO<LocalTransform>>().WithEntityAccess())
+        foreach (var (colliderBounds, groundComp, entity) in
+                 SystemAPI.Query<RefRO<ColliderBoundsComponent>,
+                 RefRO<TSGroundComponent>>().WithEntityAccess())
         {
-            float2 groundCenter = transform.ValueRO.Position.xy + collider.ValueRO.Offset;
-            float2 groundSize = collider.ValueRO.Size;
-
             // 지형의 경계 계산
-            float2 groundMin = groundCenter - groundSize * 0.5f;
-            float2 groundMax = groundCenter + groundSize * 0.5f;
+            float2 groundMin = colliderBounds.ValueRO.Min;
+            float2 groundMax = colliderBounds.ValueRO.Max;
 
             // 지형이 원의 중심보다 아래에 있는지 확인
             float groundTopY = groundMax.y;
-            if (groundTopY < circleCenter.y)
+            if (Mathf.Abs(groundTopY - circleCenter.y) <= circleRadius)
             {
                 // 원과 지형 사각형의 접촉점 계산
                 float2 contactPoint = Utility.Mathematic.CalculateCircleRectangleContact(basePosition, circleCenter, circleRadius, groundMin, groundMax);

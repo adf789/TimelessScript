@@ -2,6 +2,7 @@
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
+using Unity.Mathematics;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class SpriteRendererAuthoring : MonoBehaviour
@@ -14,7 +15,7 @@ public class SpriteRendererAuthoring : MonoBehaviour
     {
         public override void Bake(SpriteRendererAuthoring authoring)
         {
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            var entity = GetEntity(TransformUsageFlags.Renderable);
 
             authoring.Initialize();
 
