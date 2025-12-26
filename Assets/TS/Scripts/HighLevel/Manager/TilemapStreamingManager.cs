@@ -7,6 +7,7 @@ using Unity.Scenes;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using System;
 
 /// <summary>
 /// 타일맵 패턴 스트리밍 매니저
@@ -773,7 +774,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         if (mapNode.TilemapInstance != null)
         {
-            Object.Destroy(mapNode.TilemapInstance);
+            Destroy(mapNode.TilemapInstance);
             mapNode.TilemapInstance = null;
         }
     }

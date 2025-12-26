@@ -116,7 +116,7 @@ public partial class GamePreprocessingSystem : SystemBase
         if (!SystemAPI.HasBuffer<InteractBuffer>(entity))
             return;
 
-        var transform = SystemAPI.GetComponent<LocalTransform>(entity);
+        var transform = SystemAPI.GetComponent<LocalToWorld>(entity);
         var interactBuffer = SystemAPI.GetBuffer<InteractBuffer>(entity);
         long totalCount = 0;
 

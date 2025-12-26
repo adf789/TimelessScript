@@ -69,7 +69,7 @@ public partial struct BehaviorJob : IJobEntity
             if (navigation.IsActive && navigation.State == NavigationState.Completed)
                 OnEndMoving(entityInQueryIndex,
                 in entity,
-                in transform,
+                in localToWorld,
                 ref tsObject,
                 ref tsActor,
                 ref rendererComponent.ValueRW,
@@ -89,7 +89,7 @@ public partial struct BehaviorJob : IJobEntity
             if (navigation.IsActive && navigation.State == NavigationState.Completed)
                 OnEndMoving(entityInQueryIndex,
                 in entity,
-                in transform,
+                in localToWorld,
                 ref tsObject,
                 ref tsActor,
                 ref rendererComponent.ValueRW,
@@ -213,14 +213,14 @@ public partial struct BehaviorJob : IJobEntity
 
     private void OnEndMoving(int entityInQueryIndex,
         in Entity entity,
-        in LocalTransform transform,
+        in LocalToWorld localToWorld,
     ref TSObjectComponent objectComponent,
     ref TSActorComponent actorComponent,
     ref SpriteRendererComponent renderer,
     ref SpriteSheetAnimationComponent anim)
     {
         // 현재 오브젝트와 타겟의 위치를 가져옵니다.
-        float2 currentRootPosition = transform.Position.xy;
+        float2 currentRootPosition = localToWorld.Position.xy;
         currentRootPosition.y += objectComponent.RootOffset;
 
         // 이동 목적지 리셋
