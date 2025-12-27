@@ -326,7 +326,7 @@ Transform:
   m_GameObject: {fileID: 1736684047}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.1, y: 3.76, z: 0}
+  m_LocalPosition: {x: -2.53, y: 3.76, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -345,11 +345,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.MiddleLevel::SpawnConfigAuthoring
   spawnObjectPrefab: {fileID: 3268465435861632508, guid: 17559c1925ab2af47942d1c14e89ff84, type: 3}
-  lifeTime: 0
+  lifeTime: 10
   layerOffset: 0
-  maxSpawnCount: 1
+  maxSpawnCount: 10
   spawnCooldown: 2
-  minSpawnDistance: 2
 --- !u!114 &1736684051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -573,7 +572,6 @@ MonoBehaviour:
   layerOffset: 9800
   maxSpawnCount: 10
   spawnCooldown: 2
-  minSpawnDistance: 1
 --- !u!114 &5324830893101175966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -591,7 +589,6 @@ MonoBehaviour:
   layerOffset: 10000
   maxSpawnCount: 10
   spawnCooldown: 2
-  minSpawnDistance: 1
 --- !u!114 &5324830893990621454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -609,7 +606,6 @@ MonoBehaviour:
   layerOffset: 9900
   maxSpawnCount: 10
   spawnCooldown: 2
-  minSpawnDistance: 1
 --- !u!114 &7010944742738787248
 MonoBehaviour:
   m_ObjectHideFlags: 0

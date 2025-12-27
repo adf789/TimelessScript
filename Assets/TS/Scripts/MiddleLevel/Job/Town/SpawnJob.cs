@@ -15,8 +15,6 @@ public partial struct SpawnJob : IJobEntity
         [EntityIndexInQuery] int entityInQueryIndex,
         Entity spawnerEntity,
         ref SpawnConfigComponent spawnConfig,
-        in LocalTransform transform,
-        in LocalToWorld worldPosition,
         in ColliderComponent collider)
     {
         // 스폰 쿨다운 체크
@@ -28,7 +26,7 @@ public partial struct SpawnJob : IJobEntity
             return;
 
         // 스폰 가능한 위치 찾기
-        FindValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in collider, out float3 spawnPosition);
+        float3 spawnPosition = GetValidSpawnPosition(entityInQueryIndex, spawnConfig.PositionYOffset, in collider);
 
         // 스폰 요청 생성
         var spawnRequestEntity = ecb.CreateEntity(entityInQueryIndex);
@@ -54,20 +52,20 @@ public partial struct SpawnJob : IJobEntity
         spawnConfig.NextSpawnTime = CurrentTime + spawnConfig.SpawnCooldown;
     }
 
-    private void FindValidSpawnPosition(
+    private float3 GetValidSpawnPosition(
         int entityIndex,
         float yOffset,
-        in ColliderComponent collider,
-        out float3 spawnPosition)
+        in ColliderComponent collider)
     {
         float halfWidth = collider.Size.x * 0.5f;
         float halfHeight = collider.Size.y * 0.5f;
+        float offset = 0.5f;
 
         uint seed = (uint) (CurrentTime * IntDefine.TIME_MILLISECONDS_ONE) +
-                       (uint) entityIndex * 13 + 1;
+        (uint) entityIndex * 13 + 1;
 
         var random = new Random(seed);
 
-        spawnPosition = new float3(random.NextFloat(-halfWidth, halfWidth), halfHeight + yOffset, 0);
+        return new float3(random.NextFloat(-halfWidth + offset, halfWidth - offset), halfHeight + yOffset, 0);
     }
 }

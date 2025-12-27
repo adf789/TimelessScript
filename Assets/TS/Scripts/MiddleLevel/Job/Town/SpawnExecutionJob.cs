@@ -37,8 +37,6 @@ public partial struct SpawnExecutionJob : IJobEntity
         ecb.AddComponent(spawnedEntity, new Parent { Value = spawnRequest.SpawnParent });
         ecb.AddComponent(spawnedEntity, new PendingPositionComponent { Position = spawnRequest.SpawnPosition });
 
-        UnityEngine.Debug.Log($"Spawn: {spawnRequest.SpawnPosition}");
-
         switch (spawnRequest.ObjectType)
         {
             case TSObjectType.Actor:

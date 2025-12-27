@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using System.Runtime.CompilerServices;
+using System;
 
 /// <summary>
 /// 2D 플랫포머에 최적화된 통합 물리 Job
@@ -121,16 +122,16 @@ public partial struct OptimizedPhysicsJob : IJobEntity
             }
 
             // 충돌 응답
-            float2 separation = GetSeparationVector(actorBounds, groundBound);
+            float2 separation = GetSeparationVector(in actorBounds, in groundBound, in physics.Velocity);
 
-            // Y축 우선 (착지 처리)
-            if (math.abs(separation.y) > math.abs(separation.x))
+            // 충돌체 분리
+            if (separation.x != 0 || separation.y != 0)
             {
                 // Y축 분리
                 float2 currentPos = transform.Position.xy;
-                currentPos.y += separation.y;
+                currentPos += separation;
+                delta += separation;
                 transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
-                delta.y += separation.y;
 
                 // 속도 제거
                 physics.Velocity.y = 0;
@@ -143,17 +144,6 @@ public partial struct OptimizedPhysicsJob : IJobEntity
                     if (!physics.IsPrevGrounded)
                         physics.IsRandingAnimation = true;
                 }
-            }
-            else
-            {
-                // X축 분리
-                float2 currentPos = transform.Position.xy;
-                currentPos.x += separation.x;
-                transform.Position = new float3(currentPos.x, currentPos.y, transform.Position.z);
-                delta.x += separation.x;
-
-                // X축 속도 감쇠
-                physics.Velocity.x *= 0.5f;
             }
         }
 
@@ -171,23 +161,22 @@ public partial struct OptimizedPhysicsJob : IJobEntity
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private float2 GetSeparationVector(in ColliderBoundsComponent actor, in ColliderBoundsComponent ground)
+    private float2 GetSeparationVector(in ColliderBoundsComponent actor, in ColliderBoundsComponent ground, in float2 velocity)
     {
         // 겹침 크기 계산
         float overlapX = math.min(actor.Max.x, ground.Max.x) - math.max(actor.Min.x, ground.Min.x);
         float overlapY = math.min(actor.Max.y, ground.Max.y) - math.max(actor.Min.y, ground.Min.y);
+        float2 result = float2.zero;
 
-        // 최소 이동 거리 (MTV)
-        if (overlapX < overlapY)
-        {
-            // X축 분리
-            return new float2(actor.Center.x < ground.Center.x ? -overlapX : overlapX, 0);
-        }
-        else
-        {
-            // Y축 분리
-            return new float2(0, actor.Center.y < ground.Center.y ? -overlapY : overlapY);
-        }
+        // X축 분리
+        if (actor.Min.x < ground.Min.x || actor.Max.x > ground.Max.x)
+            result.x = -Math.Sign(velocity.x) * overlapX;
+
+        // Y축 분리
+        if (actor.Min.y < ground.Min.y || actor.Max.y > ground.Max.y)
+            result.y = -Math.Sign(velocity.y) * overlapY;
+
+        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

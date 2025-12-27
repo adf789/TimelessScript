@@ -10,7 +10,6 @@ public class SpawnConfigAuthoring : MonoBehaviour
     [SerializeField] private int layerOffset = 0;
     [SerializeField] private int maxSpawnCount = 10;
     [SerializeField] private float spawnCooldown = 2.0f;
-    [SerializeField] private float minSpawnDistance = 1.0f;
 
     private class Baker : Baker<SpawnConfigAuthoring>
     {
@@ -34,7 +33,6 @@ public class SpawnConfigAuthoring : MonoBehaviour
                 LifeTime = authoring.lifeTime,
                 SpawnCooldown = authoring.spawnCooldown,
                 NextSpawnTime = 0f,
-                MinSpawnDistance = authoring.minSpawnDistance,
                 PositionYOffset = authoring.spawnObjectPrefab.GetRootOffset()
             });
 

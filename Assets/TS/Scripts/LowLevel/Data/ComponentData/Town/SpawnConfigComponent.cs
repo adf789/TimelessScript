@@ -1,6 +1,5 @@
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 
 public struct SpawnConfigComponent : IComponentData
 {
@@ -15,6 +14,5 @@ public struct SpawnConfigComponent : IComponentData
     public float LifeTime;
     public float SpawnCooldown;
     public float NextSpawnTime;
-    public float MinSpawnDistance;
     public float PositionYOffset;
 }

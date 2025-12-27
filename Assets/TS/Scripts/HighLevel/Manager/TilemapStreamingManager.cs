@@ -861,18 +861,19 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (upNode == null || downNode == null)
             return Vector3.zero;
 
-        var upGround = upNode.PatternData.GetHighGroundSize();
-        var downGround = downNode.PatternData.GetLowGroundSize();
+        var upGround = upNode.PatternData.GetLowGroundSize();
+        var downGround = downNode.PatternData.GetHighGroundSize();
         int groundMin = Mathf.Max(upGround.min, downGround.min);
-        int groundMax = Mathf.Max(upGround.max, downGround.max);
+        int groundMax = Mathf.Min(upGround.max, downGround.max);
         int groundMiddle = (groundMin + groundMax) / 2;
 
         int2 upGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * upNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * upNode.GridOffset.y);
         int2 downGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * downNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * downNode.GridOffset.y);
-        float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f;
-        float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f;
 
-        float ladderX = upGridPosition.x + IntDefine.MAP_TOTAL_GRID_WIDTH * groundMiddle + IntDefine.MAP_TOTAL_GRID_WIDTH * 0.5f;
+        float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_HEIGHT;
+        float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_HEIGHT;
+
+        float ladderX = upGridPosition.x + IntDefine.MAP_GRID_SIZE * groundMiddle + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_WIDTH;
         float ladderY = (upNodeOffsetY + downNodeOffsetY) * 0.5f;
 
         return new Vector3(ladderX, ladderY, 0);
@@ -1048,6 +1049,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         // 3. Transform 컴포넌트 추가
         entityManager.AddComponentData(ladderEntity, LocalTransform.FromPosition(position));
+        entityManager.AddComponentData(ladderEntity, new LocalToWorld { Value = float4x4.Translate(position) });
 
         // 4. TSObjectComponent 추가
         entityManager.AddComponentData(ladderEntity, new TSObjectComponent
