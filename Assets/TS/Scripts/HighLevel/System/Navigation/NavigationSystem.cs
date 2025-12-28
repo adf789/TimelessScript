@@ -29,8 +29,7 @@ public partial struct NavigationSystem : ISystem
 
         _groundQuery = SystemAPI.QueryBuilder()
         .WithAll<TSObjectComponent,
-        ColliderComponent,
-        LocalTransform,
+        ColliderBoundsComponent,
         TSGroundComponent>().Build();
     }
 
@@ -168,7 +167,7 @@ public partial struct NavigationSystem : ISystem
         var currentPosition = CalculateCurrentPosition(entity, ref state);
         float distance = math.distance(currentPosition, waypointPosition);
 
-        return distance < StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE;
+        return distance < FloatDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE;
     }
 
     private void SetNavigationFailed(ref NavigationComponent navigation, string reason)
@@ -209,7 +208,7 @@ public partial struct NavigationSystem : ISystem
     [BurstCompile]
     private bool IsOnSameLevel(float startY, float targetY)
     {
-        return math.abs(startY - targetY) <= StringDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD;
+        return math.abs(startY - targetY) <= FloatDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD;
     }
 
     [BurstCompile]
@@ -313,7 +312,7 @@ public partial struct NavigationSystem : ISystem
             float finalDistance = math.distance(lastWaypoint.Position, targetPos);
 
             // 마지막 웨이포인트와 최종 목표 사이의 거리가 있으면 최종 목표 웨이포인트 추가
-            if (finalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
+            if (finalDistance > FloatDefine.AUTO_MOVE_MINIMUM_DISTANCE)
             {
                 AddWaypoint(waypoints, targetPos, targetGround, TSObjectType.Ground, MoveState.Move);
             }
@@ -542,8 +541,7 @@ public partial struct NavigationSystem : ISystem
         // 캐시된 쿼리 사용 후 런타임 필터링으로 성능 최적화
         var entities = _groundQuery.ToEntityArray(Allocator.Temp);
         var tsObjects = _groundQuery.ToComponentDataArray<TSObjectComponent>(Allocator.Temp);
-        var colliders = _groundQuery.ToComponentDataArray<ColliderComponent>(Allocator.Temp);
-        var transforms = _groundQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+        var colliders = _groundQuery.ToComponentDataArray<ColliderBoundsComponent>(Allocator.Temp);
 
         Entity foundGround = Entity.Null;
 
@@ -553,9 +551,8 @@ public partial struct NavigationSystem : ISystem
             if (tsObjects[i].ObjectType == TSObjectType.Ground)
             {
                 var collider = colliders[i];
-                var transform = transforms[i];
 
-                if (IsPositionOnGround(position, collider, transform))
+                if (IsPositionOnGround(position, collider))
                 {
                     foundGround = entities[i];
                     break;
@@ -566,26 +563,21 @@ public partial struct NavigationSystem : ISystem
         entities.Dispose();
         tsObjects.Dispose();
         colliders.Dispose();
-        transforms.Dispose();
 
         return foundGround;
     }
 
     [BurstCompile]
-    private bool IsPositionOnGround(float2 position, ColliderComponent collider, LocalTransform transform)
+    private bool IsPositionOnGround(float2 position, ColliderBoundsComponent colliderBounds)
     {
-        float groundCenterX = transform.Position.x + collider.Offset.x;
-        float groundCenterY = transform.Position.y + collider.Offset.y;
-        float halfWidth = collider.Size.x * 0.5f;
-        float halfHeight = collider.Size.y * 0.5f;
-
         // 수평 범위 확인
-        bool withinHorizontalRange = position.x >= groundCenterX - halfWidth &&
-                                    position.x <= groundCenterX + halfWidth;
+        bool withinHorizontalRange = position.x >= colliderBounds.Min.x &&
+                                    position.x <= colliderBounds.Max.x;
 
         // 수직 범위 확인 (표면에서 일정 범위 내)
-        float surfaceY = groundCenterY + halfHeight;
-        bool withinVerticalRange = math.abs(position.y - surfaceY) <= StringDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD * 2;
+        float surfaceY = colliderBounds.Max.y;
+        float diff = math.abs(position.y - surfaceY);
+        bool withinVerticalRange = diff <= FloatDefine.AUTO_MOVE_MAX_VERTICAL_REACH;
 
         return withinHorizontalRange && withinVerticalRange;
     }
@@ -605,7 +597,7 @@ public partial struct NavigationSystem : ISystem
         {
             var ladderTransform = state.EntityManager.GetComponentData<LocalTransform>(ladderEntity);
             float horizontalDistance = math.abs(currentNode.Position.x - ladderTransform.Position.x);
-            return horizontalDistance <= StringDefine.AUTO_MOVE_MAX_HORIZONTAL_REACH;
+            return horizontalDistance <= FloatDefine.AUTO_MOVE_MAX_HORIZONTAL_REACH;
         }
 
         return false;
@@ -625,7 +617,7 @@ public partial struct NavigationSystem : ISystem
             float heightDiff = math.abs(currentNode.Position.y - currentSurfaceY);
 
             // 목표 지형에 있고 표면 높이가 적절하면 도달 (걸어서 이동 가능)
-            return heightDiff <= StringDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD;
+            return heightDiff <= FloatDefine.AUTO_MOVE_SAME_HEIGHT_THRESHOLD;
         }
 
         return false;
@@ -785,7 +777,7 @@ public partial struct NavigationSystem : ISystem
 
                         // 거리가 충분히 떨어져 있으면 수평 이동 웨이포인트 추가
                         float horizontalDistance = math.abs(prevNode.Position.x - ladderColliderBounds.Center.x);
-                        if (horizontalDistance > StringDefine.AUTO_MOVE_MINIMUM_DISTANCE)
+                        if (horizontalDistance > FloatDefine.AUTO_MOVE_MINIMUM_DISTANCE)
                         {
                             AddWaypoint(waypoints, moveToLadderStartPosition, prevNode.GroundEntity, TSObjectType.Ground, MoveState.Move);
 #if UNITY_EDITOR

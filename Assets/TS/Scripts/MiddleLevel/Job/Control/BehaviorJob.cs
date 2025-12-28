@@ -157,7 +157,7 @@ public partial struct BehaviorJob : IJobEntity
         float remainingDistance = math.distance(currentRootPosition, targetRootPosition);
 
         // 위치 이동 및 스냅
-        if (remainingDistance > StringDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE)
+        if (remainingDistance > FloatDefine.AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE)
         {
             transform.Position += new float3()
             {

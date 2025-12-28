@@ -12,14 +12,6 @@ public class StringDefine
     public const string PATH_SCENE = "TS/Scenes/{0}";
     #endregion PATH
 
-    #region AUTO MOVING
-    public const float AUTO_MOVE_SAME_HEIGHT_THRESHOLD = 0.5f;
-    public const float AUTO_MOVE_MAX_HORIZONTAL_REACH = 10.0f;
-    public const float AUTO_MOVE_MAX_VERTICAL_REACH = 8.0f;
-    public const float AUTO_MOVE_WAYPOINT_ARRIVAL_DISTANCE = 0.2f;
-    public const float AUTO_MOVE_MINIMUM_DISTANCE = 0.5f;
-    #endregion
-
     #region PREF_KEY
     public const string KEY_PREFS_ACCOUNT_GOOGLE_ID = "Google_Id";
     public const string KEY_PREFS_ACCOUNT_FACEBOOK_ID = "Facebook_Id";

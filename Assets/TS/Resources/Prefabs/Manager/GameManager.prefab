@@ -95,6 +95,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: HighLevel::TS.HighLevel.Manager.TilemapStreamingManager
   _targetCamera: {fileID: 8340294928188985847}
+  _ladderPrefab: {fileID: 4522349882161182515, guid: f41211a6e39d8ab42a846d7622cabd05, type: 3}
   _maxLoadedPatterns: 9
   _updateInterval: 0.5
   _enableAutoStreaming: 1

@@ -26,8 +26,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     #region Inspector Fields
 
-    [Header("Camera Reference")]
+    [Header("References")]
     [SerializeField] private Camera _targetCamera;
+    [SerializeField] private LadderResizingAddon _ladderPrefab;
 
     [Header("Streaming Settings")]
     [SerializeField] private int _maxLoadedPatterns = 9;
@@ -454,8 +455,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                     // SubScene의 모든 Entity에 offset 적용
                     ApplyOffsetToSubSceneEntities(mapNode);
 
-                    await LoadLadders(gridOffset);
                     await LoadExtensionButton(gridOffset);
+
+                    await UniTask.Yield(cancellationToken: this.GetCancellationTokenOnDestroy());
+
+                    await LoadLadders(gridOffset);
                 }
             }
 
@@ -481,42 +485,57 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         var downGridOffset = new int2(gridOffset.x, gridOffset.y - 1);
 
         // 위 방향에 연결된 노드가 있는지
-        if (_mapDatas.TryGetValue(upGridOffset, out MapNodeEntry upNode))
+        if (_mapDatas.TryGetValue(upGridOffset, out MapNodeEntry upNode)
+        && upNode.IsLoaded)
         {
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
             float3 ladderPosition = GetLadderPosition(upNode, node);
 
             // 지형 Entity 가져옴
-            Entity bottomGroundEntity = node.MaxGroundEntity;
             Entity topGroundEntity = upNode.MinGroundEntity;
+            Entity bottomGroundEntity = node.MaxGroundEntity;
+
+            // 사다리 높이 계산
+            float calculatedHeight = CalculateLadderHeight(upNode, node);
 
             // 사다리 Entity 생성
             CreateLadderEntity(
                 ladderPosition,
+                calculatedHeight,
                 topGroundEntity,
                 bottomGroundEntity);
+
+            // 사다리 렌더링 오브젝트 생성
+            CreateLadderRenderTarget(ladderPosition, calculatedHeight - 1);
 
             this.DebugLog($"Ladder created at {ladderPosition} between {gridOffset} and {upGridOffset}");
         }
 
         // 아래 방향에 연결된 노드가 있는지
-        if (_mapDatas.TryGetValue(downGridOffset, out var downNode))
+        if (_mapDatas.TryGetValue(downGridOffset, out var downNode)
+        && downNode.IsLoaded)
         {
             // 사다리 생성 위치 계산 (baseLink.FromPosition 사용)
             // 패턴의 월드 위치 기준으로 계산
             float3 ladderPosition = GetLadderPosition(node, downNode);
 
-            // TODO: Ground Entity 찾는 로직은 패턴 내부 구조에 따라 구현 필요
-            // 현재는 Entity.Null로 설정 (나중에 실제 Ground 찾는 로직 추가)
-            Entity bottomGroundEntity = downNode.MaxGroundEntity;
+            // 지형 Entity 가져옴
             Entity topGroundEntity = node.MinGroundEntity;
+            Entity bottomGroundEntity = downNode.MaxGroundEntity;
+
+            // 사다리 높이 계산
+            float calculatedHeight = CalculateLadderHeight(node, downNode);
 
             // 사다리 Entity 생성
             CreateLadderEntity(
                 ladderPosition,
+                calculatedHeight,
                 topGroundEntity,
                 bottomGroundEntity);
+
+            // 사다리 렌더링 오브젝트 생성
+            CreateLadderRenderTarget(ladderPosition, calculatedHeight - 1);
 
             this.DebugLog($"Ladder created at {ladderPosition} between {gridOffset} and {downGridOffset}");
         }
@@ -613,9 +632,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
                 if (entityManager.HasBuffer<GroundReferenceBuffer>(entity))
                 {
                     // LocalTransform에 offset 적용
-                    var transform = entityManager.GetComponentData<LocalTransform>(entity);
-                    transform.Position += offset;
-                    entityManager.SetComponentData(entity, transform);
+                    entityManager.AddComponentData(entity, new PendingPositionComponent { Position = offset });
 
                     var referenceBuffer = entityManager.GetBuffer<GroundReferenceBuffer>(entity);
 
@@ -870,8 +887,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         int2 upGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * upNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * upNode.GridOffset.y);
         int2 downGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * downNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * downNode.GridOffset.y);
 
-        float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_HEIGHT;
-        float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_HEIGHT;
+        float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight;
+        float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight;
 
         float ladderX = upGridPosition.x + IntDefine.MAP_GRID_SIZE * groundMiddle + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_WIDTH;
         float ladderY = (upNodeOffsetY + downNodeOffsetY) * 0.5f;
@@ -1022,13 +1039,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     #region Ladder Creation (Runtime ECS Entity Generation)
 
     /// <summary>
-    /// 런타임 중 사다리 Entity 생성 (TSLadderAuthoring.Baker 로직 참고)
+    /// 런타임 중 사다리 Entity 생성
     /// </summary>
-    /// <param name="position">사다리 생성 위치</param>
-    /// <param name="topGroundEntity">상단 연결 지형 Entity</param>
-    /// <param name="bottomGroundEntity">하단 연결 지형 Entity</param>
-    /// <returns>생성된 사다리 Entity</returns>
-    private Entity CreateLadderEntity(float3 position, Entity topGroundEntity, Entity bottomGroundEntity)
+    private Entity CreateLadderEntity(float3 position, float height, Entity topGroundEntity, Entity bottomGroundEntity)
     {
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null)
@@ -1066,82 +1079,52 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             BottomConnectedGround = bottomGroundEntity
         });
 
-        // 6. 사다리 높이 계산 (TSLadderAuthoring.CalculateLadderHeight 참고)
-        float calculatedHeight = CalculateLadderHeight(
-            entityManager,
-            position.y,
-            topGroundEntity,
-            bottomGroundEntity);
-
-        // 7. ColliderComponent 추가 (TSLadderAuthoring.Baker 참고)
+        // 6. ColliderComponent 추가 (TSLadderAuthoring.Baker 참고)
         entityManager.AddComponentData(ladderEntity, new ColliderComponent
         {
             Layer = ColliderLayer.Ladder,
-            Size = new float2(0.5f, calculatedHeight),
+            Size = new float2(0.5f, height),
             Offset = new float2(0f, 0.5f),  // TSLadderAuthoring와 동일
             IsTrigger = true  // 사다리는 반드시 Trigger!
         });
 
-        // 8. ColliderBoundsComponent 추가
+        // 7. ColliderBoundsComponent 추가
         entityManager.AddComponentData(ladderEntity, new ColliderBoundsComponent());
 
-        // 9. CollisionBuffer 추가
+        // 8. CollisionBuffer 추가
         entityManager.AddBuffer<CollisionBuffer>(ladderEntity);
 
         return ladderEntity;
     }
 
     /// <summary>
-    /// 사다리 높이 계산 (TSLadderAuthoring.CalculateLadderHeight 로직 그대로 구현)
+    /// 런타임 중 사다리 Entity 생성
     /// </summary>
-    private float CalculateLadderHeight(
-        EntityManager entityManager,
-        float ladderY,
-        Entity topGroundEntity,
-        Entity bottomGroundEntity)
+    private void CreateLadderRenderTarget(float3 position, float height)
     {
-        float defaultHeight = 3.0f; // 기본 높이
+        if (_ladderPrefab == null)
+            return;
 
-        // TopConnectedGround와 BottomConnectedGround가 모두 있는 경우
-        if (topGroundEntity != Entity.Null && bottomGroundEntity != Entity.Null)
-        {
-            if (entityManager.HasComponent<LocalTransform>(topGroundEntity) &&
-                entityManager.HasComponent<LocalTransform>(bottomGroundEntity))
-            {
-                float topY = entityManager.GetComponentData<LocalTransform>(topGroundEntity).Position.y;
-                float bottomY = entityManager.GetComponentData<LocalTransform>(bottomGroundEntity).Position.y;
-                float groundDistance = math.abs(topY - bottomY);
+        var newLadder = Instantiate(_ladderPrefab, transform);
 
-                // TopConnectedGround보다 1 높게 설정
-                return groundDistance + 1.0f;
-            }
-        }
-        // TopConnectedGround만 있는 경우
-        else if (topGroundEntity != Entity.Null)
-        {
-            if (entityManager.HasComponent<LocalTransform>(topGroundEntity))
-            {
-                float topY = entityManager.GetComponentData<LocalTransform>(topGroundEntity).Position.y;
-                float distanceToTop = math.abs(topY - ladderY);
+        newLadder.transform.position = position;
 
-                // TopConnectedGround보다 1 높게 설정
-                return distanceToTop + 1.0f;
-            }
-        }
-        // BottomConnectedGround만 있는 경우
-        else if (bottomGroundEntity != Entity.Null)
-        {
-            if (entityManager.HasComponent<LocalTransform>(bottomGroundEntity))
-            {
-                float bottomY = entityManager.GetComponentData<LocalTransform>(bottomGroundEntity).Position.y;
-                float distanceToBottom = math.abs(ladderY - bottomY);
+        newLadder.SetHeight(Mathf.RoundToInt(height));
+        newLadder.Initialize();
+    }
 
-                // 기본적으로 하단에서 위로 올라가는 높이 + 1
-                return distanceToBottom + 1.0f;
-            }
-        }
+    /// <summary>
+    /// 사다리 높이 계산
+    /// </summary>
+    private float CalculateLadderHeight(MapNodeEntry upNode, MapNodeEntry downNode)
+    {
+        int2 upGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * upNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * upNode.GridOffset.y);
+        int2 downGridPosition = new int2(IntDefine.MAP_TOTAL_GRID_WIDTH * downNode.GridOffset.x, IntDefine.MAP_TOTAL_GRID_HEIGHT * downNode.GridOffset.y);
 
-        return defaultHeight;
+        float upNodeOffsetY = upGridPosition.y + upNode.PatternData.MinHeight;
+        float downNodeOffsetY = downGridPosition.y + downNode.PatternData.MaxHeight;
+
+        return upNodeOffsetY - downNodeOffsetY + 1;
     }
 
     #endregion

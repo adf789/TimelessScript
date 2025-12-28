@@ -252,10 +252,6 @@ public partial struct ControlSystem : ISystem
         float2 bestContactPoint = float2.zero;
         float shortestDistance = float.MaxValue;
 
-        // 원의 하단 점에서 아래쪽으로 검색할 범위
-        float2 searchStart = circleCenter + new float2(0, -circleRadius);
-        float searchRange = circleRadius * 2f; // 원의 지름만큼 아래까지 검색
-
         foreach (var (colliderBounds, groundComp, entity) in
                  SystemAPI.Query<RefRO<ColliderBoundsComponent>,
                  RefRO<TSGroundComponent>>().WithEntityAccess())

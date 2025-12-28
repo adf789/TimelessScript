@@ -25,8 +25,8 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("맵 확장 시 랜덤풀 내 존재 유무")]
     public bool IsRandomCreate = true;
 
-    public int MinHeight => _mapLinkInfo.GetVerticalY(FourDirection.Down);
-    public int MaxHeight => _mapLinkInfo.GetVerticalY(FourDirection.Up);
+    public float MinHeight => ConvertHeightFromGrid(_mapLinkInfo.GetVerticalY(FourDirection.Down));
+    public float MaxHeight => ConvertHeightFromGrid(_mapLinkInfo.GetVerticalY(FourDirection.Up));
 
     [Tooltip("맵 연결부")]
     [DisableInspector]
@@ -84,6 +84,11 @@ public class TilemapPatternData : ScriptableObject
             FourDirection.Right => FourDirection.Left,
             _ => FourDirection.Up
         };
+    }
+
+    private float ConvertHeightFromGrid(int gridOffset)
+    {
+        return gridOffset * IntDefine.MAP_GRID_SIZE + IntDefine.MAP_GRID_SIZE * 0.5f - IntDefine.MAP_TOTAL_GRID_HALF_HEIGHT;
     }
 
 #if UNITY_EDITOR
