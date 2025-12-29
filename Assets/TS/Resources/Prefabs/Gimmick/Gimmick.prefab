@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 534198486437448583}
   - component: {fileID: 7602456729251230026}
   m_Layer: 0
-  m_Name: Gimmick1
+  m_Name: Gimmick
   m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

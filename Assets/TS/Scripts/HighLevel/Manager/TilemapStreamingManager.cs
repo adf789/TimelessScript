@@ -560,6 +560,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     private async UniTask<Entity> LoadSubScene(TilemapPatternData patternData, string patternID, int2 gridOffset)
     {
+        this.DebugLog($"LoadSubScene ({gridOffset})");
+
         if (!patternData.SubScene.IsReferenceValid)
         {
             this.DebugLog($"No SubScene reference for pattern: {patternID}");
@@ -788,6 +790,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     {
         if (mapNode == null)
             return;
+
+        this.DebugLog($"UnloadSubScene ({mapNode.GridOffset})");
 
         if (mapNode.TilemapInstance != null)
         {

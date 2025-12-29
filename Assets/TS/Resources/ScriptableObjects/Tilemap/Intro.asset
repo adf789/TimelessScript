@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9bb10135347b324da745d98067f8138, type: 3}
+  m_Name: Intro
+  m_EditorClassIdentifier: LowLevel::TilemapPatternData
+  PatternID: Intro
+  TilemapPrefab:
+    m_AssetGUID: 
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  SubScene:
+    Id:
+      GlobalId:
+        SceneObjectIdentifier0: 102900000
+        SceneObjectIdentifier1: 0
+        AssetGUID:
+          Value:
+            x: 554078409
+            y: 1125356329
+            z: 2940389823
+            w: 1079703529
+        IdentifierType: 1
+      GenerationType: 4
+  IsRandomCreate: 1
+  _mapLinkInfo:
+    Left: 2
+    Right: 2
+    UpMin: 32
+    UpMax: 47
+    UpY: 8
+    DownMin: 0
+    DownMax: 49
+    DownY: 1
