@@ -20,6 +20,9 @@ public class TilemapPatternData : ScriptableObject
     [Header("Entity Scene Reference")]
     [Tooltip("씬 엔티티 Addressable 참조")]
     public EntitySceneReference SubScene;
+    [Header("Entity Prefab Reference")]
+    [Tooltip("프리팹 엔티티 Addressable 참조")]
+    public EntityPrefabReference Prefab;
 
     [Header("Possible Random Create")]
     [Tooltip("맵 확장 시 랜덤풀 내 존재 유무")]

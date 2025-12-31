@@ -7,9 +7,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+[CustomEditorWindow("Select Scene", "View", Order = 0, Description = "Find Scene")]
 public class SceneManagerWindow : EditorWindow
 {
-    [MenuItem("TS/Resources Manage/Scene Manager %&s")]
+    [MenuItem("TS/Resources Manage/Scene Manager")]
     public static void ShowWindow()
     {
         GetWindow<SceneManagerWindow>("Scene Manager");

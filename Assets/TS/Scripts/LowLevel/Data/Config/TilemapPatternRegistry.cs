@@ -82,7 +82,7 @@ public class TilemapPatternRegistry : ScriptableObject
     /// <summary>
     /// 패턴 ID로 패턴 데이터 생성, 있는 경우는 기존 데이터를 가져옴
     /// </summary>
-    public TilemapPatternData AddPattern(string patternID, EntitySceneReference sceneRef)
+    public TilemapPatternData AddPattern(string patternID, EntityPrefabReference prefabRef)
     {
         var data = GetPattern(patternID);
 
@@ -93,7 +93,7 @@ public class TilemapPatternRegistry : ScriptableObject
             string directoryPath = path.Substring(0, path.Length - fileName.Length);
             data = System.Activator.CreateInstance<TilemapPatternData>();
             data.PatternID = patternID;
-            data.SubScene = sceneRef;
+            data.Prefab = prefabRef;
 
             AllPatterns.Add(data);
             _patternCache[data.PatternID] = data;

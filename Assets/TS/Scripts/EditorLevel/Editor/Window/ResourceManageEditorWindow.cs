@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
-using System;
 
+[CustomEditorWindow("Resource Manager", "Resources", Order = 0, Description = "Manage ResourcesPath and TypeRegistry assets")]
 public class ResourceManageEditorWindow : EditorWindow
 {
     private ResourcesPath selectedManager;
@@ -68,7 +68,7 @@ public class ResourceManageEditorWindow : EditorWindow
 
     private ViewMode currentViewMode = ViewMode.Combined;
 
-    [MenuItem("TS/Resources Manage/Resource Manager %&r")]
+    [MenuItem("TS/Resources Manage/Resource Manager")]
     public static void OpenWindow()
     {
         var window = GetWindow<ResourceManageEditorWindow>("Resource Manager");

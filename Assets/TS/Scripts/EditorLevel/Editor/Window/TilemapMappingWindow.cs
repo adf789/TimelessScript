@@ -1,13 +1,9 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
-using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// 타일맵 패턴 관리 도구
-/// 초기 패턴 설정, SubScene 관리, 6방향 Port 연결 관리
-/// </summary>
+[CustomEditorWindow("Select Map", "View", Order = 0, Description = "Find All Maps")]
 public class TilemapMappingWindow : EditorWindow
 {
     private TilemapPatternRegistry _registry;

@@ -4,6 +4,8 @@ using UnityEditor;
 using System.Collections.Generic;
 using Unity.Entities.Serialization;
 using Cysharp.Threading.Tasks;
+using UnityEditor.SceneManagement;
+using Unity.Entities;
 
 [CustomEditor(typeof(GroundReferenceAuthoring))]
 public class GroundReferenceAuthoringInspector : Editor
@@ -99,18 +101,23 @@ public class GroundReferenceAuthoringInspector : Editor
 
         var _registry = await ResourcesTypeRegistry.Get().LoadAsyncWithName<TilemapPatternRegistry>("TilemapPatternRegistry");
 
-        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-        _mapData = _registry.GetPattern(activeScene.name);
+        var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+
+        if (prefabStage == null)
+            return;
+
+        _mapData = _registry.GetPattern(prefabStage.name);
 
         // 맵 데이터가 없으면 새로 생성
         if (_mapData == null)
         {
             // Scene의 GUID 가져오기
-            var scenePath = activeScene.path;
-            var guid = AssetDatabase.GUIDFromAssetPath(scenePath);
-            var sceneRef = new EntitySceneReference(guid, IntDefine.EDITOR_REF_ENTITY_SCENE_SECTION_INDEX);
+            var prefabPath = prefabStage.assetPath;
+            var go = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject)) as GameObject;
+            // var refabRef = new EntityPrefabReference(guid, IntDefine.EDITOR_REF_ENTITY_SCENE_SECTION_INDEX);
+            var prefabRef = new EntityPrefabReference(go);
 
-            _mapData = _registry.AddPattern(activeScene.name, sceneRef);
+            _mapData = _registry.AddPattern(prefabStage.name, prefabRef);
         }
     }
 

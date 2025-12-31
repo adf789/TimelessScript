@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System;
 using UnityEditor.Compilation;
 
+[CustomEditorWindow("Script Creator", "Create", Order = 0, Description = "Create script by type")]
 public class ScriptCreatorEditorWindow : EditorWindow
 {
     private enum CreateScriptType
@@ -26,7 +27,7 @@ public class ScriptCreatorEditorWindow : EditorWindow
     private Dictionary<CreateScriptType, BaseScriptCreator> _creators = null;
     private static ScriptCreatorEditorWindow _instance;
 
-    [MenuItem("TS/Create Script %&e")] // Ctrl + Shift + E 단축키 설정
+    [MenuItem("TS/Create Script")]
     public static void ShowWindow()
     {
         var window = GetWindow<ScriptCreatorEditorWindow>("Unity Script Creator");
