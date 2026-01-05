@@ -208,13 +208,13 @@ public class TilemapMappingWindow : EditorWindow
             EditorGUILayout.EndHorizontal();
 
             // SubScene indicator
-            if (pattern.SubScene.IsReferenceValid)
+            if (pattern.Prefab.IsReferenceValid)
             {
-                EditorGUILayout.LabelField($"SubScene: {pattern.SubScene.ToString()}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"Prefab: {pattern.Prefab}", EditorStyles.miniLabel);
             }
             else
             {
-                EditorGUILayout.LabelField("SubScene: (None)", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField("Prefab: (None)", EditorStyles.miniLabel);
             }
 
             EditorGUILayout.EndVertical();

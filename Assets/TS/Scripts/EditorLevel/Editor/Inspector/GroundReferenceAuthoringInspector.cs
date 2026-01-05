@@ -106,18 +106,19 @@ public class GroundReferenceAuthoringInspector : Editor
         if (prefabStage == null)
             return;
 
-        _mapData = _registry.GetPattern(prefabStage.name);
+        string key = prefabStage.scene.name;
+        _mapData = _registry.GetPattern(key);
 
         // 맵 데이터가 없으면 새로 생성
         if (_mapData == null)
         {
             // Scene의 GUID 가져오기
             var prefabPath = prefabStage.assetPath;
-            var go = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject)) as GameObject;
+            var guid = AssetDatabase.GUIDFromAssetPath(prefabPath);
             // var refabRef = new EntityPrefabReference(guid, IntDefine.EDITOR_REF_ENTITY_SCENE_SECTION_INDEX);
-            var prefabRef = new EntityPrefabReference(go);
+            var prefabRef = new EntityPrefabReference(guid);
 
-            _mapData = _registry.AddPattern(prefabStage.name, prefabRef);
+            _mapData = _registry.AddPattern(key, prefabRef);
         }
     }
 

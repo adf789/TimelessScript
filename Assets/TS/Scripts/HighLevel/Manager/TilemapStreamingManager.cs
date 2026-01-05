@@ -44,7 +44,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     [SerializeField] private bool _showDebugInfo = true;
     [SerializeField] private Color _debugColor = Color.green;
     [SerializeField] private bool _showCameraBounds = true;
-
     #endregion
 
     #region Private Fields
@@ -71,6 +70,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
     // 콜백 이벤트
     private System.Action<int2> _onEventExtensionMap = null;
+
+    // 타일맵 생성
+    private Transform _mapParent;
     #endregion
 
     #region Unity Lifecycle
@@ -130,32 +132,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         _patternRegistry.Initialize();
     }
 
-    /// <summary>
-    /// 테스트용
-    /// </summary>
     public void SetMapData(in MapDto dto)
     {
-        // // 테스트 데이터
-        // var basePosition = new int2(0, 0);
-        // var baseMap = new MapNodeEntry("BaseTown")
-        // {
-        //     GridOffset = basePosition,
-        //     PatternData = _patternRegistry.GetPattern("BaseTown")
-        // };
-
-        // var secondPosition = new int2(0, -1);
-        // var secondMap = new MapNodeEntry("BaseTown_1")
-        // {
-        //     GridOffset = secondPosition,
-        //     PatternData = _patternRegistry.GetPattern("BaseTown_1")
-        // };
-
-        // _mapDatas[basePosition] = baseMap;
-        // _mapDatas[secondPosition] = secondMap;
-
-        // var gridPair = new GridPair(basePosition, secondPosition);
-        // _ladderDatas[gridPair] = 33;
-
         for (int i = 0; i < dto.MapCount; i++)
         {
             var position = dto.MapGrids[i].Grid;
@@ -168,6 +146,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
             _mapDatas[position] = map;
         }
+    }
+
+    public void SetMapParent(Transform parent)
+    {
+        _mapParent = parent;
     }
 
     public void SetEventExtensionMap(System.Action<int2> onEvent)
@@ -285,7 +268,7 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
     /// </summary>
     public async UniTask UpdateStreamingByCameraView()
     {
-        if (!_isInitialized || _targetCamera == null || !_enableAutoStreaming) return;
+        if (!_isInitialized || _targetCamera == null || !_enableAutoStreaming || _mapParent == null) return;
 
         SetCameraPosition(_targetCamera.transform.position);
 
@@ -364,15 +347,17 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
 
         // 중복 로드 체크
-        if (TryGetLoadedPattern(gridOffset, out var existingInstance))
+        if (CheckLoadedPattern(gridOffset))
         {
-            return existingInstance;
+            return true;
         }
 
         // 로딩 중 체크
         if (IsPatternLoading(gridOffset))
         {
-            return await WaitForPatternLoad(gridOffset);
+            await WaitForPatternLoad(gridOffset);
+
+            return true;
         }
 
         // 패턴 데이터 검증
@@ -386,15 +371,13 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return await LoadPatternInternal(patternID, gridOffset, patternData);
     }
 
-    private bool TryGetLoadedPattern(int2 key, out GameObject instance)
+    private bool CheckLoadedPattern(int2 key)
     {
-        if (_mapDatas.TryGetValue(key, out var loaded))
+        if (_mapDatas.TryGetValue(key, out var entry))
         {
-            instance = loaded.TilemapInstance;
-            return instance != null;
+            return entry.IsLoaded;
         }
 
-        instance = null;
         return false;
     }
 
@@ -408,10 +391,9 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         return false;
     }
 
-    private async UniTask<GameObject> WaitForPatternLoad(int2 key)
+    private async UniTask WaitForPatternLoad(int2 key)
     {
         await UniTask.WaitUntil(() => _mapDatas.ContainsKey(key) || !_loadingKeys.Contains(key));
-        return _mapDatas.TryGetValue(key, out var loaded) ? loaded.TilemapInstance : null;
     }
 
     private bool ValidatePatternData(TilemapPatternData patternData, string patternID)
@@ -419,12 +401,6 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         if (patternData == null)
         {
             this.DebugLogError($"Pattern not found: {patternID}");
-            return false;
-        }
-
-        if (patternData.TilemapPrefab == null || !patternData.TilemapPrefab.RuntimeKeyIsValid())
-        {
-            this.DebugLogError($"Invalid Addressable reference for pattern: {patternID}");
             return false;
         }
 
@@ -437,17 +413,8 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         try
         {
-            var newTilemap = await InstantiateTilemap(patternData, gridOffset);
-            if (newTilemap == null)
-            {
-                _loadingKeys.Remove(gridOffset);
-                return false;
-            }
-
             if (_mapDatas.TryGetValue(gridOffset, out var mapNode))
             {
-                mapNode.TilemapInstance = newTilemap;
-
                 if (mapNode.SubSceneEntity == Entity.Null)
                 {
                     mapNode.SubSceneEntity = await LoadSubScene(patternData, patternID, gridOffset);
@@ -541,28 +508,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
         }
     }
 
-    private async UniTask<GameObject> InstantiateTilemap(TilemapPatternData patternData, int2 gridOffset)
-    {
-        var tileMapHandle = Addressables.InstantiateAsync(patternData.TilemapPrefab);
-        var instance = await tileMapHandle.Task;
-
-        if (instance == null)
-        {
-            this.DebugLogError($"Failed to instantiate pattern");
-            return null;
-        }
-
-        instance.transform.position = CalculatePatternCenter(gridOffset);
-        instance.name = $"TilemapPattern_{gridOffset}";
-
-        return instance;
-    }
-
     private async UniTask<Entity> LoadSubScene(TilemapPatternData patternData, string patternID, int2 gridOffset)
     {
         this.DebugLog($"LoadSubScene ({gridOffset})");
 
-        if (!patternData.SubScene.IsReferenceValid)
+        if (!patternData.Prefab.IsReferenceValid)
         {
             this.DebugLog($"No SubScene reference for pattern: {patternID}");
             return Entity.Null;
@@ -575,22 +525,33 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
             return Entity.Null;
         }
 
-        // SubScene 로드 (BlockOnStreamIn으로 즉시 로드)
-        var loadParams = new SceneSystem.LoadParameters
+        var entityManager = world.EntityManager;
+
+        // EntityPrefabReference 로드 요청
+        var prefabLoadRequest = entityManager.CreateEntity();
+        entityManager.AddComponentData(prefabLoadRequest, new RequestEntityPrefabLoaded
         {
-            Flags = SceneLoadFlags.BlockOnStreamIn | SceneLoadFlags.LoadAdditive
-        };
+            Prefab = patternData.Prefab
+        });
 
-        var subSceneEntity = SceneSystem.LoadSceneAsync(
-            world.Unmanaged,
-            patternData.SubScene,
-            loadParams
-        );
-
-        // SubScene 로드 완료 대기
+        // Prefab 로드 완료 대기
         await UniTask.WaitUntil(() =>
-            SceneSystem.IsSceneLoaded(world.Unmanaged, subSceneEntity)
-        );
+        {
+            if (!entityManager.Exists(prefabLoadRequest))
+                return false;
+
+            return entityManager.HasComponent<PrefabLoadResult>(prefabLoadRequest);
+        });
+
+        // 로드된 Prefab Entity 가져오기
+        var loadResult = entityManager.GetComponentData<PrefabLoadResult>(prefabLoadRequest);
+        var prefabEntity = loadResult.PrefabRoot;
+
+        // 요청 Entity 정리
+        entityManager.DestroyEntity(prefabLoadRequest);
+
+        // Prefab Entity 인스턴스화
+        var subSceneEntity = entityManager.Instantiate(prefabEntity);
 
         this.DebugLog($"SubScene loaded for pattern: {patternID} at offset {gridOffset} (Entity: {subSceneEntity})");
 
@@ -793,11 +754,11 @@ public class TilemapStreamingManager : BaseManager<TilemapStreamingManager>
 
         this.DebugLog($"UnloadSubScene ({mapNode.GridOffset})");
 
-        if (mapNode.TilemapInstance != null)
-        {
-            Destroy(mapNode.TilemapInstance);
-            mapNode.TilemapInstance = null;
-        }
+        // if (mapNode.TilemapInstance != null)
+        // {
+        //     Destroy(mapNode.TilemapInstance);
+        //     mapNode.TilemapInstance = null;
+        // }
     }
 
     public async UniTask UnloadAllPatterns()

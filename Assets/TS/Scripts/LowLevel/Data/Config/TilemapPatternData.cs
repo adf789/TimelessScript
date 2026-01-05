@@ -13,13 +13,6 @@ public class TilemapPatternData : ScriptableObject
     [Tooltip("고유 패턴 ID")]
     public string PatternID;
 
-    [Header("Addressable Reference")]
-    [Tooltip("타일맵 프리팹 Addressable 참조")]
-    public AssetReference TilemapPrefab;
-
-    [Header("Entity Scene Reference")]
-    [Tooltip("씬 엔티티 Addressable 참조")]
-    public EntitySceneReference SubScene;
     [Header("Entity Prefab Reference")]
     [Tooltip("프리팹 엔티티 Addressable 참조")]
     public EntityPrefabReference Prefab;

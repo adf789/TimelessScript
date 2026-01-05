@@ -15,6 +15,6 @@ public class IntDefine
     #endregion MAP
 
     #region EDITOR REFERENCE
-    public const int EDITOR_REF_ENTITY_SCENE_SECTION_INDEX = 102900000;
+    public const long EDITOR_REF_ENTITY_PREFAB_SECTION_INDEX = 8940476364880711571;
     #endregion EDITOR REFERENCE
 }

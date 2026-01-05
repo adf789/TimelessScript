@@ -13,11 +13,10 @@ public class MapNodeEntry
     public string PatternID { get; private set; }
     public int2 GridOffset;
     public TilemapPatternData PatternData;
-    public GameObject TilemapInstance;
     public Entity SubSceneEntity;
     public Entity MinGroundEntity;
     public Entity MaxGroundEntity;
-    public bool IsLoaded => TilemapInstance != null;
+    public bool IsLoaded => SubSceneEntity != Entity.Null;
 
     /// <summary>
     /// 생성자

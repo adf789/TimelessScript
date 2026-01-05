@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a905f381146dfec49b641caa0c77f33d, type: 3}
   m_Name: TilemapPatternRegistry
   m_EditorClassIdentifier: LowLevel::TS.LowLevel.Data.Config.TilemapPatternRegistry
-  AllPatterns: []
+  AllPatterns:
+  - {fileID: 11400000, guid: 49882aececd60104199bf49cc84ee327, type: 2}
+  - {fileID: 11400000, guid: 4756678f5b1436146a1c93c6f26f3cb8, type: 2}
   Categories: []
